@@ -32,59 +32,59 @@ const { Upload, CheckCircle, XCircle, AlertCircle, ChevronRight, ChevronLeft, Se
 const ImageIcon = LucideReact.Image;
 
 
-// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// ─────────────────────────────────────────────
 // CONSTANTS
-// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// ─────────────────────────────────────────────
 const REQUIRED_FIELDS = ["ean", "ncm", "preco_venda", "peso", "altura", "largura", "comprimento"];
 const FIELD_LABELS = {
-  ean: "EAN", ncm: "NCM", preco_venda: "Pre\u00E7o de venda",
+  ean: "EAN", ncm: "NCM", preco_venda: "Preço de venda",
   peso: "Peso", altura: "Altura", largura: "Largura", comprimento: "Comprimento",
 };
 const STEPS = ["upload", "validation", "enrichment", "review", "sync"];
 
-// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// ─────────────────────────────────────────────
 // MARKETPLACE CONFIG
-// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// ─────────────────────────────────────────────
 const MARKETPLACES = [
   {
-    id: "mercadolivre", label: "Mercado Livre", icon: "\uD83D\uDED2", limit: 60,
-    rules: "M\u00E1x 60 chars. Formato: Marca + Produto + Spec principal + Voltagem. Sem adjetivos (melhor, incr\u00EDvel). Sem pontua\u00E7\u00E3o final. Sem repeti\u00E7\u00E3o de palavras. Tudo em portugu\u00EAs claro.",
+    id: "mercadolivre", label: "Mercado Livre", icon: "🛒", limit: 60,
+    rules: "Máx 60 chars. Formato: Marca + Produto + Spec principal + Voltagem. Sem adjetivos (melhor, incrível). Sem pontuação final. Sem repetição de palavras. Tudo em português claro.",
   },
   {
-    id: "shopee", label: "Shopee", icon: "\uD83D\uDECD\uFE0F", limit: 120,
-    rules: "M\u00E1x 120 chars. Comece com a palavra-chave principal (produto). Inclua modelo, specs e marca. Pode usar h\u00EDfen como separador. Linguagem direta e objetiva.",
+    id: "shopee", label: "Shopee", icon: "🛍️", limit: 120,
+    rules: "Máx 120 chars. Comece com a palavra-chave principal (produto). Inclua modelo, specs e marca. Pode usar hífen como separador. Linguagem direta e objetiva.",
   },
   {
-    id: "amazon", label: "Amazon", icon: "\uD83D\uDCE6", limit: 200,
-    rules: "M\u00E1x 200 chars. Formato: Marca + Produto + Modelo + Specs detalhadas. Use v\u00EDrgula ou travess\u00E3o como separadores. N\u00E3o use CAPS excessivo. Sem pre\u00E7os ou promo\u00E7\u00F5es. Portugu\u00EAs formal.",
+    id: "amazon", label: "Amazon", icon: "📦", limit: 200,
+    rules: "Máx 200 chars. Formato: Marca + Produto + Modelo + Specs detalhadas. Use vírgula ou travessão como separadores. Não use CAPS excessivo. Sem preços ou promoções. Português formal.",
   },
   {
-    id: "magalu", label: "Magalu", icon: "\uD83C\uDFEA", limit: 120,
-    rules: "M\u00E1x 120 chars. Linguagem acess\u00EDvel e descritiva. Inclua marca e principais caracter\u00EDsticas. P\u00FAblico amplo, n\u00E3o apenas t\u00E9cnico.",
+    id: "magalu", label: "Magalu", icon: "🏪", limit: 120,
+    rules: "Máx 120 chars. Linguagem acessível e descritiva. Inclua marca e principais características. Público amplo, não apenas técnico.",
   },
   {
-    id: "tiktok", label: "TikTok Shop", icon: "\uD83C\uDFB5", limit: 100,
-    rules: "M\u00E1x 100 chars. Destaque o benef\u00EDcio principal primeiro. Tom mais informal e envolvente. Mencione o diferencial do produto. Evite jarg\u00E3o t\u00E9cnico excessivo.",
+    id: "tiktok", label: "TikTok Shop", icon: "🎵", limit: 100,
+    rules: "Máx 100 chars. Destaque o benefício principal primeiro. Tom mais informal e envolvente. Mencione o diferencial do produto. Evite jargão técnico excessivo.",
   },
   {
-    id: "madeiramadeira", label: "Madeira Madeira", icon: "\uD83E\uDEB5", limit: 120,
-    rules: "M\u00E1x 120 chars. Tom t\u00E9cnico e detalhado. Inclua material, acabamento ou especifica\u00E7\u00E3o construtiva quando relevante. Marca + produto + specs completas.",
+    id: "madeiramadeira", label: "Madeira Madeira", icon: "🪵", limit: 120,
+    rules: "Máx 120 chars. Tom técnico e detalhado. Inclua material, acabamento ou especificação construtiva quando relevante. Marca + produto + specs completas.",
   },
 ];
 
-// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// ─────────────────────────────────────────────
 // COLUMN RESOLUTION
-// Maps various real-world column name variations \u2192 canonical internal names
-// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// Maps various real-world column name variations → canonical internal names
+// ─────────────────────────────────────────────
 const COLUMN_ALIASES = {
-  // NCM: "NCM Classifica\u00E7\u00E3o Fiscal", "NCM", "ncm_fiscal" etc \u2192 "ncm"
+  // NCM: "NCM Classificação Fiscal", "NCM", "ncm_fiscal" etc → "ncm"
   ncm: "ncm",
-  // Pre\u00E7o: "Pre\u00E7o de Venda", "Preco_venda", "Pre\u00E7o Venda" etc \u2192 "preco_venda"
+  // Preço: "Preço de Venda", "Preco_venda", "Preço Venda" etc → "preco_venda"
   preco_de_venda: "preco_venda",
   preco_venda: "preco_venda",
   valor_venda: "preco_venda",
   preco: "preco_venda",
-  // Dimens\u00F5es com sufixo de unidade
+  // Dimensões com sufixo de unidade
   peso_kg: "peso",
   peso: "peso",
   altura_cm: "altura",
@@ -108,7 +108,7 @@ function resolveColumnName(raw) {
   // 1. Normalize the key
   const nk = String(raw)
     .toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
     .replace(/[^a-z0-9]+/g, "_")
     .replace(/^_|_$/g, "");
   // 2. Direct match
@@ -120,18 +120,18 @@ function resolveColumnName(raw) {
   return nk;
 }
 
-// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// ─────────────────────────────────────────────
 // UTILITIES
-// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// ─────────────────────────────────────────────
 function normalizeKey(key) {
   return String(key)
     .toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
     .replace(/[^a-z0-9]+/g, "_")
     .replace(/^_|_$/g, "");
 }
 
-// Cleans values that Excel stores as floats (e.g. EAN: 7893946001234.0 \u2192 "7893946001234")
+// Cleans values that Excel stores as floats (e.g. EAN: 7893946001234.0 → "7893946001234")
 function cleanNumericString(val) {
   if (val === null || val === undefined || val === "") return "";
   const s = String(val).trim();
@@ -139,14 +139,14 @@ function cleanNumericString(val) {
   return s;
 }
 
-// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// ─────────────────────────────────────────────
 // TINY FIELD MAPPING
-// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// ─────────────────────────────────────────────
 function mapOrigem(origem) {
   const o = (origem || "").toLowerCase().trim();
   if (o.includes("import") || o.includes("estrang"))
-    return "2 - Estrangeira - Adquirida no mercado interno, exceto a indicada no c\u00F3digo 7";
-  return "0 - Nacional, exceto as indicadas nos c\u00F3digos 3 a 5";
+    return "2 - Estrangeira - Adquirida no mercado interno, exceto a indicada no código 7";
+  return "0 - Nacional, exceto as indicadas nos códigos 3 a 5";
 }
 
 function mapGarantia(val) {
@@ -155,7 +155,7 @@ function mapGarantia(val) {
   return num ? `${num} meses` : String(val);
 }
 
-// After all products are enriched, resolve V\u2192K parent/child relationships
+// After all products are enriched, resolve V→K parent/child relationships
 function resolveParentChild(products) {
   const vProds = products.filter(p => (p.tipo_de_produto || "S").toUpperCase() === "V");
 
@@ -164,7 +164,7 @@ function resolveParentChild(products) {
     if ((p.tipo_de_produto || "S").toUpperCase() !== "K") return p;
     const kSku = (p.enriched?.sku_interno || "").toUpperCase();
     const kName = (p.produto_fornecedor || "").toLowerCase()
-      .replace(/\s*[-\u2013]\s*(110v|220v|127v|220|110|127|bivolt)\s*$/i, "").trim();
+      .replace(/\s*[-–]\s*(110v|220v|127v|220|110|127|bivolt)\s*$/i, "").trim();
 
     let parent = null;
     // Match by SKU prefix
@@ -176,7 +176,7 @@ function resolveParentChild(products) {
     if (!parent) {
       for (const v of vProds) {
         const vName = (v.produto_fornecedor || "").toLowerCase()
-          .replace(/\s*[-\u2013]\s*(110v|220v|127v|220|110|127|bivolt)\s*$/i, "").trim();
+          .replace(/\s*[-–]\s*(110v|220v|127v|220|110|127|bivolt)\s*$/i, "").trim();
         if (vName.length > 5 && kName.includes(vName.substring(0, Math.min(vName.length, 25)))) {
           parent = v; break;
         }
@@ -209,74 +209,74 @@ function resolveParentChild(products) {
 }
 
 const TINY_HEADERS = [
-  "ID","C\u00F3digo (SKU)","Descri\u00E7\u00E3o","Unidade","Classifica\u00E7\u00E3o fiscal","Origem","Pre\u00E7o",
-  "Valor IPI fixo","Observa\u00E7\u00F5es","Situa\u00E7\u00E3o","Estoque","Pre\u00E7o de custo","C\u00F3d do Fornecedor",
-  "Fornecedor","Localiza\u00E7\u00E3o","Estoque m\u00E1ximo","Estoque m\u00EDnimo","Peso l\u00EDquido (Kg)",
-  "Peso bruto (Kg)","GTIN/EAN","GTIN/EAN tribut\u00E1vel","Descri\u00E7\u00E3o complementar","CEST",
-  "C\u00F3digo de Enquadramento IPI","Formato embalagem","Largura embalagem","Altura embalagem",
-  "Comprimento embalagem","Di\u00E2metro embalagem","Tipo do produto","URL imagem 1","URL imagem 2",
-  "URL imagem 3","URL imagem 4","URL imagem 5","URL imagem 6","Categoria","C\u00F3digo do pai",
-  "Varia\u00E7\u00F5es","Marca","Garantia","Sob encomenda","Pre\u00E7o promocional","URL imagem externa 1",
+  "ID","Código (SKU)","Descrição","Unidade","Classificação fiscal","Origem","Preço",
+  "Valor IPI fixo","Observações","Situação","Estoque","Preço de custo","Cód do Fornecedor",
+  "Fornecedor","Localização","Estoque máximo","Estoque mínimo","Peso líquido (Kg)",
+  "Peso bruto (Kg)","GTIN/EAN","GTIN/EAN tributável","Descrição complementar","CEST",
+  "Código de Enquadramento IPI","Formato embalagem","Largura embalagem","Altura embalagem",
+  "Comprimento embalagem","Diâmetro embalagem","Tipo do produto","URL imagem 1","URL imagem 2",
+  "URL imagem 3","URL imagem 4","URL imagem 5","URL imagem 6","Categoria","Código do pai",
+  "Variações","Marca","Garantia","Sob encomenda","Preço promocional","URL imagem externa 1",
   "URL imagem externa 2","URL imagem externa 3","URL imagem externa 4","URL imagem externa 5",
-  "URL imagem externa 6","Link do v\u00EDdeo","T\u00EDtulo SEO","Descri\u00E7\u00E3o SEO","Palavras chave SEO",
-  "Slug","Dias para prepara\u00E7\u00E3o","Controlar lotes","Unidade por caixa","URL imagem externa 7",
+  "URL imagem externa 6","Link do vídeo","Título SEO","Descrição SEO","Palavras chave SEO",
+  "Slug","Dias para preparação","Controlar lotes","Unidade por caixa","URL imagem externa 7",
   "URL imagem externa 8","URL imagem externa 9","URL imagem externa 10","Markup",
-  "Permitir inclus\u00E3o nas vendas","EX TIPI",
+  "Permitir inclusão nas vendas","EX TIPI",
 ];
 
 function buildTinyRow(p) {
   const img = p.generatedImage || "";
   return [
     "",                                          // ID
-    p.enriched?.sku_interno || "",               // C\u00F3digo (SKU)
-    p.produto_fornecedor || "",                  // Descri\u00E7\u00E3o
+    p.enriched?.sku_interno || "",               // Código (SKU)
+    p.produto_fornecedor || "",                  // Descrição
     "UN",                                        // Unidade
-    p.ncm || "",                                 // Classifica\u00E7\u00E3o fiscal
+    p.ncm || "",                                 // Classificação fiscal
     mapOrigem(p.origem),                         // Origem
-    (p.preco_venda || "").replace(".", ","),      // Pre\u00E7o
+    (p.preco_venda || "").replace(".", ","),      // Preço
     "",                                          // Valor IPI fixo
-    "",                                          // Observa\u00E7\u00F5es
-    "Ativo",                                     // Situa\u00E7\u00E3o
+    "",                                          // Observações
+    "Ativo",                                     // Situação
     "",                                          // Estoque
-    "",                                          // Pre\u00E7o de custo
-    p.codigo_fornecedor || "",                   // C\u00F3d do Fornecedor
+    "",                                          // Preço de custo
+    p.codigo_fornecedor || "",                   // Cód do Fornecedor
     p.fornecedor || "",                          // Fornecedor
-    "",                                          // Localiza\u00E7\u00E3o
-    "",                                          // Estoque m\u00E1ximo
-    "",                                          // Estoque m\u00EDnimo
-    (p.peso || "").toString().replace(".", ","), // Peso l\u00EDquido
+    "",                                          // Localização
+    "",                                          // Estoque máximo
+    "",                                          // Estoque mínimo
+    (p.peso || "").toString().replace(".", ","), // Peso líquido
     (p.peso || "").toString().replace(".", ","), // Peso bruto
     p.ean || "",                                 // GTIN/EAN
-    "",                                          // GTIN/EAN tribut\u00E1vel
-    p.enriched?.descricao_complementar || "",    // Descri\u00E7\u00E3o complementar
+    "",                                          // GTIN/EAN tributável
+    p.enriched?.descricao_complementar || "",    // Descrição complementar
     p.enriched?.cest || "",                      // CEST
-    "999",                                       // C\u00F3digo de Enquadramento IPI
+    "999",                                       // Código de Enquadramento IPI
     "Pacote / Caixa",                            // Formato embalagem
     (p.largura || "").toString().replace(".", ","),    // Largura
     (p.altura || "").toString().replace(".", ","),     // Altura
     (p.comprimento || "").toString().replace(".", ","),// Comprimento
-    "0",                                         // Di\u00E2metro
+    "0",                                         // Diâmetro
     (p.tipo_de_produto || "S").toUpperCase(),    // Tipo do produto
     img, "", "", "", "", "",                      // URLs imagem 1-6
     p.categoria_sugerida || "",                  // Categoria
-    p._codigoPai || "",                          // C\u00F3digo do pai
-    p.enriched?.variacoes || "",                 // Varia\u00E7\u00F5es
+    p._codigoPai || "",                          // Código do pai
+    p.enriched?.variacoes || "",                 // Variações
     p.marca || "",                               // Marca
     mapGarantia(p.garantia),                     // Garantia
-    "n\u00E3o",                                       // Sob encomenda
-    "",                                          // Pre\u00E7o promocional
+    "não",                                       // Sob encomenda
+    "",                                          // Preço promocional
     "", "", "", "", "", "",                       // URL imagem externa 1-6
-    "",                                          // Link do v\u00EDdeo
-    p.enriched?.titulo_seo || "",                // T\u00EDtulo SEO
-    p.enriched?.descricao_seo || "",             // Descri\u00E7\u00E3o SEO
+    "",                                          // Link do vídeo
+    p.enriched?.titulo_seo || "",                // Título SEO
+    p.enriched?.descricao_seo || "",             // Descrição SEO
     p.enriched?.palavras_chave_seo || "",        // Palavras chave SEO
     p.enriched?.sku_interno || "",               // Slug
-    "0",                                         // Dias para prepara\u00E7\u00E3o
-    "n\u00E3o",                                       // Controlar lotes
+    "0",                                         // Dias para preparação
+    "não",                                       // Controlar lotes
     "",                                          // Unidade por caixa
     "", "", "", "",                              // URL imagem externa 7-10
     "",                                          // Markup
-    "sim",                                       // Permitir inclus\u00E3o nas vendas
+    "sim",                                       // Permitir inclusão nas vendas
     "",                                          // EX TIPI
   ];
 }
@@ -293,7 +293,7 @@ function buildTinyCSV(products) {
 }
 
 function downloadCSV(content, filename) {
-  const bom = "\uFEFF"; // UTF-8 BOM for Excel compatibility
+  const bom = "﻿"; // UTF-8 BOM for Excel compatibility
   const blob = new Blob([bom + content], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -309,11 +309,11 @@ function parseNumber(val) {
   if (s.startsWith("#")) return null;
   s = s.replace(/[R$\s]/g, "");
   if (!s) return null;
-  // Brazilian format "1.234,56" \u2192 has both period (thousands) and comma (decimal)
+  // Brazilian format "1.234,56" → has both period (thousands) and comma (decimal)
   if (s.includes(",") && s.includes(".")) {
-    s = s.replace(/\./g, "").replace(",", ".");        // "1.234,56" \u2192 "1234.56"
+    s = s.replace(/\./g, "").replace(",", ".");        // "1.234,56" → "1234.56"
   } else if (s.includes(",") && !s.includes(".")) {
-    s = s.replace(",", ".");                            // "1234,56"  \u2192 "1234.56"
+    s = s.replace(",", ".");                            // "1234,56"  → "1234.56"
   }
   // Remove any remaining non-numeric characters except period and minus
   s = s.replace(/[^0-9.\-]/g, "");
@@ -341,36 +341,36 @@ function validateProduct(p) {
   const isV = tipo === "V";
 
   for (const f of REQUIRED_FIELDS) {
-    // EAN \u00E9 opcional para produtos do tipo V (produto pai com varia\u00E7\u00F5es)
+    // EAN é opcional para produtos do tipo V (produto pai com variações)
     if (f === "ean" && isV) continue;
-    if (!p[f] && p[f] !== 0) errors.push({ field: f, msg: `${FIELD_LABELS[f]} \u00E9 obrigat\u00F3rio` });
+    if (!p[f] && p[f] !== 0) errors.push({ field: f, msg: `${FIELD_LABELS[f]} é obrigatório` });
   }
-  if (p.ean && !isValidEAN(p.ean)) errors.push({ field: "ean", msg: `EAN deve ter 8 ou 13 d\u00EDgitos num\u00E9ricos (recebido: "${p.ean}")` });
-  if (p.ncm && !isValidNCM(p.ncm)) errors.push({ field: "ncm", msg: `NCM deve ter 8 d\u00EDgitos num\u00E9ricos (recebido: "${p.ncm}")` });
-  if (p.preco_venda && !isValidPrice(p.preco_venda)) errors.push({ field: "preco_venda", msg: `Pre\u00E7o deve ser um n\u00FAmero v\u00E1lido (recebido: "${p.preco_venda}")` });
+  if (p.ean && !isValidEAN(p.ean)) errors.push({ field: "ean", msg: `EAN deve ter 8 ou 13 dígitos numéricos (recebido: "${p.ean}")` });
+  if (p.ncm && !isValidNCM(p.ncm)) errors.push({ field: "ncm", msg: `NCM deve ter 8 dígitos numéricos (recebido: "${p.ncm}")` });
+  if (p.preco_venda && !isValidPrice(p.preco_venda)) errors.push({ field: "preco_venda", msg: `Preço deve ser um número válido (recebido: "${p.preco_venda}")` });
   return errors;
 }
 
-// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// ─────────────────────────────────────────────
 // API FUNCTIONS
-// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// ─────────────────────────────────────────────
 async function enrichProductWithAI(product, apiKey, rules = {}, onPhase) {
   const {
     titleTemplate = "", descriptionStyles = [], additionalInstructions = "",
     aiModel = "gpt-4o", activeMarketplaces = MARKETPLACES.map(m => m.id),
   } = rules;
 
-  // \u2500\u2500 STEP 1: Web research + CEST lookup \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  // ── STEP 1: Web research + CEST lookup ──────────────────────────────────
   onPhase?.("Pesquisando na web...");
   let webContext = "";
   try {
-    const searchPrompt = `Pesquise informa\u00E7\u00F5es sobre o produto "${product.produto_fornecedor}" marca "${product.marca || ""}". NCM: ${product.ncm}. Tarefas: 1) Encontre o c\u00F3digo CEST para NCM ${product.ncm} conforme Conv\u00EAnio ICMS 142/2018 (formato XX.XXX.XX). 2) Colete especifica\u00E7\u00F5es t\u00E9cnicas detalhadas. 3) Identifique palavras-chave para SEO no e-commerce brasileiro. Retorne as informa\u00E7\u00F5es encontradas de forma estruturada.`;
+    const searchPrompt = `Pesquise informações sobre o produto "${product.produto_fornecedor}" marca "${product.marca || ""}". NCM: ${product.ncm}. Tarefas: 1) Encontre o código CEST para NCM ${product.ncm} conforme Convênio ICMS 142/2018 (formato XX.XXX.XX). 2) Colete especificações técnicas detalhadas. 3) Identifique palavras-chave para SEO no e-commerce brasileiro. Retorne as informações encontradas de forma estruturada.`;
     const res1 = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
       body: JSON.stringify({
         model: "gpt-4o-search-preview",
-        // Note: gpt-4o-search-preview does NOT support temperature \u2014 omit it
+        // Note: gpt-4o-search-preview does NOT support temperature — omit it
         messages: [{ role: "user", content: searchPrompt }],
       }),
     });
@@ -380,82 +380,82 @@ async function enrichProductWithAI(product, apiKey, rules = {}, onPhase) {
     }
     // If not ok, silently fall through to step 2 with empty webContext
   } catch (_) {
-    // web research failed \u2014 proceed with data-only enrichment
+    // web research failed — proceed with data-only enrichment
   }
 
-  // \u2500\u2500 STEP 2: Structured generation (JSON mode) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-  onPhase?.("Gerando conte\u00FAdo...");
+  // ── STEP 2: Structured generation (JSON mode) ───────────────────────────
+  onPhase?.("Gerando conteúdo...");
 
   const titleInstruction = titleTemplate
-    ? `Siga EXATAMENTE este padr\u00E3o: "${titleTemplate}". Substitua cada vari\u00E1vel ({Marca}, {Produto}, {Pot\u00EAncia}, {Tens\u00E3o}, etc.) pelo valor extra\u00EDdo dos dados. Omita vari\u00E1veis que n\u00E3o se aplicam. M\u00E1x 60 chars.`
-    : `Crie um t\u00EDtulo otimizado para marketplace (m\u00E1x 60 chars). Inclua marca, modelo e specs principais.`;
+    ? `Siga EXATAMENTE este padrão: "${titleTemplate}". Substitua cada variável ({Marca}, {Produto}, {Potência}, {Tensão}, etc.) pelo valor extraído dos dados. Omita variáveis que não se aplicam. Máx 60 chars.`
+    : `Crie um título otimizado para marketplace (máx 60 chars). Inclua marca, modelo e specs principais.`;
 
   const activeMPs = MARKETPLACES.filter(m => activeMarketplaces.includes(m.id));
   const mpInstructions = activeMPs.map(m => `  - "${m.id}": ${m.rules}`).join("\n");
 
   const STYLE_LABELS = {
-    tecnico: "tom t\u00E9cnico com foco em especifica\u00E7\u00F5es detalhadas",
-    marketplace: "linguagem otimizada para marketplace com palavras-chave estrat\u00E9gicas",
-    beneficios: "destaque os benef\u00EDcios pr\u00E1ticos para o usu\u00E1rio final",
+    tecnico: "tom técnico com foco em especificações detalhadas",
+    marketplace: "linguagem otimizada para marketplace com palavras-chave estratégicas",
+    beneficios: "destaque os benefícios práticos para o usuário final",
     garantia: "sempre mencione a garantia do produto",
     origem: "sempre mencione a origem (importado/nacional)",
   };
   const styleText = descriptionStyles.length
     ? `Estilo: ${descriptionStyles.map(s => STYLE_LABELS[s] || s).join("; ")}.`
-    : "Descri\u00E7\u00E3o clara, completa e profissional.";
+    : "Descrição clara, completa e profissional.";
   const extraInstructions = additionalInstructions.trim()
-    ? `\nInstru\u00E7\u00F5es adicionais: ${additionalInstructions.trim()}` : "";
+    ? `\nInstruções adicionais: ${additionalInstructions.trim()}` : "";
 
-  const prompt = `Voc\u00EA \u00E9 especialista em cadastro de produtos para e-commerce brasileiro.
-Com base nos dados abaixo, gere em PORTUGU\u00CAS DO BRASIL todos os campos para o Tiny ERP.
+  const prompt = `Você é especialista em cadastro de produtos para e-commerce brasileiro.
+Com base nos dados abaixo, gere em PORTUGUÊS DO BRASIL todos os campos para o Tiny ERP.
 
 CONTEXTO DA PESQUISA WEB:
-${webContext || "(pesquisa n\u00E3o dispon\u00EDvel \u2014 use seu conhecimento)"}
+${webContext || "(pesquisa não disponível — use seu conhecimento)"}
 
-INSTRU\u00C7\u00D5ES DE GERA\u00C7\u00C3O:
+INSTRUÇÕES DE GERAÇÃO:
 
-1. "sku_interno": SKU interno no padr\u00E3o [CATEG]-[SPEC]-[MODELO]-[MARCA][-VARIA\u00C7\u00C3O] em MAI\u00DASCULAS com h\u00EDfens.
+1. "sku_interno": SKU interno no padrão [CATEG]-[SPEC]-[MODELO]-[MARCA][-VARIAÇÃO] em MAIÚSCULAS com hífens.
    Exemplos: "LAV-1200W-LK1305-KALA-127V", "SER-1400W-SM1400-VOND-220V", "FUR-710W-HP0704-BOSH"
-   Use abrevia\u00E7\u00F5es: LAV=Lavadora, SER=Serra, FUR=Furadeira, PAR=Parafusadeira, ESM=Esmerilhadeira, LIX=Lixadeira, AMP=Amplificador, GER=Gerador, POL=Poliadeira, etc.
-   Para tipo K (variante), inclua a varia\u00E7\u00E3o ao final (ex: -127V, -220V, -BIVOLT).
+   Use abreviações: LAV=Lavadora, SER=Serra, FUR=Furadeira, PAR=Parafusadeira, ESM=Esmerilhadeira, LIX=Lixadeira, AMP=Amplificador, GER=Gerador, POL=Poliadeira, etc.
+   Para tipo K (variante), inclua a variação ao final (ex: -127V, -220V, -BIVOLT).
 
-2. "cest": C\u00F3digo CEST para NCM ${product.ncm} conforme Conv\u00EAnio ICMS 142/2018 (formato "XX.XXX.XX"). Se n\u00E3o encontrado, retorne "".
+2. "cest": Código CEST para NCM ${product.ncm} conforme Convênio ICMS 142/2018 (formato "XX.XXX.XX"). Se não encontrado, retorne "".
 
-3. "descricao_complementar": Texto curto (m\u00E1x 200 chars) com specs principais \u2014 voltagem, pot\u00EAncia, modelo, capacidade.
+3. "descricao_complementar": Texto curto (máx 200 chars) com specs principais — voltagem, potência, modelo, capacidade.
 
 4. "titulo_otimizado": ${titleInstruction}
 
-5. "titulos": Objeto com t\u00EDtulo para cada marketplace abaixo, respeitando RIGOROSAMENTE limite de chars e regras:
+5. "titulos": Objeto com título para cada marketplace abaixo, respeitando RIGOROSAMENTE limite de chars e regras:
 ${mpInstructions}
 
-6. "descricao": Descri\u00E7\u00E3o HTML do produto (use <p>, <ul>, <li>). M\u00EDnimo 150 palavras. ${styleText}${extraInstructions}
+6. "descricao": Descrição HTML do produto (use <p>, <ul>, <li>). Mínimo 150 palavras. ${styleText}${extraInstructions}
 
-7. "atributos": Array [{nome, valor}] com especifica\u00E7\u00F5es t\u00E9cnicas do produto.
+7. "atributos": Array [{nome, valor}] com especificações técnicas do produto.
 
 8. "tags": Array de 10 a 15 palavras-chave para SEO.
 
-9. "titulo_seo": T\u00EDtulo SEO (m\u00E1x 70 chars). Palavra-chave principal + marca. Ex: "Serra M\u00E1rmore 1400W 220V Vonder SM-1400 Disco 110mm"
+9. "titulo_seo": Título SEO (máx 70 chars). Palavra-chave principal + marca. Ex: "Serra Mármore 1400W 220V Vonder SM-1400 Disco 110mm"
 
-10. "descricao_seo": Meta description SEO (m\u00E1x 160 chars) descrevendo o produto para buscadores.
+10. "descricao_seo": Meta description SEO (máx 160 chars) descrevendo o produto para buscadores.
 
-11. "palavras_chave_seo": String com 8-12 termos separados por v\u00EDrgula para campo SEO.
+11. "palavras_chave_seo": String com 8-12 termos separados por vírgula para campo SEO.
 
 12. "variacoes": Se tipo_de_produto for "K" (variante filho), retorne "Atributo: valor" (ex: "Voltagem: 127V"). Para "S" ou "V", retorne "".
 
-Retorne APENAS JSON v\u00E1lido com exatamente estas chaves: sku_interno, cest, descricao_complementar, titulo_otimizado, titulos, descricao, atributos, tags, titulo_seo, descricao_seo, palavras_chave_seo, variacoes.
+Retorne APENAS JSON válido com exatamente estas chaves: sku_interno, cest, descricao_complementar, titulo_otimizado, titulos, descricao, atributos, tags, titulo_seo, descricao_seo, palavras_chave_seo, variacoes.
 
 DADOS DO PRODUTO:
 Nome: ${product.produto_fornecedor}
-Marca: ${product.marca || "\u2014"}
-Categoria: ${product.categoria_sugerida || "\u2014"}
+Marca: ${product.marca || "—"}
+Categoria: ${product.categoria_sugerida || "—"}
 NCM: ${product.ncm}
-Origem: ${product.origem || "\u2014"}
+Origem: ${product.origem || "—"}
 Tipo: ${product.tipo_de_produto || "S"}
-Peso: ${product.peso}kg | Dimens\u00F5es: ${product.altura}\u00D7${product.largura}\u00D7${product.comprimento}cm
-Pre\u00E7o: R$ ${product.preco_venda}
-Garantia: ${product.garantia || "\u2014"} meses
-Observa\u00E7\u00F5es: ${product.observacoes || "\u2014"}
-${product.link_benchmark ? `Refer\u00EAncia mercado: ${product.link_benchmark}` : ""}`;
+Peso: ${product.peso}kg | Dimensões: ${product.altura}×${product.largura}×${product.comprimento}cm
+Preço: R$ ${product.preco_venda}
+Garantia: ${product.garantia || "—"} meses
+Observações: ${product.observacoes || "—"}
+${product.link_benchmark ? `Referência mercado: ${product.link_benchmark}` : ""}`;
 
   const res2 = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -470,9 +470,9 @@ ${product.link_benchmark ? `Refer\u00EAncia mercado: ${product.link_benchmark}` 
   if (!res2.ok) {
     const err = await res2.json().catch(() => ({}));
     let msg = err?.error?.message || `OpenAI HTTP ${res2.status}`;
-    if (res2.status === 429) msg = "\u26A0\uFE0F Quota/limite de uso atingido. Adicione cr\u00E9ditos em platform.openai.com/settings/billing";
-    if (res2.status === 401) msg = "\uD83D\uDD11 Chave de API inv\u00E1lida. Verifique a chave nas Configura\u00E7\u00F5es.";
-    if (res2.status === 403) msg = "\uD83D\uDEAB Acesso negado. Chave sem permiss\u00E3o para este modelo.";
+    if (res2.status === 429) msg = "⚠️ Quota/limite de uso atingido. Adicione créditos em platform.openai.com/settings/billing";
+    if (res2.status === 401) msg = "🔑 Chave de API inválida. Verifique a chave nas Configurações.";
+    if (res2.status === 403) msg = "🚫 Acesso negado. Chave sem permissão para este modelo.";
     throw new Error(msg);
   }
   const data2 = await res2.json();
@@ -482,12 +482,12 @@ ${product.link_benchmark ? `Refer\u00EAncia mercado: ${product.link_benchmark}` 
   try {
     return JSON.parse(cleaned);
   } catch {
-    throw new Error(`Resposta da IA n\u00E3o \u00E9 JSON v\u00E1lido. Trecho: "${cleaned.slice(0, 80)}"`);
+    throw new Error(`Resposta da IA não é JSON válido. Trecho: "${cleaned.slice(0, 80)}"`);
   }
 }
 
 async function generateProductImage(productName, enrichedDesc, customPrompt, apiKey) {
-  const fullPrompt = `Fotografia lifestyle profissional de alta qualidade, ilumina\u00E7\u00E3o cinematogr\u00E1fica natural, fundo desfocado bokeh. Produto: ${productName}. ${customPrompt}. Estilo: an\u00FAncio comercial premium para e-commerce brasileiro. Ultra realista, 4K.`;
+  const fullPrompt = `Fotografia lifestyle profissional de alta qualidade, iluminação cinematográfica natural, fundo desfocado bokeh. Produto: ${productName}. ${customPrompt}. Estilo: anúncio comercial premium para e-commerce brasileiro. Ultra realista, 4K.`;
   const res = await fetch("https://api.openai.com/v1/images/generations", {
     method: "POST",
     headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
@@ -532,14 +532,14 @@ async function sendToTiny(product, token) {
   return await res.json();
 }
 
-// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// ─────────────────────────────────────────────
 // STEP BAR
-// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// ─────────────────────────────────────────────
 const STEP_META = [
   { id: "upload", label: "Upload", Icon: Upload },
-  { id: "validation", label: "Valida\u00E7\u00E3o", Icon: CheckCircle },
+  { id: "validation", label: "Validação", Icon: CheckCircle },
   { id: "enrichment", label: "Enriquecimento", Icon: Zap },
-  { id: "review", label: "Revis\u00E3o", Icon: Eye },
+  { id: "review", label: "Revisão", Icon: Eye },
   { id: "sync", label: "Envio", Icon: Send },
 ];
 
@@ -566,30 +566,30 @@ function StepBar({ current }) {
   );
 }
 
-// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// ─────────────────────────────────────────────
 // SETTINGS MODAL (APIs + Regras de IA)
-// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// ─────────────────────────────────────────────
 const TITLE_VARIABLES = [
   { label: "{Marca}", desc: "Marca do produto" },
   { label: "{Produto}", desc: "Nome do produto" },
-  { label: "{Modelo}", desc: "C\u00F3digo/modelo" },
-  { label: "{Pot\u00EAncia}", desc: "Pot\u00EAncia em W" },
-  { label: "{Tens\u00E3o}", desc: "Tens\u00E3o/voltagem" },
-  { label: "{Capacidade}", desc: "Capacidade (L, Ah\u2026)" },
-  { label: "{Especifica\u00E7\u00E3o}", desc: "Spec principal" },
+  { label: "{Modelo}", desc: "Código/modelo" },
+  { label: "{Potência}", desc: "Potência em W" },
+  { label: "{Tensão}", desc: "Tensão/voltagem" },
+  { label: "{Capacidade}", desc: "Capacidade (L, Ah…)" },
+  { label: "{Especificação}", desc: "Spec principal" },
 ];
 
 const DESCRIPTION_STYLES = [
-  { id: "tecnico", label: "Tom t\u00E9cnico", desc: "Foco em especifica\u00E7\u00F5es detalhadas" },
-  { id: "marketplace", label: "Otimizado para marketplace", desc: "Palavras-chave estrat\u00E9gicas" },
-  { id: "beneficios", label: "Foco em benef\u00EDcios", desc: "Vantagens pr\u00E1ticas para o usu\u00E1rio" },
+  { id: "tecnico", label: "Tom técnico", desc: "Foco em especificações detalhadas" },
+  { id: "marketplace", label: "Otimizado para marketplace", desc: "Palavras-chave estratégicas" },
+  { id: "beneficios", label: "Foco em benefícios", desc: "Vantagens práticas para o usuário" },
   { id: "garantia", label: "Mencionar garantia", desc: "Inclui info de garantia sempre" },
   { id: "origem", label: "Mencionar origem", desc: "Destaca importado / nacional" },
 ];
 
 const AI_MODELS = [
   { id: "gpt-4o", label: "GPT-4o", desc: "Melhor qualidade, mais lento" },
-  { id: "gpt-4o-mini", label: "GPT-4o mini", desc: "R\u00E1pido e econ\u00F4mico" },
+  { id: "gpt-4o-mini", label: "GPT-4o mini", desc: "Rápido e econômico" },
 ];
 
 function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
@@ -619,10 +619,10 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
   const previewTitle = () => {
     const tpl = localRules.titleTemplate || "";
     return tpl
-      .replace("{Marca}", "Vonder").replace("{Produto}", "Serra M\u00E1rmore")
-      .replace("{Modelo}", "SM-1400").replace("{Pot\u00EAncia}", "1400")
-      .replace("{Tens\u00E3o}", "220V").replace("{Capacidade}", "\u2014")
-      .replace("{Especifica\u00E7\u00E3o}", "Disco 110mm") || "\u2014";
+      .replace("{Marca}", "Vonder").replace("{Produto}", "Serra Mármore")
+      .replace("{Modelo}", "SM-1400").replace("{Potência}", "1400")
+      .replace("{Tensão}", "220V").replace("{Capacidade}", "—")
+      .replace("{Especificação}", "Disco 110mm") || "—";
   };
 
   return (
@@ -630,7 +630,7 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="p-5 border-b border-gray-100 flex items-center justify-between shrink-0">
-          <h2 className="text-lg font-bold flex items-center gap-2"><Settings size={18} /> Configura\u00E7\u00F5es</h2>
+          <h2 className="text-lg font-bold flex items-center gap-2"><Settings size={18} /> Configurações</h2>
           <div className="flex gap-1 bg-gray-100 p-1 rounded-xl">
             {[{ id: "apis", label: "APIs" }, { id: "rules", label: "Regras de IA" }].map(({ id, label }) => (
               <button key={id} onClick={() => setTab(id)}
@@ -649,16 +649,16 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Chave OpenAI</label>
                 <input type="password" value={localKeys.openai} onChange={e => setKey("openai", e.target.value)}
                   placeholder="sk-proj-..." className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                <p className="text-xs text-gray-400 mt-1">Usada para enriquecimento de texto e gera\u00E7\u00E3o de imagens</p>
+                <p className="text-xs text-gray-400 mt-1">Usada para enriquecimento de texto e geração de imagens</p>
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Token Tiny ERP</label>
                 <input type="password" value={localKeys.tiny} onChange={e => setKey("tiny", e.target.value)}
                   placeholder="Token da API do Tiny" className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                <p className="text-xs text-gray-400 mt-1">Tiny \u2192 Configura\u00E7\u00F5es \u2192 API e Integra\u00E7\u00F5es \u2192 Token</p>
+                <p className="text-xs text-gray-400 mt-1">Tiny → Configurações → API e Integrações → Token</p>
               </div>
               <div className="p-3 bg-blue-50 rounded-xl text-xs text-blue-700">
-                \uD83D\uDD12 As chaves ficam salvas apenas na mem\u00F3ria desta sess\u00E3o e n\u00E3o s\u00E3o enviadas a nenhum servidor al\u00E9m das APIs correspondentes.
+                🔒 As chaves ficam salvas apenas na memória desta sessão e não são enviadas a nenhum servidor além das APIs correspondentes.
               </div>
             </div>
           )}
@@ -681,8 +681,8 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
 
               {/* Title template */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Padr\u00E3o de t\u00EDtulo</label>
-                <p className="text-xs text-gray-400 mb-2">Monte o template clicando nas vari\u00E1veis ou digitando diretamente.</p>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Padrão de título</label>
+                <p className="text-xs text-gray-400 mb-2">Monte o template clicando nas variáveis ou digitando diretamente.</p>
                 {/* Variable chips */}
                 <div className="flex flex-wrap gap-1.5 mb-2">
                   {TITLE_VARIABLES.map(v => (
@@ -697,7 +697,7 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
                   type="text"
                   value={localRules.titleTemplate || ""}
                   onChange={e => setRule("titleTemplate", e.target.value)}
-                  placeholder='Ex: {Marca} {Produto} {Pot\u00EAncia}W {Tens\u00E3o}'
+                  placeholder='Ex: {Marca} {Produto} {Potência}W {Tensão}'
                   className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
                 {localRules.titleTemplate && (
@@ -708,13 +708,13 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
                   </div>
                 )}
                 {!localRules.titleTemplate && (
-                  <p className="text-xs text-gray-400 mt-1.5 italic">Sem padr\u00E3o definido \u2014 a IA criar\u00E1 o t\u00EDtulo livremente.</p>
+                  <p className="text-xs text-gray-400 mt-1.5 italic">Sem padrão definido — a IA criará o título livremente.</p>
                 )}
               </div>
 
               {/* Description style */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Estilo da descri\u00E7\u00E3o</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Estilo da descrição</label>
                 <div className="space-y-2">
                   {DESCRIPTION_STYLES.map(s => {
                     const active = (localRules.descriptionStyles || []).includes(s.id);
@@ -737,7 +737,7 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
               {/* Marketplace selector */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Marketplaces ativos</label>
-                <p className="text-xs text-gray-400 mb-3">A IA gerar\u00E1 um t\u00EDtulo personalizado para cada marketplace selecionado.</p>
+                <p className="text-xs text-gray-400 mb-3">A IA gerará um título personalizado para cada marketplace selecionado.</p>
                 <div className="grid grid-cols-2 gap-2">
                   {MARKETPLACES.map(mp => {
                     const active = (localRules.activeMarketplaces ?? MARKETPLACES.map(m => m.id)).includes(mp.id);
@@ -764,12 +764,12 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
 
               {/* Additional instructions */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Instru\u00E7\u00F5es adicionais</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Instruções adicionais</label>
                 <textarea
                   value={localRules.additionalInstructions || ""}
                   onChange={e => setRule("additionalInstructions", e.target.value)}
                   rows={3}
-                  placeholder='Ex: "Sempre mencione que o produto possui certifica\u00E7\u00E3o INMETRO. Evite superlativos como melhor e perfeito."'
+                  placeholder='Ex: "Sempre mencione que o produto possui certificação INMETRO. Evite superlativos como melhor e perfeito."'
                   className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
                 />
                 <p className="text-xs text-gray-400 mt-1">Texto livre enviado diretamente para a IA em todos os produtos.</p>
@@ -783,7 +783,7 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
           <button onClick={onClose} className="flex-1 py-2.5 border border-gray-300 rounded-xl text-sm font-medium hover:bg-gray-50">Cancelar</button>
           <button onClick={() => { setKeys(localKeys); setRules(localRules); onClose(); }}
             className="flex-1 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700">
-            Salvar configura\u00E7\u00F5es
+            Salvar configurações
           </button>
         </div>
       </div>
@@ -791,17 +791,17 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
   );
 }
 
-// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// ─────────────────────────────────────────────
 // CSV PARSER
 // Custom RFC-4180 CSV parser that:
 //   - Always uses comma as delimiter (no auto-detection)
 //   - Handles quoted fields with embedded commas/newlines
 //   - Preserves tabs inside field names (e.g. "Unidade\tPreco_venda")
-//   - Returns plain objects (header row \u2192 keys, data rows \u2192 values)
-// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+//   - Returns plain objects (header row → keys, data rows → values)
+// ─────────────────────────────────────────────
 function parseCSVText(text) {
   // Remove UTF-8 BOM if present
-  const s = text.replace(/^\uFEFF/, "");
+  const s = text.replace(/^﻿/, "");
 
   // Parse all records into arrays of strings
   const records = [];
@@ -847,9 +847,9 @@ function parseCSVText(text) {
   });
 }
 
-// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// ─────────────────────────────────────────────
 // UPLOAD STEP
-// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// ─────────────────────────────────────────────
 function UploadStep({ onUpload }) {
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState("");
@@ -859,28 +859,28 @@ function UploadStep({ onUpload }) {
     setError("");
     const ext = file.name.split(".").pop().toLowerCase();
     if (!["xlsx", "xls", "csv"].includes(ext)) {
-      setError("Formato n\u00E3o suportado. Use Excel (.xlsx, .xls) ou CSV."); return;
+      setError("Formato não suportado. Use Excel (.xlsx, .xls) ou CSV."); return;
     }
     try {
       let rawRows;
 
       if (ext === "csv") {
-        // \u2500\u2500 CSV: read as text (proper UTF-8 decode) then parse manually.
-        // Avoids SheetJS binary\u2192string encoding issues that garble accented chars
-        // (e.g. "Pre\u00E7o de Venda" decoded as Latin-1 \u2192 "Pre\u00C3\u00A7o de Venda").
+        // ── CSV: read as text (proper UTF-8 decode) then parse manually.
+        // Avoids SheetJS binary→string encoding issues that garble accented chars
+        // (e.g. "Preço de Venda" decoded as Latin-1 → "PreÃ§o de Venda").
         const text = await file.text();
         rawRows = parseCSVText(text);
       } else {
-        // \u2500\u2500 XLSX / XLS: SheetJS binary read
+        // ── XLSX / XLS: SheetJS binary read
         const buf = await file.arrayBuffer();
         const wb = XLSX.read(buf, { type: "array" });
         const ws = wb.Sheets[wb.SheetNames[0]];
         rawRows = XLSX.utils.sheet_to_json(ws, { raw: false, defval: "" });
       }
 
-      if (!rawRows.length) { setError("Arquivo sem dados reconhec\u00EDveis."); return; }
+      if (!rawRows.length) { setError("Arquivo sem dados reconhecíveis."); return; }
 
-      // Build column map: original header \u2192 canonical name (for diagnostics)
+      // Build column map: original header → canonical name (for diagnostics)
       const columnMap = {};
       if (rawRows[0]) {
         Object.keys(rawRows[0]).forEach(k => { columnMap[k] = resolveColumnName(k); });
@@ -904,7 +904,7 @@ function UploadStep({ onUpload }) {
       const nonEmpty = normalized.filter(r => Object.values(r).some(v => String(v).trim() !== ""));
       onUpload(nonEmpty, columnMap);
     } catch (err) {
-      setError("Erro ao ler o arquivo. Verifique se est\u00E1 no formato correto.");
+      setError("Erro ao ler o arquivo. Verifique se está no formato correto.");
     }
   }, [onUpload]);
 
@@ -915,7 +915,7 @@ function UploadStep({ onUpload }) {
           <Package size={32} className="text-indigo-600" />
         </div>
         <h1 className="text-2xl font-bold text-gray-900">Cadastro Massivo de Produtos</h1>
-        <p className="text-gray-500 mt-1.5 text-sm">Fa\u00E7a upload da planilha para iniciar o processo de enriquecimento</p>
+        <p className="text-gray-500 mt-1.5 text-sm">Faça upload da planilha para iniciar o processo de enriquecimento</p>
       </div>
       <div
         onClick={() => inputRef.current?.click()}
@@ -936,16 +936,16 @@ function UploadStep({ onUpload }) {
         </div>
       )}
       <div className="mt-5 p-4 bg-gray-50 rounded-xl">
-        <p className="text-xs font-semibold text-gray-600 mb-2">\uD83D\uDCCB Colunas esperadas na planilha</p>
-        <p className="text-xs text-gray-400 leading-relaxed">EAN \u00B7 Produto_fornecedor \u00B7 Codigo_fornecedor \u00B7 Marca \u00B7 Fornecedor \u00B7 Origem \u00B7 NCM \u00B7 Classifica\u00E7\u00E3o_Fiscal \u00B7 Cubagem \u00B7 Peso \u00B7 Altura \u00B7 Largura \u00B7 Comprimento \u00B7 Link_imagens_drive \u00B7 Link_benchmark \u00B7 Categoria_sugerida \u00B7 Observacoes \u00B7 <strong>Status</strong> \u00B7 Unidade \u00B7 Preco_venda \u00B7 Garantia</p>
+        <p className="text-xs font-semibold text-gray-600 mb-2">📋 Colunas esperadas na planilha</p>
+        <p className="text-xs text-gray-400 leading-relaxed">EAN · Produto_fornecedor · Codigo_fornecedor · Marca · Fornecedor · Origem · NCM · Classificação_Fiscal · Cubagem · Peso · Altura · Largura · Comprimento · Link_imagens_drive · Link_benchmark · Categoria_sugerida · Observacoes · <strong>Status</strong> · Unidade · Preco_venda · Garantia</p>
       </div>
     </div>
   );
 }
 
-// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// ─────────────────────────────────────────────
 // VALIDATION STEP
-// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// ─────────────────────────────────────────────
 function ValidationStep({ raw, columnMap, onProceed, onBack }) {
   const valid = [], blocked = [], ignored = [];
   for (const p of raw) {
@@ -965,7 +965,7 @@ function ValidationStep({ raw, columnMap, onProceed, onBack }) {
   const missingRequired = REQUIRED_FIELDS.filter(f => !mappedCanonicals.has(f));
 
   const TABS = [
-    { id: "valid", label: "V\u00E1lidos", count: valid.length, color: "green", Icon: CheckCircle },
+    { id: "valid", label: "Válidos", count: valid.length, color: "green", Icon: CheckCircle },
     { id: "blocked", label: "Bloqueados", count: blocked.length, color: "red", Icon: XCircle },
     { id: "ignored", label: "Ignorados", count: ignored.length, color: "gray", Icon: AlertCircle },
   ];
@@ -974,7 +974,7 @@ function ValidationStep({ raw, columnMap, onProceed, onBack }) {
   return (
     <div>
       <div className="text-center mb-6">
-        <h2 className="text-xl font-bold text-gray-900">Valida\u00E7\u00E3o dos Produtos</h2>
+        <h2 className="text-xl font-bold text-gray-900">Validação dos Produtos</h2>
         <p className="text-gray-500 text-sm mt-1">{raw.length} linhas lidas da planilha</p>
       </div>
 
@@ -985,7 +985,7 @@ function ValidationStep({ raw, columnMap, onProceed, onBack }) {
             <div className="p-3 mb-2 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-start gap-2">
               <AlertCircle size={13} className="shrink-0 mt-0.5" />
               <span>
-                <strong>Colunas obrigat\u00F3rias n\u00E3o encontradas na planilha:</strong>{" "}
+                <strong>Colunas obrigatórias não encontradas na planilha:</strong>{" "}
                 {missingRequired.map(f => FIELD_LABELS[f] || f).join(", ")}.
                 {" "}Verifique os nomes das colunas.
               </span>
@@ -993,7 +993,7 @@ function ValidationStep({ raw, columnMap, onProceed, onBack }) {
           )}
           <button onClick={() => setShowColMap(v => !v)}
             className="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1 transition-colors">
-            {showColMap ? "\u25B2" : "\u25BC"} Diagn\u00F3stico de colunas detectadas ({Object.keys(columnMap).length} colunas)
+            {showColMap ? "▲" : "▼"} Diagnóstico de colunas detectadas ({Object.keys(columnMap).length} colunas)
           </button>
           {showColMap && (
             <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-xl text-xs max-h-40 overflow-y-auto">
@@ -1003,9 +1003,9 @@ function ValidationStep({ raw, columnMap, onProceed, onBack }) {
                   return (
                     <div key={orig} className="flex gap-2 items-center">
                       <span className="text-gray-400 font-mono truncate max-w-[180px]" title={orig}>"{orig}"</span>
-                      <span className="text-gray-400">\u2192</span>
+                      <span className="text-gray-400">→</span>
                       <span className={`font-mono font-semibold ${isRequired ? "text-indigo-600" : "text-gray-500"}`}>{canon}</span>
-                      {isRequired && <span className="text-indigo-400 text-[10px]">\u2713 obrigat\u00F3rio</span>}
+                      {isRequired && <span className="text-indigo-400 text-[10px]">✓ obrigatório</span>}
                     </div>
                   );
                 })}
@@ -1054,13 +1054,13 @@ function ValidationStep({ raw, columnMap, onProceed, onBack }) {
                   <tr key={`r${i}`}
                     className={`border-t border-gray-100 transition-colors ${tab === "blocked" ? "cursor-pointer hover:bg-red-50" : ""}`}
                     onClick={() => tab === "blocked" && setExpanded(expanded === i ? null : i)}>
-                    <td className="px-4 py-3 font-mono text-xs text-gray-500">{p.ean || "\u2014"}</td>
-                    <td className="px-4 py-3 font-medium text-gray-800 max-w-[200px] truncate">{p.produto_fornecedor || "\u2014"}</td>
-                    <td className="px-4 py-3 text-gray-500 text-xs">{p.marca || "\u2014"}</td>
+                    <td className="px-4 py-3 font-mono text-xs text-gray-500">{p.ean || "—"}</td>
+                    <td className="px-4 py-3 font-medium text-gray-800 max-w-[200px] truncate">{p.produto_fornecedor || "—"}</td>
+                    <td className="px-4 py-3 text-gray-500 text-xs">{p.marca || "—"}</td>
                     <td className="px-4 py-3">
                       {tab === "blocked" && (
                         <span className="inline-flex items-center gap-1 text-red-600 text-xs font-medium">
-                          <XCircle size={12} /> {p._errors.length} erro(s) {expanded === i ? "\u25B2" : "\u25BC"}
+                          <XCircle size={12} /> {p._errors.length} erro(s) {expanded === i ? "▲" : "▼"}
                         </span>
                       )}
                       {tab === "ignored" && <span className="text-gray-400 text-xs">{p._reason}</span>}
@@ -1083,7 +1083,7 @@ function ValidationStep({ raw, columnMap, onProceed, onBack }) {
                         </ul>
                         {/* Debug: raw values received for all required fields */}
                         <div className="border-t border-red-200 pt-2">
-                          <p className="text-xs font-semibold text-red-500 mb-1.5">\uD83D\uDD0D Valores lidos da planilha:</p>
+                          <p className="text-xs font-semibold text-red-500 mb-1.5">🔍 Valores lidos da planilha:</p>
                           <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
                             {REQUIRED_FIELDS.map(f => (
                               <div key={f} className="text-xs flex gap-1">
@@ -1109,11 +1109,11 @@ function ValidationStep({ raw, columnMap, onProceed, onBack }) {
       {valid.length > 0 ? (
         <button onClick={() => onProceed(valid)}
           className="w-full py-3.5 bg-indigo-600 text-white rounded-2xl font-semibold hover:bg-indigo-700 flex items-center justify-center gap-2 transition-colors shadow-md shadow-indigo-200">
-          Prosseguir com {valid.length} produto(s) v\u00E1lido(s) <ChevronRight size={18} />
+          Prosseguir com {valid.length} produto(s) válido(s) <ChevronRight size={18} />
         </button>
       ) : (
         <div className="text-center py-5 bg-gray-50 rounded-2xl text-gray-500 text-sm">
-          Nenhum produto v\u00E1lido encontrado. Corrija os erros e fa\u00E7a upload novamente.
+          Nenhum produto válido encontrado. Corrija os erros e faça upload novamente.
           <br />
           <button onClick={onBack} className="mt-3 px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-100 inline-flex items-center gap-1">
             <Home size={14} /> Voltar ao upload
@@ -1124,9 +1124,9 @@ function ValidationStep({ raw, columnMap, onProceed, onBack }) {
   );
 }
 
-// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// ─────────────────────────────────────────────
 // ENRICHMENT STEP
-// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// ─────────────────────────────────────────────
 function EnrichmentStep({ products, apiKey, rules, onDone }) {
   const [results, setResults] = useState([]);
   const [current, setCurrent] = useState(-1);
@@ -1197,34 +1197,34 @@ function EnrichmentStep({ products, apiKey, rules, onDone }) {
           : running
             ? "Processando produtos..."
             : done && !failedCount
-              ? "Enriquecimento conclu\u00EDdo!"
+              ? "Enriquecimento concluído!"
               : done
                 ? `${failedCount} produto(s) com erro`
                 : "Processando..."}
       </h2>
       <p className="text-gray-500 text-sm mb-6">
-        {!started ? `A IA vai gerar t\u00EDtulo, descri\u00E7\u00E3o, atributos e tags para ${products.length} produto(s).` : ""}
+        {!started ? `A IA vai gerar título, descrição, atributos e tags para ${products.length} produto(s).` : ""}
       </p>
 
       {!started && (
         <>
           {(rules?.titleTemplate || (rules?.descriptionStyles || []).length > 0 || rules?.additionalInstructions) && (
             <div className="mb-4 p-4 bg-indigo-50 border border-indigo-100 rounded-2xl text-left text-sm space-y-1.5">
-              <p className="font-semibold text-indigo-700 text-xs mb-2">\uD83D\uDCCB Regras configuradas</p>
+              <p className="font-semibold text-indigo-700 text-xs mb-2">📋 Regras configuradas</p>
               {rules.aiModel && rules.aiModel !== "gpt-4o" && (
-                <p className="text-xs text-indigo-600">\uD83E\uDD16 Modelo: <span className="font-medium">{rules.aiModel}</span></p>
+                <p className="text-xs text-indigo-600">🤖 Modelo: <span className="font-medium">{rules.aiModel}</span></p>
               )}
               {rules.titleTemplate && (
-                <p className="text-xs text-indigo-600">\uD83C\uDFF7\uFE0F Padr\u00E3o: <span className="font-mono font-medium">{rules.titleTemplate}</span></p>
+                <p className="text-xs text-indigo-600">🏷️ Padrão: <span className="font-mono font-medium">{rules.titleTemplate}</span></p>
               )}
               {(rules.descriptionStyles || []).length > 0 && (
-                <p className="text-xs text-indigo-600">\u270D\uFE0F Estilos: <span className="font-medium">{rules.descriptionStyles.join(", ")}</span></p>
+                <p className="text-xs text-indigo-600">✍️ Estilos: <span className="font-medium">{rules.descriptionStyles.join(", ")}</span></p>
               )}
             </div>
           )}
           {!apiKey && (
             <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-700 text-sm flex items-center gap-2">
-              <AlertCircle size={15} /> Configure a chave da OpenAI nas configura\u00E7\u00F5es antes de continuar.
+              <AlertCircle size={15} /> Configure a chave da OpenAI nas configurações antes de continuar.
             </div>
           )}
           <button onClick={run} disabled={!apiKey}
@@ -1238,7 +1238,7 @@ function EnrichmentStep({ products, apiKey, rules, onDone }) {
         <div className="text-left">
           {/* Progress bar */}
           <div className="flex justify-between text-sm text-gray-500 mb-2">
-            <span>{successCount} ok \u00B7 {failedCount} erro \u00B7 {results.filter(r => r._pending).length} pendente</span>
+            <span>{successCount} ok · {failedCount} erro · {results.filter(r => r._pending).length} pendente</span>
             <span className="font-semibold text-indigo-600">{pct}%</span>
           </div>
           <div className="w-full bg-gray-100 rounded-full h-3 mb-5 overflow-hidden">
@@ -1254,7 +1254,7 @@ function EnrichmentStep({ products, apiKey, rules, onDone }) {
               </p>
               {phase && (
                 <p className="text-xs text-indigo-500 font-medium mt-1 flex items-center justify-center gap-1">
-                  {phase === "Pesquisando na web..." ? "\uD83D\uDD0D" : "\u2728"} {phase}
+                  {phase === "Pesquisando na web..." ? "🔍" : "✨"} {phase}
                 </p>
               )}
             </div>
@@ -1276,7 +1276,7 @@ function EnrichmentStep({ products, apiKey, rules, onDone }) {
                       : <XCircle size={14} className="shrink-0 cursor-pointer" />}
                   <span className="flex-1 truncate text-xs">{r.produto_fornecedor}</span>
                   {!r._ok && !r._pending && r._err && (
-                    <span className="text-xs opacity-60 shrink-0">{expandedErr === i ? "\u25B2" : "\u25BC"}</span>
+                    <span className="text-xs opacity-60 shrink-0">{expandedErr === i ? "▲" : "▼"}</span>
                   )}
                 </div>
                 {/* Full error message, expandable */}
@@ -1310,9 +1310,9 @@ function EnrichmentStep({ products, apiKey, rules, onDone }) {
   );
 }
 
-// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// ─────────────────────────────────────────────
 // REVIEW STEP
-// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// ─────────────────────────────────────────────
 function ReviewStep({ products, apiKey, onDone }) {
   const [items, setItems] = useState(() =>
     products.map(p => ({ ...p, _approved: false, _imgPrompt: "", _generatedImage: null, _imgUrl: p.link_imagens_drive || "" }))
@@ -1350,7 +1350,7 @@ function ReviewStep({ products, apiKey, onDone }) {
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">Revis\u00E3o</h2>
+          <h2 className="text-xl font-bold text-gray-900">Revisão</h2>
           <p className="text-sm text-gray-500">Produto {idx + 1} de {items.length}</p>
         </div>
         <div className="flex items-center gap-2">
@@ -1381,7 +1381,7 @@ function ReviewStep({ products, apiKey, onDone }) {
       <div className="flex items-center gap-3 mb-5 p-4 bg-gray-50 rounded-2xl">
         <div className="flex-1">
           <p className="font-bold text-gray-900">{cur.produto_fornecedor}</p>
-          <p className="text-xs text-gray-500 mt-0.5">{cur.marca} \u00B7 EAN {cur.ean} \u00B7 {cur.categoria_sugerida || "Sem categoria"}</p>
+          <p className="text-xs text-gray-500 mt-0.5">{cur.marca} · EAN {cur.ean} · {cur.categoria_sugerida || "Sem categoria"}</p>
         </div>
         {cur._ok === false && (
           <span className="px-2 py-1 bg-red-100 text-red-700 text-xs rounded-lg font-medium">Falha no enriquecimento</span>
@@ -1396,7 +1396,7 @@ function ReviewStep({ products, apiKey, onDone }) {
       {/* Tabs */}
       <div className="flex gap-1 mb-5 bg-gray-100 p-1 rounded-xl">
         {[
-          { id: "content", label: "Conte\u00FAdo IA", Icon: FileText },
+          { id: "content", label: "Conteúdo IA", Icon: FileText },
           { id: "image", label: "Imagem Lifestyle", Icon: ImageIcon },
           { id: "data", label: "Dados Originais", Icon: Package },
         ].map(({ id, label, Icon }) => (
@@ -1414,7 +1414,7 @@ function ReviewStep({ products, apiKey, onDone }) {
           {/* Marketplace titles table */}
           {cur.enriched?.titulos && Object.keys(cur.enriched.titulos).length > 0 && (
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-2">T\u00EDtulos por Marketplace</label>
+              <label className="block text-xs font-semibold text-gray-600 mb-2">Títulos por Marketplace</label>
               <div className="border border-gray-200 rounded-xl overflow-hidden">
                 {MARKETPLACES.filter(mp => cur.enriched.titulos[mp.id] !== undefined).map((mp, i) => {
                   const title = cur.enriched.titulos[mp.id] || "";
@@ -1450,14 +1450,14 @@ function ReviewStep({ products, apiKey, onDone }) {
 
           {/* Generic title */}
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">T\u00EDtulo Geral</label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Título Geral</label>
             <input type="text" value={cur.enriched?.titulo_otimizado || ""}
               onChange={e => updEnr("titulo_otimizado", e.target.value)}
               className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             <p className="text-xs text-gray-400 mt-1">{(cur.enriched?.titulo_otimizado || "").length} / 60 caracteres</p>
           </div>
 
-          {/* SKU Interno + CEST + Varia\u00E7\u00F5es */}
+          {/* SKU Interno + CEST + Variações */}
           <div>
             <label className="block text-xs font-semibold text-gray-600 mb-1.5">SKU Interno</label>
             <input type="text" value={cur.enriched?.sku_interno || ""}
@@ -1475,7 +1475,7 @@ function ReviewStep({ products, apiKey, onDone }) {
                 className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Varia\u00E7\u00F5es <span className="font-normal text-gray-400">(tipo K)</span></label>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Variações <span className="font-normal text-gray-400">(tipo K)</span></label>
               <input type="text" value={cur.enriched?.variacoes || ""}
                 onChange={e => updEnr("variacoes", e.target.value)}
                 placeholder="Voltagem: 127V"
@@ -1484,7 +1484,7 @@ function ReviewStep({ products, apiKey, onDone }) {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Descri\u00E7\u00E3o Complementar <span className="font-normal text-gray-400">(m\u00E1x 200 chars)</span></label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Descrição Complementar <span className="font-normal text-gray-400">(máx 200 chars)</span></label>
             <textarea value={cur.enriched?.descricao_complementar || ""}
               onChange={e => updEnr("descricao_complementar", e.target.value)}
               rows={2}
@@ -1493,23 +1493,23 @@ function ReviewStep({ products, apiKey, onDone }) {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Descri\u00E7\u00E3o (HTML)</label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Descrição (HTML)</label>
             <textarea value={cur.enriched?.descricao || ""} onChange={e => updEnr("descricao", e.target.value)}
               rows={7} className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
           </div>
 
           {/* SEO fields */}
           <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl space-y-3">
-            <p className="text-xs font-bold text-blue-700 mb-1">\uD83D\uDD0D Campos SEO</p>
+            <p className="text-xs font-bold text-blue-700 mb-1">🔍 Campos SEO</p>
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5">T\u00EDtulo SEO <span className="font-normal text-gray-400">(m\u00E1x 70 chars)</span></label>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Título SEO <span className="font-normal text-gray-400">(máx 70 chars)</span></label>
               <input type="text" value={cur.enriched?.titulo_seo || ""}
                 onChange={e => updEnr("titulo_seo", e.target.value)}
                 className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
               <p className="text-xs text-gray-400 mt-1">{(cur.enriched?.titulo_seo || "").length} / 70 caracteres</p>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Descri\u00E7\u00E3o SEO <span className="font-normal text-gray-400">(m\u00E1x 160 chars)</span></label>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Descrição SEO <span className="font-normal text-gray-400">(máx 160 chars)</span></label>
               <textarea value={cur.enriched?.descricao_seo || ""}
                 onChange={e => updEnr("descricao_seo", e.target.value)}
                 rows={2}
@@ -1542,7 +1542,7 @@ function ReviewStep({ products, apiKey, onDone }) {
 
           {(cur.enriched?.atributos || []).length > 0 && (
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-2">Atributos T\u00E9cnicos</label>
+              <label className="block text-xs font-semibold text-gray-600 mb-2">Atributos Técnicos</label>
               <div className="bg-gray-50 rounded-xl overflow-hidden border border-gray-100">
                 {(cur.enriched.atributos || []).map((a, i) => (
                   <div key={i} className={`flex text-sm px-4 py-2 ${i % 2 === 0 ? "bg-gray-50" : "bg-white"}`}>
@@ -1560,11 +1560,11 @@ function ReviewStep({ products, apiKey, onDone }) {
       {activeTab === "image" && (
         <div className="space-y-4">
           <div className="p-4 bg-purple-50 rounded-2xl text-xs text-purple-700 border border-purple-100">
-            \uD83D\uDCA1 A IA gerar\u00E1 uma fotografia lifestyle profissional baseada no nome do produto e no contexto que voc\u00EA descrever abaixo.
+            💡 A IA gerará uma fotografia lifestyle profissional baseada no nome do produto e no contexto que você descrever abaixo.
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">URL da imagem do produto <span className="font-normal text-gray-400">(refer\u00EAncia visual)</span></label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">URL da imagem do produto <span className="font-normal text-gray-400">(referência visual)</span></label>
             <input type="url" value={cur._imgUrl} onChange={e => upd("_imgUrl", e.target.value)}
               placeholder="https://drive.google.com/... ou link direto da imagem"
               className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
@@ -1594,7 +1594,7 @@ function ReviewStep({ products, apiKey, onDone }) {
               <div className="absolute bottom-2 right-2 flex gap-2">
                 <a href={cur._generatedImage} target="_blank" rel="noreferrer"
                   className="px-2.5 py-1 bg-white/90 rounded-lg text-xs font-medium hover:bg-white shadow-sm">
-                  Abrir \u2197
+                  Abrir ↗
                 </a>
                 <button onClick={handleGenImage}
                   className="px-2.5 py-1 bg-white/90 rounded-lg text-xs font-medium hover:bg-white shadow-sm flex items-center gap-1">
@@ -1610,17 +1610,17 @@ function ReviewStep({ products, apiKey, onDone }) {
       {activeTab === "data" && (
         <div className="bg-gray-50 rounded-2xl overflow-hidden border border-gray-100">
           {[
-            ["EAN", cur.ean], ["C\u00F3digo fornecedor", cur.codigo_fornecedor], ["Marca", cur.marca],
+            ["EAN", cur.ean], ["Código fornecedor", cur.codigo_fornecedor], ["Marca", cur.marca],
             ["Fornecedor", cur.fornecedor], ["Origem", cur.origem], ["NCM", cur.ncm],
-            ["Classifica\u00E7\u00E3o Fiscal", cur.classificacao_fiscal], ["Pre\u00E7o de venda", cur.preco_venda ? `R$ ${cur.preco_venda}` : "\u2014"],
-            ["Unidade", cur.unidade], ["Garantia", cur.garantia ? `${cur.garantia} meses` : "\u2014"],
-            ["Peso", cur.peso ? `${cur.peso} kg` : "\u2014"],
-            ["Dimens\u00F5es (A\u00D7L\u00D7C)", cur.altura && cur.largura && cur.comprimento ? `${cur.altura} \u00D7 ${cur.largura} \u00D7 ${cur.comprimento} cm` : "\u2014"],
-            ["Categoria sugerida", cur.categoria_sugerida], ["Observa\u00E7\u00F5es", cur.observacoes],
+            ["Classificação Fiscal", cur.classificacao_fiscal], ["Preço de venda", cur.preco_venda ? `R$ ${cur.preco_venda}` : "—"],
+            ["Unidade", cur.unidade], ["Garantia", cur.garantia ? `${cur.garantia} meses` : "—"],
+            ["Peso", cur.peso ? `${cur.peso} kg` : "—"],
+            ["Dimensões (A×L×C)", cur.altura && cur.largura && cur.comprimento ? `${cur.altura} × ${cur.largura} × ${cur.comprimento} cm` : "—"],
+            ["Categoria sugerida", cur.categoria_sugerida], ["Observações", cur.observacoes],
           ].map(([label, value], i) => (
             <div key={i} className={`flex text-sm px-4 py-2.5 ${i % 2 === 0 ? "" : "bg-white"}`}>
               <span className="font-medium text-gray-500 w-1/2 shrink-0">{label}</span>
-              <span className="text-gray-800 break-all">{value || "\u2014"}</span>
+              <span className="text-gray-800 break-all">{value || "—"}</span>
             </div>
           ))}
         </div>
@@ -1638,21 +1638,21 @@ function ReviewStep({ products, apiKey, onDone }) {
             cur._approved ? "bg-green-100 text-green-700 border border-green-300 hover:bg-green-200" : "bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-200"
           }`}>
           <CheckCircle size={15} />
-          {cur._approved ? "Aprovado \u2713" : "Aprovar produto"}
+          {cur._approved ? "Aprovado ✓" : "Aprovar produto"}
         </button>
 
         <button onClick={() => setIdx(Math.min(items.length - 1, idx + 1))} disabled={idx === items.length - 1}
           className="px-4 py-2.5 border border-gray-300 rounded-xl text-sm font-medium hover:bg-gray-50 disabled:opacity-30 flex items-center gap-1">
-          Pr\u00F3ximo <ChevronRight size={16} />
+          Próximo <ChevronRight size={16} />
         </button>
       </div>
     </div>
   );
 }
 
-// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// ─────────────────────────────────────────────
 // SYNC STEP (CSV export primary + API secondary)
-// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// ─────────────────────────────────────────────
 function SyncStep({ products, tinyToken, onRestart }) {
   const [exported, setExported] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -1710,12 +1710,12 @@ function SyncStep({ products, tinyToken, onRestart }) {
               <h3 className="font-semibold text-gray-900 text-sm">Exportar CSV</h3>
               <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs rounded-full font-medium">Recomendado</span>
             </div>
-            <p className="text-xs text-gray-500 mt-0.5">Gera planilha no formato padr\u00E3o Tiny ERP para importa\u00E7\u00E3o manual.</p>
+            <p className="text-xs text-gray-500 mt-0.5">Gera planilha no formato padrão Tiny ERP para importação manual.</p>
           </div>
         </div>
         {exported && (
           <div className="p-3 bg-green-50 border border-green-200 rounded-xl text-green-700 text-xs flex items-center gap-2">
-            <CheckCircle size={13} /> CSV exportado! Importe em: <span className="font-medium">Tiny \u2192 Produtos \u2192 Importar Planilha</span>
+            <CheckCircle size={13} /> CSV exportado! Importe em: <span className="font-medium">Tiny → Produtos → Importar Planilha</span>
           </div>
         )}
         <button onClick={handleExportCSV}
@@ -1732,17 +1732,17 @@ function SyncStep({ products, tinyToken, onRestart }) {
             <Send size={18} className="text-gray-500" />
           </div>
           <div>
-            <h3 className="font-semibold text-gray-700 text-sm">Envio via API <span className="text-gray-400 font-normal">(Avan\u00E7ado)</span></h3>
+            <h3 className="font-semibold text-gray-700 text-sm">Envio via API <span className="text-gray-400 font-normal">(Avançado)</span></h3>
             <p className="text-xs text-gray-400 mt-0.5">Cadastra diretamente no Tiny pela API v3. Requer token configurado.</p>
           </div>
         </div>
         {!tinyToken && (
           <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-700 text-xs flex items-center gap-2">
-            <AlertCircle size={12} /> Configure o token do Tiny nas configura\u00E7\u00F5es.
+            <AlertCircle size={12} /> Configure o token do Tiny nas configurações.
           </div>
         )}
         <div className="p-2.5 bg-blue-50 border border-blue-100 rounded-xl text-blue-700 text-xs">
-          \u2139\uFE0F A API do Tiny pode bloquear requisi\u00E7\u00F5es do navegador (CORS). Para produ\u00E7\u00E3o use um proxy server.
+          ℹ️ A API do Tiny pode bloquear requisições do navegador (CORS). Para produção use um proxy server.
         </div>
         {!syncDone && (
           <button onClick={handleSyncAPI} disabled={!tinyToken || syncing}
@@ -1783,9 +1783,9 @@ function SyncStep({ products, tinyToken, onRestart }) {
   );
 }
 
-// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// ─────────────────────────────────────────────
 // MAIN APP
-// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// ─────────────────────────────────────────────
 function App() {
   const [step, setStep] = useState("upload");
   const [apiKeys, setApiKeys] = useState({ openai: "", tiny: "" });
@@ -1824,7 +1824,7 @@ function App() {
           <button onClick={() => setShowSettings(true)}
             className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-xl transition-colors">
             <Settings size={16} />
-            <span className="hidden sm:inline font-medium">Configura\u00E7\u00F5es</span>
+            <span className="hidden sm:inline font-medium">Configurações</span>
             {!keysConfigured && <span className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />}
             {rulesConfigured && <span className="w-2 h-2 bg-indigo-500 rounded-full" title="Regras de IA configuradas" />}
           </button>
