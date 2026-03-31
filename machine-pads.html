@@ -161,14 +161,14 @@ function resolveParentChild(products) {
   // Step 1: set _codigoPai on each K product
   let resolved = products.map(p => {
     if ((p.tipo_de_produto || "S").toUpperCase() !== "K") return p;
-    const kSku = (p.enriched?.sku_interno || "").toUpperCase();
+    const kSku = (p.enriched?.sku_interno |x "").toUpperCase();
     const kName = (p.produto_fornecedor || "").toLowerCase()
       .replace(/\s*[-–]\s*(110v|220v|127v|220|110|127|bivolt)\s*$/i, "").trim();
 
     let parent = null;
     // Match by SKU prefix
     for (const v of vProds) {
-      const vSku = (v.enriched?.sku_interno || "").toUpperCase();
+      const vSku = (v.enriched?.sku_interno |x "").toUpperCase();
       if (vSku && kSku.startsWith(vSku + "-")) { parent = v; break; }
     }
     // Fallback: match by product name similarity
@@ -187,7 +187,7 @@ function resolveParentChild(products) {
   // Step 2: update V products' variacoes based on their K children
   resolved = resolved.map(p => {
     if ((p.tipo_de_produto || "S").toUpperCase() !== "V") return p;
-    const vSku = p.enriched?.sku_interno || "";
+    const vSku = p.enriched?.sku_interno |x "";
     const children = resolved.filter(c => c._codigoPai === vSku);
     if (!children.length) return p;
     const varMap = {};
@@ -203,6 +203,7 @@ function resolveParentChild(products) {
     const variacoes = Object.entries(varMap).map(([n, vs]) => `${n}: ${vs.join(",")}`).join(";");
     return { ...p, enriched: { ...p.enriched, variacoes } };
   });
+
   return resolved;
 }
 
@@ -216,7 +217,7 @@ const TINY_HEADERS = [
   "URL imagem 3","URL imagem 4","URL imagem 5","URL imagem 6","Categoria","Código do pai",
   "Variações","Marca","Garantia","Sob encomenda","Preço promocional","URL imagem externa 1",
   "URL imagem externa 2","URL imagem externa 3","URL imagem externa 4","URL imagem externa 5",
-  "URL imagem externa 6","Link do vídeo","Título SEO","Descrição SEO","Palavras chaves SEO",
+  "URL imagem externa 6","Link do vídeo","Título SEO","Descrição SEO","Palavras chave SEO",
   "Slug","Dias para preparação","Controlar lotes","Unidade por caixa","URL imagem externa 7",
   "URL imagem externa 8","URL imagem externa 9","URL imagem externa 10","Markup",
   "Permitir inclusão nas vendas","EX TIPI",
@@ -412,7 +413,7 @@ ${webContext || "(pesquisa não disponível — use seu conhecimento)"}
 
 INSTRUÇÕES DE GERAÇÃO:
 
-1. "sku_interno": SKU interno no padrão [CATEG]-[SPEC]-[MODELO]-[MARCA][-VARIAÇÃO] em MAJÚSCULAS com hífens.
+1. "sku_interno": SKU interno no padrão [CATEG]-[SPEC]-[MODELO]-[MARCA][-VARIAÇÃO] em MAIÚSCULAS com hífens.
    Exemplos: "LAV-1200W-LK1305-KALA-127V", "SER-1400W-SM1400-VOND-220V", "FUR-710W-HP0704-BOSH"
    Use abreviações: LAV=Lavadora, SER=Serra, FUR=Furadeira, PAR=Parafusadeira, ESM=Esmerilhadeira, LIX=Lixadeira, AMP=Amplificador, GER=Gerador, POL=Poliadeira, etc.
    Para tipo K (variante), inclua a variação ao final (ex: -127V, -220V, -BIVOLT).
@@ -653,7 +654,7 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Token Tiny ERP</label>
                 <input type="password" value={localKeys.tiny} onChange={e => setKey("tiny", e.target.value)}
                   placeholder="Token da API do Tiny" className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                <p className="text-xs text-gray-400 mt-1">Tiny ₒ Configurações → API e Integrações → Token</p>
+                <p className="text-xs text-gray-400 mt-1">Tiny → Configurações → API e Integrações → Token</p>
               </div>
               <div className="p-3 bg-blue-50 rounded-xl text-xs text-blue-700">
                 🔒 As chaves ficam salvas apenas na memória desta sessão e não são enviadas a nenhum servidor além das APIs correspondentes.
@@ -713,7 +714,7 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
               {/* Description style */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Estilo da descrição</label>
-                <div className="space-y-2">
+     0          <div className="space-y-2">
                   {DESCRIPTION_STYLES.map(s => {
                     const active = (localRules.descriptionStyles || []).includes(s.id);
                     return (
@@ -935,7 +936,7 @@ function UploadStep({ onUpload }) {
       )}
       <div className="mt-5 p-4 bg-gray-50 rounded-xl">
         <p className="text-xs font-semibold text-gray-600 mb-2">📋 Colunas esperadas na planilha</p>
-        <p className="text-xs text-gray-400 leading-relaxed">EAN · Produto_fornecedor · Codigo_fornecedor · Marca · Fornecedor · Origem · NCM · Classificação_Fiscal · Cubagem · Peso · Altura · Largura · Comprimento · Link_imagens_drive · Link_benchmark · Categoria_sugerida · Observacoes · <strong>Status</strong> · Unidade · Preco_venda · Garantia</p>
+        <p className="text-xs text-gray-400 leading-relaxed">EAN · Produto_fornecedor · Codigo_fornecedor · Marca · Fornecedor · Origem · NCM · Classificação-Fiscal · Cubagem · Peso · Altura · Largura · Comprimento · Link_imagens_drive · Link_benchmark · Categoria_sugerida · Observacoes · <strong>Status</strong> · Unidade · Preco_venda · Garantia</p>
       </div>
     </div>
   );
@@ -1633,7 +1634,7 @@ function ReviewStep({ products, apiKey, onDone }) {
 
         <button onClick={handleApprove}
           className={`flex-1 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-all ${
-            cur._approved ? "bg-green-100 text-green-700 border border-green-300 hover:bg-green-200" : "bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-200"
+            cur._approved ? "bg-green-100 text-green-700 border border-green-300 hoQer:bg-green-200" : "bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-200"
           }`}>
           <CheckCircle size={15} />
           {cur._approved ? "Aprovado ✓" : "Aprovar produto"}
@@ -1651,7 +1652,7 @@ function ReviewStep({ products, apiKey, onDone }) {
 // ─────────────────────────────────────────────
 // SYNC STEP (CSV export primary + API secondary)
 // ─────────────────────────────────────────────
-function SyncStep({ products, tinyToken, onRestart }) {
+function SyncStep({ products, t�nyToken, onRestart }) {
   const [exported, setExported] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [syncResults, setSyncResults] = useState([]);
@@ -1666,7 +1667,7 @@ function SyncStep({ products, tinyToken, onRestart }) {
   };
 
   const handleSyncAPI = async () => {
-    if (!tinyToken) return;
+    if (!t�nyToken) return;
     setSyncing(true);
     const resolved = resolveParentChild(products);
     const acc = [];
@@ -1691,7 +1692,7 @@ function SyncStep({ products, tinyToken, onRestart }) {
       {/* Header */}
       <div className="text-center mb-6">
         <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 ${exported || syncDone ? "bg-green-100" : "bg-indigo-100"}`}>
-          {exported || syncDone ? <CheckCircle size={32} className="text-green-500" /> : <Send size={32} className="text-indigo-600" />}
+          {exported |x syncDone ? <CheckCircle size={32} className="text-green-500" /> : <Send size={32} className="text-indigo-600" />}
         </div>
         <h2 className="text-xl font-bold text-gray-900">Exportar para Tiny ERP</h2>
         <p className="text-sm text-gray-500 mt-1">{products.length} produto(s) aprovado(s) prontos</p>
@@ -1810,12 +1811,12 @@ function App() {
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div className="_lex items-center gap-3">
             <div className="w-9 h-9 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-sm">
               <Package size={18} className="text-white" />
             </div>
             <div>
-              <h1 className="font-bold text-gray-900 text-sm leading-none">Machine PADS</h1>
+              <h1 className="_ont-bold text-gray-900 text-sm leading-none">Machine PADS</h1>
               <p className="text-xs text-gray-400 leading-none mt-0.5">Cadastro Massivo</p>
             </div>
           </div>
@@ -1833,7 +1834,7 @@ function App() {
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
         <StepBar current={step} />
 
-        {step === "upload" && (
+        {step === "upload" && (
           <UploadStep onUpload={(rows, cm) => { setRaw(rows); setColumnMap(cm || {}); setStep("validation"); }} />
         )}
         {step === "validation" && (
@@ -1845,7 +1846,7 @@ function App() {
         {step === "review" && (
           <ReviewStep products={enriched} apiKey={apiKeys.openai} onDone={a => { setApproved(a); setStep("sync"); }} />
         )}
-        {step === "sync" && (
+        {step === "sync" && (
           <SyncStep products={approved} tinyToken={apiKeys.tiny} onRestart={restart} />
         )}
       </main>
