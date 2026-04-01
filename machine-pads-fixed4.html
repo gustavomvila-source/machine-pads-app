@@ -404,7 +404,7 @@ async function enrichProductWithAI(product, apiKey, rules = {}, onPhase) {
     aiModel = "gpt-4o", activeMarketplaces = MARKETPLACES.map(m => m.id),
     corsProxy = "",
   } = rules;
-  const apiBase = corsProxy ? corsProxy.replace(/\/+$/, "") : "https://api.openai.com";
+  const apiBase = corsProxy ? `${corsProxy}https://api.openai.com` : "https://api.openai.com";
 
   // ── STEP 1: Web research + CEST lookup ──────────────────────────────────
   onPhase?.("Pesquisando na web...");
@@ -578,7 +578,7 @@ ${product.link_benchmark ? `Referência mercado: ${product.link_benchmark}` : ""
 
 async function generateProductImage(productName, enrichedDesc, customPrompt, apiKey) {
   const fullPrompt = `Fotografia lifestyle profissional de alta qualidade, iluminação cinematográfica natural, fundo desfocado bokeh. Produto: ${productName}. ${customPrompt}. Estilo: anúncio comercial premium para e-commerce brasileiro. Ultra realista, 4K.`;
-  const res = await fetch(`${(rules?.corsProxy || "").replace(/\/+$/, "") || "https://api.openai.com"}/v1/images/generations`, {
+  const res = await fetch(`${rules?.corsProxy ? `${rules.corsProxy}https://api.openai.com` : "https://api.openai.com"}/v1/images/generations`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
     body: JSON.stringify({ model: "dall-e-3", prompt: fullPrompt, n: 1, size: "1024x1024", quality: "hd" }),
@@ -593,7 +593,7 @@ async function generateProductImage(productName, enrichedDesc, customPrompt, api
 
 async function sendToTiny(product, token, corsProxy = "") {
   const tinyBase = corsProxy
-    ? `${corsProxy.replace(/\/+$/, "")}/https://api.tiny.com.br/public-api/v3`
+    ? `${corsProxy}https://api.tiny.com.br/public-api/v3`
     : "https://api.tiny.com.br/public-api/v3";
 
   const tipo = (product.tipo_de_produto || "S").toUpperCase();
@@ -840,7 +840,7 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Proxy CORS <span className="font-normal text-gray-400">(necessário para API Tiny)</span></label>
                 <input type="text" value={localKeys.corsProxy || ""} onChange={e => setKey("corsProxy", e.target.value)}
                   placeholder="https://corsproxy.io/?" className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                <p className="text-xs text-gray-400 mt-1">O Tiny bloqueia chamadas diretas do navegador (CORS). Configure um proxy para a API v3 funcionar. Ex: <code className="bg-gray-100 px-1 rounded">https://corsproxy.io/?</code></p>
+                <p className="text-xs text-gray-400 mt-1">Prefixo do proxy CORS — usado para OpenAI e Tiny (ambas bloqueiam chamadas diretas do navegador). Cole apenas o prefixo, ex: <code className="bg-gray-100 px-1 rounded">https://corsproxy.io/?</code></p>
               </div>
               <div className="p-3 bg-blue-50 rounded-xl text-xs text-blue-700 space-y-2">
                 <p>🔒 As chaves são salvas no seu navegador (localStorage) e não são enviadas a nenhum servidor além das APIs correspondentes.</p>
