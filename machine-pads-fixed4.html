@@ -591,33 +591,99 @@ async function generateProductImage(productName, enrichedDesc, customPrompt, api
   return data.data[0].url;
 }
 
-async function sendToTiny(product, token) {
+async function sendToTiny(product, token, corsProxy = "") {
+  const tinyBase = corsProxy
+    ? `${corsProxy.replace(/\/+$/, "")}/https://api.tiny.com.br/public-api/v3`
+    : "https://api.tiny.com.br/public-api/v3";
+
+  const tipo = (product.tipo_de_produto || "S").toUpperCase();
+
   const body = {
-    nome: product.enriched?.titulo_otimizado || product.produto_fornecedor,
-    codigo: product.codigo_fornecedor || "",
-    ean: String(product.ean || ""),
-    preco: parseNumber(product.preco_venda) ?? 0,
-    descricao: product.enriched?.descricao || "",
-    unidade: product.unidade || "UN",
-    ncm: String(product.ncm || "").replace(/\D/g, ""),
-    origem: (product.origem || "").toLowerCase().includes("import") ? "I" : "N",
-    peso_bruto: parseNumber(product.peso) ?? 0,
-    largura: parseNumber(product.largura) ?? 0,
-    altura: parseNumber(product.altura) ?? 0,
-    comprimento: parseNumber(product.comprimento) ?? 0,
-    marca: product.marca || "",
-    garantia: product.garantia || "",
-    palavras_chave: (product.enriched?.tags || []).join(", "),
+    // ── Identificação ──────────────────────────────────────
+    nome:           product.enriched?.titulo_otimizado || product.produto_fornecedor,
+    codigo:         product.enriched?.sku_interno || product.codigo_fornecedor || "",
+    ean:            String(product.ean || ""),
+    situacao:       "A",
+    tipo:           tipo === "V" ? "V" : "P",
+
+    // ── Preços ─────────────────────────────────────────────
+    preco:          parseNumber(product.preco_venda) ?? 0,
+    precoCusto:     parseNumber(product.preco_custo) ?? undefined,
+
+    // ── Classificação fiscal ───────────────────────────────
+    unidadeMedida:  product.unidade || "UN",
+    ncm:            String(product.ncm || "").replace(/\D/g, ""),
+    cest:           product.enriched?.cest || "",
+    origem:         (product.origem || "").toLowerCase().includes("import") ? "2" : "0",
+
+    // ── Descrições ─────────────────────────────────────────
+    // "descricao" = título mestre (campo "Descrição" no Tiny, base de marketplaces)
+    descricao:               product.enriched?.titulo_otimizado || product.produto_fornecedor,
+    // "descricaoComplementar" = HTML rico (campo "Descrição complementar" no Tiny)
+    descricaoComplementar:   product.enriched?.descricao || "",
+
+    // ── Logística ──────────────────────────────────────────
+    peso:           parseNumber(product.peso) ?? 0,
+    pesoBruto:      parseNumber(product.peso) ?? 0,
+    largura:        parseNumber(product.largura) ?? 0,
+    altura:         parseNumber(product.altura) ?? 0,
+    comprimento:    parseNumber(product.comprimento) ?? 0,
+
+    // ── Marketing ──────────────────────────────────────────
+    marca:          product.marca || "",
+    garantia:       mapGarantia(product.garantia),
+    palavrasChave:  Array.isArray(product.enriched?.tags)
+                      ? product.enriched.tags.join(", ")
+                      : (product.enriched?.tags || ""),
+
+    // ── SEO ────────────────────────────────────────────────
+    seo: {
+      titulo:    product.enriched?.titulo_seo || "",
+      descricao: product.enriched?.descricao_seo || "",
+      slug:      (product.enriched?.sku_interno || product.produto_fornecedor || "")
+                   .toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]/g, ""),
+    },
+
+    // ── Imagens ────────────────────────────────────────────
     imagens: product.generatedImage ? [{ url: product.generatedImage }] : [],
+
+    // ── Variação (kit/filho) ───────────────────────────────
+    ...(product._codigoPai ? { codigoPai: product._codigoPai } : {}),
   };
-  const res = await fetch("https://api.tiny.com.br/public-api/v3/produtos", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-    body: JSON.stringify(body),
-  });
+
+  // Remove campos vazios/null para não poluir o payload
+  const clean = (obj) => Object.fromEntries(
+    Object.entries(obj).filter(([, v]) => v !== "" && v !== null && v !== undefined)
+  );
+  const payload = { ...clean(body), seo: clean(body.seo), imagens: body.imagens };
+  if (!payload.imagens.length) delete payload.imagens;
+  if (!Object.keys(payload.seo).length) delete payload.seo;
+
+  let res;
+  try {
+    res = await fetch(`${tinyBase}/produtos`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+      body: JSON.stringify(payload),
+    });
+  } catch (netErr) {
+    const m = netErr.message.toLowerCase();
+    if (m.includes("failed to fetch") || m.includes("cors") || m.includes("network")) {
+      throw new Error(
+        "CORS bloqueado — configure o Proxy CORS nas Configurações " +
+        "(ex: https://corsproxy.io/?). O Tiny bloqueia chamadas diretas do navegador."
+      );
+    }
+    throw new Error(`Rede: ${netErr.message}`);
+  }
+
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err?.message || `Tiny API ${res.status}`);
+    const detail = err?.message || (err?.erros || []).join(", ") || `HTTP ${res.status}`;
+    if (res.status === 401) throw new Error("Token inválido ou expirado — atualize nas Configurações.");
+    if (res.status === 422) throw new Error(`Dados inválidos: ${detail}`);
+    if (res.status === 429) throw new Error("Rate limit — aguarde e tente novamente.");
+    throw new Error(detail);
   }
   return await res.json();
 }
@@ -759,22 +825,22 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
                 <p className="text-xs text-gray-400 mt-1">Usada para enriquecimento de texto e geração de imagens</p>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Token Tiny ERP</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Token Tiny ERP <span className="px-1.5 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] rounded font-medium ml-1">OAuth2 v3</span></label>
                 <div className="relative">
                   <input type={showPwd.tiny ? "text" : "password"} value={localKeys.tiny} onChange={e => setKey("tiny", e.target.value)}
-                    placeholder="Token da API do Tiny" className="w-full border border-gray-300 rounded-xl px-4 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                    placeholder="Bearer token OAuth2 do Tiny v3" className="w-full border border-gray-300 rounded-xl px-4 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                   <button type="button" onClick={() => togglePwd("tiny")}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs font-medium">
                     {showPwd.tiny ? "ocultar" : "ver"}
                   </button>
                 </div>
-                <p className="text-xs text-gray-400 mt-1">Tiny → Configurações → API e Integrações → Token</p>
+                <p className="text-xs text-gray-400 mt-1">Tiny → Configurações → Integrações API → Criar aplicativo v3 → gerar Access Token</p>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Proxy CORS <span className="font-normal text-gray-400">(opcional)</span></label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Proxy CORS <span className="font-normal text-gray-400">(necessário para API Tiny)</span></label>
                 <input type="text" value={localKeys.corsProxy || ""} onChange={e => setKey("corsProxy", e.target.value)}
                   placeholder="https://corsproxy.io/?" className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                <p className="text-xs text-gray-400 mt-1">Use se receber "Erro de rede". Tente: <code className="bg-gray-100 px-1 rounded">https://corsproxy.io/?https://api.openai.com</code></p>
+                <p className="text-xs text-gray-400 mt-1">O Tiny bloqueia chamadas diretas do navegador (CORS). Configure um proxy para a API v3 funcionar. Ex: <code className="bg-gray-100 px-1 rounded">https://corsproxy.io/?</code></p>
               </div>
               <div className="p-3 bg-blue-50 rounded-xl text-xs text-blue-700 space-y-2">
                 <p>🔒 As chaves são salvas no seu navegador (localStorage) e não são enviadas a nenhum servidor além das APIs correspondentes.</p>
@@ -1801,116 +1867,142 @@ function ReviewStep({ products, apiKey, onDone, onBack }) {
 }
 
 // ─────────────────────────────────────────────
-// SYNC STEP (CSV export primary + API secondary)
+// SYNC STEP (API v3 primary + CSV backup)
 // ─────────────────────────────────────────────
-function SyncStep({ products, tinyToken, onRestart }) {
-  const [exported, setExported] = useState(false);
-  const [syncing, setSyncing] = useState(false);
-  const [syncResults, setSyncResults] = useState([]);
-  const [syncDone, setSyncDone] = useState(false);
+function SyncStep({ products, tinyToken, corsProxy, onRestart }) {
+  const [syncing, setSyncing]           = useState(false);
+  const [stopFlag, setStopFlag]         = useState({ stop: false });
+  const [syncResults, setSyncResults]   = useState([]);
+  const [syncDone, setSyncDone]         = useState(false);
+  const [currentIdx, setCurrentIdx]     = useState(0);
+  const [currentName, setCurrentName]   = useState("");
+  const [expandedErr, setExpandedErr]   = useState({});
+  const [exported, setExported]         = useState(false);
+
+  const resolved = React.useMemo(() => resolveParentChild(products), [products]);
+
+  const runSync = async (items) => {
+    const flag = { stop: false };
+    setStopFlag(flag);
+    setSyncing(true);
+    setSyncDone(false);
+    setCurrentIdx(0);
+    const acc = [];
+    for (let i = 0; i < items.length; i++) {
+      if (flag.stop) break;
+      const p = items[i];
+      setCurrentIdx(i + 1);
+      setCurrentName(p.enriched?.titulo_otimizado || p.produto_fornecedor || "");
+      try {
+        await sendToTiny(p, tinyToken, corsProxy || "");
+        acc.push({ ...p, _syncOk: true });
+      } catch (e) {
+        acc.push({ ...p, _syncOk: false, _syncErr: e.message });
+      }
+      setSyncResults([...acc]);
+      if (i < items.length - 1) await new Promise(r => setTimeout(r, 260));
+    }
+    setSyncing(false);
+    setSyncDone(true);
+  };
+
+  const handleSyncAll  = () => runSync(resolved);
+  const handleRetryFail = () => {
+    const failed = syncResults.filter(r => !r._syncOk);
+    setSyncResults(syncResults.filter(r => r._syncOk));
+    runSync(failed);
+  };
+  const handleStop = () => { stopFlag.stop = true; };
 
   const handleExportCSV = () => {
-    const resolved = resolveParentChild(products);
     const csv = buildTinyCSV(resolved);
     const date = new Date().toISOString().slice(0, 10);
     downloadCSV(csv, `tiny-produtos-${date}.csv`);
     setExported(true);
   };
 
-  const handleSyncAPI = async () => {
-    if (!tinyToken) return;
-    setSyncing(true);
-    const resolved = resolveParentChild(products);
-    const acc = [];
-    for (const p of resolved) {
-      try {
-        await sendToTiny(p, tinyToken);
-        acc.push({ ...p, _syncOk: true });
-      } catch (e) {
-        acc.push({ ...p, _syncOk: false, _syncErr: e.message });
-      }
-      setSyncResults([...acc]);
-    }
-    setSyncing(false);
-    setSyncDone(true);
-  };
-
-  const ok = syncResults.filter(r => r._syncOk).length;
+  const ok   = syncResults.filter(r => r._syncOk).length;
   const fail = syncResults.filter(r => !r._syncOk).length;
+  const hasCors = syncResults.some(r => !r._syncOk && r._syncErr && r._syncErr.toLowerCase().includes("cors"));
+  const pct = resolved.length > 0 ? Math.round((syncResults.length / resolved.length) * 100) : 0;
 
   return (
     <div className="max-w-lg mx-auto">
       {/* Header */}
       <div className="text-center mb-6">
-        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 ${exported || syncDone ? "bg-green-100" : "bg-indigo-100"}`}>
-          {exported || syncDone ? <CheckCircle size={32} className="text-green-500" /> : <Send size={32} className="text-indigo-600" />}
+        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 ${syncDone && fail === 0 ? "bg-green-100" : syncDone ? "bg-amber-100" : "bg-indigo-100"}`}>
+          {syncDone && fail === 0
+            ? <CheckCircle size={32} className="text-green-500" />
+            : syncDone
+              ? <AlertCircle size={32} className="text-amber-500" />
+              : <Send size={32} className="text-indigo-600" />}
         </div>
-        <h2 className="text-xl font-bold text-gray-900">Exportar para Tiny ERP</h2>
-        <p className="text-sm text-gray-500 mt-1">{products.length} produto(s) aprovado(s) prontos</p>
+        <h2 className="text-xl font-bold text-gray-900">Cadastro via API v3</h2>
+        <div className="flex items-center justify-center gap-2 mt-1">
+          <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs rounded-full font-medium">Direto no Tiny</span>
+          <p className="text-sm text-gray-500">{products.length} produto(s) aprovado(s)</p>
+        </div>
       </div>
 
-      {/* PRIMARY: CSV Export */}
+      {/* Token warning */}
+      {!tinyToken && (
+        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-700 text-xs flex items-center gap-2 mb-4">
+          <AlertCircle size={13} /> Configure o token OAuth2 do Tiny nas <strong>Configurações</strong> para enviar via API.
+        </div>
+      )}
+
+      {/* CORS warning */}
+      {hasCors && (
+        <div className="p-3 bg-orange-50 border border-orange-200 rounded-xl text-orange-800 text-xs mb-4 space-y-1">
+          <div className="flex items-center gap-2 font-semibold"><AlertCircle size={13} /> CORS bloqueado pelo Tiny</div>
+          <p>O navegador não consegue chamar a API do Tiny diretamente. Configure um <strong>Proxy CORS</strong> nas Configurações (ex: <code>https://corsproxy.io/?</code>).</p>
+        </div>
+      )}
+
+      {/* PRIMARY: API Sync */}
       <div className="p-5 bg-white border-2 border-indigo-200 rounded-2xl mb-4 space-y-3">
-        <div className="flex items-start gap-3">
-          <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center shrink-0">
-            <FileText size={20} className="text-indigo-600" />
-          </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-gray-900 text-sm">Exportar CSV</h3>
-              <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs rounded-full font-medium">Recomendado</span>
+        {/* Progress bar */}
+        {(syncing || (syncResults.length > 0 && !syncDone)) && (
+          <div className="space-y-1">
+            <div className="flex justify-between text-xs text-gray-500">
+              <span className="truncate max-w-[240px]">{currentName}</span>
+              <span>{currentIdx}/{resolved.length}</span>
             </div>
-            <p className="text-xs text-gray-500 mt-0.5">Gera planilha no formato padrão Tiny ERP para importação manual.</p>
-          </div>
-        </div>
-        {exported && (
-          <div className="p-3 bg-green-50 border border-green-200 rounded-xl text-green-700 text-xs flex items-center gap-2">
-            <CheckCircle size={13} /> CSV exportado! Importe em: <span className="font-medium">Tiny → Produtos → Importar Planilha</span>
+            <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div className="h-2 bg-indigo-500 rounded-full transition-all duration-300" style={{ width: `${pct}%` }} />
+            </div>
           </div>
         )}
-        <button onClick={handleExportCSV}
-          className="w-full py-3 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 flex items-center justify-center gap-2 shadow-md shadow-indigo-200 transition-colors">
-          <FileText size={16} />
-          {exported ? "Exportar novamente" : `Baixar CSV (${products.length} produto${products.length !== 1 ? "s" : ""})`}
-        </button>
-      </div>
 
-      {/* SECONDARY: API Sync */}
-      <div className="p-5 bg-white border border-gray-200 rounded-2xl mb-5 space-y-3">
-        <div className="flex items-start gap-3">
-          <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center shrink-0">
-            <Send size={18} className="text-gray-500" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-gray-700 text-sm">Envio via API <span className="text-gray-400 font-normal">(Avançado)</span></h3>
-            <p className="text-xs text-gray-400 mt-0.5">Cadastra diretamente no Tiny pela API v3. Requer token configurado.</p>
-          </div>
+        {/* Action buttons */}
+        <div className="flex gap-2">
+          {!syncing && !syncDone && (
+            <button onClick={handleSyncAll} disabled={!tinyToken}
+              className="flex-1 py-3 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-40 flex items-center justify-center gap-2 shadow-md shadow-indigo-200 transition-colors">
+              <Send size={15} /> Enviar {resolved.length} produto{resolved.length !== 1 ? "s" : ""}
+            </button>
+          )}
+          {syncing && (
+            <button onClick={handleStop}
+              className="flex-1 py-3 bg-red-50 border border-red-300 text-red-700 rounded-xl text-sm font-semibold hover:bg-red-100 flex items-center justify-center gap-2 transition-colors">
+              <XCircle size={15} /> Parar envio
+            </button>
+          )}
+          {syncDone && fail > 0 && !syncing && (
+            <button onClick={handleRetryFail}
+              className="flex-1 py-2.5 bg-amber-50 border border-amber-300 text-amber-800 rounded-xl text-sm font-semibold hover:bg-amber-100 flex items-center justify-center gap-2 transition-colors">
+              <Loader size={14} /> Reenviar {fail} com erro
+            </button>
+          )}
+          {syncDone && !syncing && (
+            <button onClick={handleSyncAll} disabled={!tinyToken}
+              className="flex-1 py-2.5 border border-gray-300 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 disabled:opacity-40 flex items-center justify-center gap-2 transition-colors">
+              <Send size={14} /> Reenviar tudo
+            </button>
+          )}
         </div>
-        {!tinyToken && (
-          <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-700 text-xs flex items-center gap-2">
-            <AlertCircle size={12} /> Configure o token do Tiny nas configurações.
-          </div>
-        )}
-        <div className="p-2.5 bg-blue-50 border border-blue-100 rounded-xl text-blue-700 text-xs">
-          ℹ️ A API do Tiny pode bloquear requisições do navegador (CORS). Para produção use um proxy server.
-        </div>
-        {!syncDone && (
-          <button onClick={handleSyncAPI} disabled={!tinyToken || syncing}
-            className="w-full py-2.5 border border-gray-300 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 disabled:opacity-40 flex items-center justify-center gap-2 transition-colors">
-            {syncing ? <><Loader size={14} className="animate-spin" /> Enviando...</> : <><Send size={14} /> Enviar via API</>}
-          </button>
-        )}
-        {(syncing || syncResults.length > 0) && (
-          <div className="space-y-1 max-h-40 overflow-y-auto">
-            {syncResults.map((r, i) => (
-              <div key={i} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs ${r._syncOk ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
-                {r._syncOk ? <CheckCircle size={12} /> : <XCircle size={12} />}
-                <span className="flex-1 truncate">{r.produto_fornecedor}</span>
-                {!r._syncOk && <span className="opacity-70 truncate max-w-[120px]">{r._syncErr}</span>}
-              </div>
-            ))}
-          </div>
-        )}
+
+        {/* Summary grid */}
         {syncDone && (
           <div className="grid grid-cols-2 gap-2">
             <div className="p-3 bg-green-50 rounded-xl text-center border border-green-100">
@@ -1923,7 +2015,45 @@ function SyncStep({ products, tinyToken, onRestart }) {
             </div>
           </div>
         )}
+
+        {/* Per-product results */}
+        {syncResults.length > 0 && (
+          <div className="space-y-1 max-h-52 overflow-y-auto pr-1">
+            {syncResults.map((r, i) => (
+              <div key={i} className={`rounded-lg text-xs ${r._syncOk ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
+                <button className="w-full flex items-center gap-2 px-3 py-1.5 text-left"
+                  onClick={() => !r._syncOk && setExpandedErr(prev => ({ ...prev, [i]: !prev[i] }))}>
+                  {r._syncOk ? <CheckCircle size={12} className="shrink-0" /> : <XCircle size={12} className="shrink-0" />}
+                  <span className="flex-1 truncate font-medium">{r.enriched?.titulo_otimizado || r.produto_fornecedor}</span>
+                  {!r._syncOk && <span className="opacity-60 text-[10px] shrink-0">{expandedErr[i] ? "▲" : "▼"}</span>}
+                </button>
+                {!r._syncOk && expandedErr[i] && (
+                  <div className="px-3 pb-2 text-[11px] opacity-80 break-words">{r._syncErr}</div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
+
+      {/* BACKUP: CSV Export */}
+      <details className="mb-5">
+        <summary className="cursor-pointer text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1.5 mb-2 select-none">
+          <FileText size={12} /> Prefere importar por planilha? <span className="underline">Exportar CSV</span>
+        </summary>
+        <div className="p-4 bg-white border border-gray-200 rounded-2xl space-y-2">
+          <p className="text-xs text-gray-500">Gera planilha no formato padrão Tiny ERP para importação manual em <strong>Produtos → Importar Planilha</strong>.</p>
+          {exported && (
+            <div className="p-2.5 bg-green-50 border border-green-200 rounded-xl text-green-700 text-xs flex items-center gap-2">
+              <CheckCircle size={12} /> CSV baixado!
+            </div>
+          )}
+          <button onClick={handleExportCSV}
+            className="w-full py-2.5 border border-gray-300 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 flex items-center justify-center gap-2 transition-colors">
+            <FileText size={14} /> {exported ? "Exportar novamente" : `Baixar CSV (${products.length} produto${products.length !== 1 ? "s" : ""})`}
+          </button>
+        </div>
+      </details>
 
       <button onClick={onRestart}
         className="w-full py-3 border border-gray-300 rounded-2xl text-sm font-medium hover:bg-gray-50 flex items-center justify-center gap-2">
@@ -2002,7 +2132,7 @@ function App() {
           <ReviewStep products={enriched} apiKey={apiKeys.openai} onDone={a => { setApproved(a); setStep("sync"); }} onBack={() => setStep("enrichment")} />
         )}
         {step === "sync" && (
-          <SyncStep products={approved} tinyToken={apiKeys.tiny} onRestart={restart} />
+          <SyncStep products={approved} tinyToken={apiKeys.tiny} corsProxy={apiKeys.corsProxy} onRestart={restart} />
         )}
       </main>
 
