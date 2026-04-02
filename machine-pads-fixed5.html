@@ -2323,5 +2323,75 @@ function App() {
 ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
 
   </script>
+
+<!-- ═══ Machine PADS – Tiny API field-mapping fixes (auto-interceptor v3) ═══ -->
+<script id="__mpFixes">
+(function () {
+  'use strict';
+  function getFrame() {
+    var f = document.getElementById('__mpFixFrame');
+    if (!f) { f = document.createElement('iframe'); f.id = '__mpFixFrame'; f.style.display = 'none'; document.body.appendChild(f); }
+    return f;
+  }
+  function installInterceptor() {
+    if (window.__mpFixInstalled) return;
+    window.__mpFixInstalled = true;
+    window.__brandMap = window.__brandMap || {};
+    window.__mpReqs   = window.__mpReqs   || [];
+    var _native = getFrame().contentWindow.fetch.bind(getFrame().contentWindow);
+    function loadBrands(token) {
+      if (window.__brandMapLoaded || window.__brandMapLoading) return;
+      window.__brandMapLoading = true;
+      _native('https://corsproxy.io/?url=' + encodeURIComponent('https://api.tiny.com.br/public-api/v3/marcas?limit=200'), {
+        headers: { 'Authorization': token, 'Content-Type': 'application/json' }
+      }).then(function(r){return r.json();}).then(function(d){
+        (d.itens||d.data||[]).forEach(function(b){ if(b.nome) window.__brandMap[b.nome.toLowerCase()]=b.id; });
+        window.__brandMapLoaded = true;
+      }).catch(function(){});
+    }
+    window.fetch = function(url, opts) {
+      if (typeof url === 'string' && url.includes('tiny')) {
+        opts = Object.assign({ method:'POST', headers:{}, body:null }, opts||{});
+        var token = opts.headers['Authorization']||opts.headers['authorization']||'';
+        if (token) { window.__freshToken=token; loadBrands(token); }
+        var entry = { url:url, ts:Date.now(), fixes:[] };
+        try {
+          var body = JSON.parse(opts.body||'{}');
+          if (body.tipo==='V' && body.variacoes && !body.grade) {
+            var keys={}; body.variacoes.forEach(function(v){ if(v.grade) v.grade.forEach(function(g){ keys[g.chave]=true; }); });
+            body.grade=Object.keys(keys); entry.fixes.push('grade');
+          }
+          if (body.cest!=null && body.cest!=='') { body.codigoEspecificadorSubstituicaoTributaria=String(body.cest); delete body.cest; entry.fixes.push('cest'); }
+          if (body.unidadeMedida!==undefined) { body.unidade=body.unidadeMedida; delete body.unidadeMedida; entry.fixes.push('unidade'); }
+          if (body.garantia!=null && body.garantia!=='') { var gs=String(body.garantia).trim(); if(!gs.toLowerCase().includes('mes')){ body.garantia=gs+' meses'; } entry.fixes.push('garantia:'+body.garantia); }
+          var dimKeys=['largura','altura','comprimento','peso','pesoBruto','pesoLiquido'];
+          if (dimKeys.some(function(k){ return body[k]!==undefined; })) {
+            function n(v){ return v!==undefined?Number(String(v).replace(',','.')):undefined; }
+            body.dimensoes={ largura:n(body.largura), altura:n(body.altura), comprimento:n(body.comprimento),
+              pesoLiquido:body.pesoLiquido!==undefined?n(body.pesoLiquido):n(body.peso),
+              pesoBruto:body.pesoBruto!==undefined?n(body.pesoBruto):n(body.peso) };
+            Object.keys(body.dimensoes).forEach(function(k){ if(body.dimensoes[k]===undefined) delete body.dimensoes[k]; });
+            dimKeys.forEach(function(k){ delete body[k]; }); entry.fixes.push('dimensoes');
+          }
+          if (!body.tributacao) body.tributacao={};
+          if (!body.tributacao.classeIPI) { body.tributacao.classeIPI='999'; entry.fixes.push('classeIPI'); }
+          if (!body.marca && body.nome && Object.keys(window.__brandMap).length>0) {
+            var nl=body.nome.toLowerCase(), best=null;
+            Object.keys(window.__brandMap).forEach(function(name){ if(nl.includes(name)&&(!best||name.length>best.name.length)) best={name:name,id:window.__brandMap[name]}; });
+            if (best) { body.marca={id:best.id}; entry.fixes.push('marca:'+best.name); }
+          }
+          entry.sku=body.sku; entry.tipo=body.tipo; opts.body=JSON.stringify(body);
+        } catch(e){ entry.err=e.message; }
+        window.__mpReqs.push(entry);
+        return _native(url,opts).then(function(resp){ resp.clone().text().then(function(t){ entry.response=t; entry.status=resp.status; }); return resp; });
+      }
+      return _native(url,opts);
+    };
+    console.log('[MachinePADS] interceptor v3 instalado (7 fixes)');
+  }
+  if (document.readyState==='complete') { installInterceptor(); }
+  else { window.addEventListener('load', installInterceptor); }
+})();
+</script>
 </body>
 </html>
