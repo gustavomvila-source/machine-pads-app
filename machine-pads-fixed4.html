@@ -456,7 +456,7 @@ Retorne as três seções claramente separadas.`;
   const STYLE_LABELS = {
     tecnico: "tom técnico com foco em especificações detalhadas",
     marketplace: "linguagem otimizada para marketplace com palavras-chave estratégicas",
-    beneficios: "destaque os benefícios práticos para o usuário finai�,
+    beneficios: "destaque os benefícios práticos para o usuário final",
     garantia: "sempre mencione a garantia do produto",
     origem: "sempre mencione a origem (importado/nacional)",
   };
@@ -519,13 +519,13 @@ ${mpInstructions}
 
 8. "tags": Array de 10 a 15 palavras-chave para SEO.
 
-9. "titulo_seo": Título SEO (máx 70 chars). Palavra-chave principal + marca. Ex: "Serra Mármore 1400W 220V Vonder SM-1400 Disco 110mm"
+9. "titulo_seo": Título SEO (máx 70 chars). Palavra-chave principal + marca. Ex: "Serra Mármore 1 400W 220V Vonder SM-1400 Disco 110mm"
 
 10. "descricao_seo": Meta description SEO (máx 160 chars) descrevendo o produto para buscadores.
 
 11. "palavras_chave_seo": String com 8-12 termos separados por vírgula para campo SEO.
 
-12. "variacoes": Se tipo_de_produto for "K" (variante filho), retorne "Atributo: valor" (ex: "Voltagem: 127V"). Para "S" ou "V", retorne "".
+12. "variacoes": Se tipo_de_produto for "K" (variante filho),retorne "Atributo: valor" (ex: "Voltagem: 127V"). Para "S" ou "V", retorne "".
 
 Retorne APENAS JSON válido com exatamente estas chaves: sku_interno, cest, descricao_complementar, titulo_otimizado, titulos, descricao, atributos, tags, titulo_seo, descricao_seo, palavras_chave_seo, variacoes.
 
@@ -1744,7 +1744,7 @@ function ReviewStep({ products, apiKey, onDone, onBack }) {
               onChange={e => updEnr("titulo_otimizado", e.target.value)}
               className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             <p className="text-xs text-gray-400 mt-1">{(cur.enriched?.titulo_otimizado || "").length} / 60 caracteres</p>
-          </div>
+    0     </div>
 
           {/* SKU Interno + CEST + Variações */}
           <div>
@@ -2059,7 +2059,7 @@ function SyncStep({ products, tinyToken, corsProxy, onRestart }) {
           {syncing && (
             <button onClick={handleStop}
               className="flex-1 py-3 bg-red-50 border border-red-300 text-red-700 rounded-xl text-sm font-semibold hover:bg-red-100 flex items-center justify-center gap-2 transition-colors">
-              <XCircle size={15} /> Parar envio
+              <XCircle size={15}  /> Parar envio
             </button>
           )}
           {syncDone && fail > 0 && !syncing && (
@@ -2085,7 +2085,7 @@ function SyncStep({ products, tinyToken, corsProxy, onRestart }) {
             </div>
             <div className={`p-3 rounded-xl text-center border ${fail > 0 ? "bg-red-50 border-red-100" : "bg-gray-50 border-gray-100"}`}>
               <div className={`text-2xl font-bold ${fail > 0 ? "text-red-600" : "text-gray-400"}`}>{fail}</div>
-              <div classsName={`text-xs font-medium mt-0.5 ${fail > 0 ? "text-red-700" : "text-gray-400"}`}>Com erro</div>
+              <div className={`text-xs font-medium mt-0.5 ${fail > 0 ? "text-red-700" : "text-gray-400"}`}>Com erro</div>
             </div>
           </div>
         )}
