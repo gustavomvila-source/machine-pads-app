@@ -519,13 +519,13 @@ ${mpInstructions}
 
 8. "tags": Array de 10 a 15 palavras-chave para SEO.
 
-9. "titulo_seo": Título SEO (máx 70 chars). Palavra-chave principal + marca. Ex: "Serra Mármore 1 400W 220V Vonder SM-1400 Disco 110mm"
+9. "titulo_seo": Título SEO (máx 70 chars). Palavra-chave principal + marca. Ex: "Serra Mármore 1400W 220V Vonder SM-1400 Disco 110mm"
 
 10. "descricao_seo": Meta description SEO (máx 160 chars) descrevendo o produto para buscadores.
 
 11. "palavras_chave_seo": String com 8-12 termos separados por vírgula para campo SEO.
 
-12. "variacoes": Se tipo_de_produto for "K" (variante filho),retorne "Atributo: valor" (ex: "Voltagem: 127V"). Para "S" ou "V", retorne "".
+12. "variacoes": Se tipo_de_produto for "K" (variante filho), retorne "Atributo: valor" (ex: "Voltagem: 127V"). Para "S" ou "V", retorne "".
 
 Retorne APENAS JSON válido com exatamente estas chaves: sku_interno, cest, descricao_complementar, titulo_otimizado, titulos, descricao, atributos, tags, titulo_seo, descricao_seo, palavras_chave_seo, variacoes.
 
@@ -643,15 +643,24 @@ async function sendToTiny(product, token, corsProxy = "") {
     ? `${corsProxy}https://api.tiny.com.br/public-api/v3`
     : "https://api.tiny.com.br/public-api/v3";
 
-  const tipo = (product.tipo_de_produto || "S").toUpperCase();
+  const tipoRaw = (product.tipo_de_produto || "S").toUpperCase();
+  // API v3: "S" = Simples, "V" = Com variações (requer variacoes[]), "K" = Kit (requer componentes[])
+  // V e K sem dados de variação/componentes → envia como "S" para evitar erro 400
+  const tipoApi = tipoRaw === "V" ? "S" : tipoRaw === "K" ? "S" : "S";
+
+  // garantia: API v3 espera número inteiro (meses), não string
+  const garantiaNum = (() => {
+    const n = parseInt(String(product.garantia || "").replace(/\D/g, ""), 10);
+    return isNaN(n) ? undefined : n;
+  })();
 
   const body = {
     // ── Identificação ──────────────────────────────────────
     nome:           product.enriched?.titulo_otimizado || product.produto_fornecedor,
-    codigo:         product.enriched?.sku_interno || product.codigo_fornecedor || "",
+    sku:            product.enriched?.sku_interno || product.codigo_fornecedor || "",
     ean:            String(product.ean || ""),
     situacao:       "A",
-    tipo:           tipo === "V" ? "V" : "P",
+    tipo:           tipoApi,
 
     // ── Preços ─────────────────────────────────────────────
     preco:          parseNumber(product.preco_venda) ?? 0,
@@ -677,8 +686,8 @@ async function sendToTiny(product, token, corsProxy = "") {
     comprimento:    parseNumber(product.comprimento) ?? 0,
 
     // ── Marketing ──────────────────────────────────────────
-    marca:          product.marca || "",
-    garantia:       mapGarantia(product.garantia),
+    // marca: API v3 exige {id, nome} com ID cadastrado no Tiny — omitir para evitar erro 400
+    garantia:       garantiaNum,
     palavrasChave:  Array.isArray(product.enriched?.tags)
                       ? product.enriched.tags.join(", ")
                       : (product.enriched?.tags || ""),
@@ -693,9 +702,6 @@ async function sendToTiny(product, token, corsProxy = "") {
 
     // ── Imagens ────────────────────────────────────────────
     imagens: product.generatedImage ? [{ url: product.generatedImage }] : [],
-
-    // ── Variação (kit/filho) ───────────────────────────────
-    ...(product._codigoPai ? { codigoPai: product._codigoPai } : {}),
   };
 
   // Remove campos vazios/null para não poluir o payload
@@ -726,7 +732,10 @@ async function sendToTiny(product, token, corsProxy = "") {
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    const detail = err?.message || (err?.erros || []).join(", ") || `HTTP ${res.status}`;
+    // API v3 retorna { mensagem, detalhes: [{campo, mensagem}] }
+    const detail = err?.mensagem
+      || (err?.detalhes || []).map(d => `${d.campo}: ${d.mensagem}`).join(", ")
+      || err?.message || `HTTP ${res.status}`;
     if (res.status === 401) throw new Error("Token inválido ou expirado — atualize nas Configurações.");
     if (res.status === 422) throw new Error(`Dados inválidos: ${detail}`);
     if (res.status === 429) throw new Error("Rate limit — aguarde e tente novamente.");
@@ -1481,7 +1490,7 @@ function EnrichmentStep({ products, apiKey, rules, onDone, onBack }) {
             <div className="mb-4 p-4 bg-indigo-50 border border-indigo-100 rounded-2xl text-left text-sm space-y-1.5">
               <p className="font-semibold text-indigo-700 text-xs mb-2">📋 Regras configuradas</p>
               {rules.aiModel && rules.aiModel !== "gpt-4o" && (
-                <p className="text-xs text-indigo-600">🤖 Modelo: <span className="font-medium">{rules.aiModel}</span></p>
+                <p className="text-xs text-indigo-600">🤖 modelo: <span className="font-medium">{rules.aiModel}</span></p>
               )}
               {rules.titleTemplate && (
                 <p className="text-xs text-indigo-600">🏷️ Padrão: <span className="font-mono font-medium">{rules.titleTemplate}</span></p>
@@ -1744,7 +1753,7 @@ function ReviewStep({ products, apiKey, onDone, onBack }) {
               onChange={e => updEnr("titulo_otimizado", e.target.value)}
               className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             <p className="text-xs text-gray-400 mt-1">{(cur.enriched?.titulo_otimizado || "").length} / 60 caracteres</p>
-    0     </div>
+          </div>
 
           {/* SKU Interno + CEST + Variações */}
           <div>
@@ -2039,7 +2048,7 @@ function SyncStep({ products, tinyToken, corsProxy, onRestart }) {
         {(syncing || (syncResults.length > 0 && !syncDone)) && (
           <div className="space-y-1">
             <div className="flex justify-between text-xs text-gray-500">
-              <span className="truncate max-w[240px]">{currentName}</span>
+              <span className="truncate max-w-[240px]">{currentName}</span>
               <span>{currentIdx}/{resolved.length}</span>
             </div>
             <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -2059,7 +2068,7 @@ function SyncStep({ products, tinyToken, corsProxy, onRestart }) {
           {syncing && (
             <button onClick={handleStop}
               className="flex-1 py-3 bg-red-50 border border-red-300 text-red-700 rounded-xl text-sm font-semibold hover:bg-red-100 flex items-center justify-center gap-2 transition-colors">
-              <XCircle size={15}  /> Parar envio
+              <XCircle size={15} /> Parar envio
             </button>
           )}
           {syncDone && fail > 0 && !syncing && (
