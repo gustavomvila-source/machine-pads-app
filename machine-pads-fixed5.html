@@ -2324,7 +2324,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
 
   </script>
 
-<!-- ═══ Machine PADS – Tiny API field-mapping fixes (auto-interceptor v3) ═══ -->
+<!-- ═══ Machine PADS – Tiny API field-mapping fixes (auto-interceptor v4) ═══ -->
 <script id="__mpFixes">
 (function () {
   'use strict';
@@ -2347,8 +2347,14 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
       }).then(function(r){return r.json();}).then(function(d){
         (d.itens||d.data||[]).forEach(function(b){ if(b.nome) window.__brandMap[b.nome.toLowerCase()]=b.id; });
         window.__brandMapLoaded = true;
-      }).catch(function(){});
+        console.log('[MachinePADS] brandMap:', Object.keys(window.__brandMap).length, 'marcas');
+      }).catch(function(e){ window.__brandMapLoading = false; });
     }
+    // FIX: pré-carrega marcas imediatamente usando token salvo no localStorage
+    try {
+      var _k = JSON.parse(localStorage.getItem('mpads_keys') || '{}');
+      if (_k.tiny) loadBrands('Bearer ' + _k.tiny);
+    } catch(e) {}
     window.fetch = function(url, opts) {
       if (typeof url === 'string' && url.includes('tiny')) {
         opts = Object.assign({ method:'POST', headers:{}, body:null }, opts||{});
@@ -2357,13 +2363,18 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
         var entry = { url:url, ts:Date.now(), fixes:[] };
         try {
           var body = JSON.parse(opts.body||'{}');
+          // FIX 1: grade[] at root for tipo V
           if (body.tipo==='V' && body.variacoes && !body.grade) {
             var keys={}; body.variacoes.forEach(function(v){ if(v.grade) v.grade.forEach(function(g){ keys[g.chave]=true; }); });
             body.grade=Object.keys(keys); entry.fixes.push('grade');
           }
+          // FIX 2: cest -> codigoEspecificadorSubstituicaoTributaria
           if (body.cest!=null && body.cest!=='') { body.codigoEspecificadorSubstituicaoTributaria=String(body.cest); delete body.cest; entry.fixes.push('cest'); }
+          // FIX 3: unidadeMedida -> unidade
           if (body.unidadeMedida!==undefined) { body.unidade=body.unidadeMedida; delete body.unidadeMedida; entry.fixes.push('unidade'); }
+          // FIX 4: garantia number -> "N meses"
           if (body.garantia!=null && body.garantia!=='') { var gs=String(body.garantia).trim(); if(!gs.toLowerCase().includes('mes')){ body.garantia=gs+' meses'; } entry.fixes.push('garantia:'+body.garantia); }
+          // FIX 5: flat dimensions -> dimensoes object
           var dimKeys=['largura','altura','comprimento','peso','pesoBruto','pesoLiquido'];
           if (dimKeys.some(function(k){ return body[k]!==undefined; })) {
             function n(v){ return v!==undefined?Number(String(v).replace(',','.')):undefined; }
@@ -2373,12 +2384,21 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
             Object.keys(body.dimensoes).forEach(function(k){ if(body.dimensoes[k]===undefined) delete body.dimensoes[k]; });
             dimKeys.forEach(function(k){ delete body[k]; }); entry.fixes.push('dimensoes');
           }
-          if (!body.tributacao) body.tributacao={};
-          if (!body.tributacao.classeIPI) { body.tributacao.classeIPI='999'; entry.fixes.push('classeIPI'); }
+          // FIX 6: marca via lookup no brandMap
           if (!body.marca && body.nome && Object.keys(window.__brandMap).length>0) {
             var nl=body.nome.toLowerCase(), best=null;
             Object.keys(window.__brandMap).forEach(function(name){ if(nl.includes(name)&&(!best||name.length>best.name.length)) best={name:name,id:window.__brandMap[name]}; });
             if (best) { body.marca={id:best.id}; entry.fixes.push('marca:'+best.name); }
+          }
+          // FIX 7: propagar dimensoes, marca, unidade, garantia para variacoes[] (tipo V)
+          if (body.tipo==='V' && body.variacoes && body.variacoes.length>0) {
+            body.variacoes.forEach(function(v){
+              if (body.dimensoes && !v.dimensoes) v.dimensoes = JSON.parse(JSON.stringify(body.dimensoes));
+              if (body.marca && !v.marca) v.marca = JSON.parse(JSON.stringify(body.marca));
+              if (body.unidade && !v.unidade) v.unidade = body.unidade;
+              if (body.garantia && !v.garantia) v.garantia = body.garantia;
+            });
+            entry.fixes.push('variacoes-propagate');
           }
           entry.sku=body.sku; entry.tipo=body.tipo; opts.body=JSON.stringify(body);
         } catch(e){ entry.err=e.message; }
@@ -2387,7 +2407,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
       }
       return _native(url,opts);
     };
-    console.log('[MachinePADS] interceptor v3 instalado (7 fixes)');
+    console.log('[MachinePADS] interceptor v4 instalado (7 fixes)');
   }
   if (document.readyState==='complete') { installInterceptor(); }
   else { window.addEventListener('load', installInterceptor); }
