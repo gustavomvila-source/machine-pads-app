@@ -687,7 +687,7 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
     // ── Marketing ──────────────────────────────────────────
     marcaId:        product._marcaId || undefined,
     marcaNome:      product._marcaSearch || product.marca || undefined,
-    tagExtraNome:   (product.cross_docking && product.cross_docking.toLowerCase() !== 'não') ? product.cross_docking.trim() : undefined,
+    tagExtraNome:   (() => { var _cd = (product.cross_docking || '').trim(); if (!_cd || _cd.toLowerCase() === 'não') { var _k = children.find(function(c){ return c.cross_docking && c.cross_docking.toLowerCase() !== 'não'; }); _cd = _k ? _k.cross_docking.trim() : ''; } return (_cd && _cd.toLowerCase() !== 'não') ? _cd : undefined; })(),
     // marca: API v3 exige {id, nome} com ID cadastrado no Tiny — omitir para evitar erro 400
     garantia:       garantiaNum,
     palavrasChave:  Array.isArray(product.enriched?.tags)
