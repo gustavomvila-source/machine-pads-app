@@ -687,6 +687,7 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
     // ── Marketing ──────────────────────────────────────────
     marcaId:        product._marcaId || undefined,
     marcaNome:      product._marcaSearch || product.marca || undefined,
+    tagExtraNome:   (product.cross_docking && product.cross_docking.toLowerCase() !== 'não') ? product.cross_docking.trim() : undefined,
     // marca: API v3 exige {id, nome} com ID cadastrado no Tiny — omitir para evitar erro 400
     garantia:       garantiaNum,
     palavrasChave:  Array.isArray(product.enriched?.tags)
@@ -2440,14 +2441,16 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
     }
 
     // FIX 9: Aplica tag de marca (grupo Fornecedores) via Tiny API v3 (v11: _native + proxy dinâmico)
-    function postTagsMarca(produtoId, marcaNome, token, proxyUrl) {
+    function postTagsMarca(produtoId, marcaNome, token, proxyUrl, grupoNome) {
       if (!produtoId || !marcaNome) return;
       var tinyTagBase = 'https://api.tiny.com.br/public-api/v3/produtos/' + produtoId + '/tags';
       var fullTagUrl = proxyUrl ? proxyUrl + encodeURIComponent(tinyTagBase) : tinyTagBase;
+      var _grupo = grupoNome !== undefined ? grupoNome : 'Fornecedores';
+      var _tagObj = _grupo ? { nome: marcaNome, nomeGrupoTag: _grupo } : { nome: marcaNome };
       _native(fullTagUrl, {
         method: 'POST',
         headers: { 'Authorization': token, 'Content-Type': 'application/json' },
-        body: JSON.stringify([{ nome: marcaNome, nomeGrupoTag: 'Fornecedores' }])
+        body: JSON.stringify([_tagObj])
       }).then(function(r) {
         console.log('[MachinePADS] tag "' + marcaNome + '" -> produto ' + produtoId + ': ' + r.status);
         if (r.status >= 400) { r.text().then(function(txt) { console.warn('[MachinePADS] tag falhou:', txt.substring(0,200)); }); }
@@ -2561,6 +2564,10 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
               if (resp.status >= 200 && resp.status < 300 && body.marcaNome) {
                 try { var rdT = JSON.parse(t); if (rdT.id) { postTagsMarca(rdT.id, body.marcaNome, token, _proxyUrl); entry.fixes.push('tag:'+body.marcaNome); if (rdT.variacoes && rdT.variacoes.length) { rdT.variacoes.forEach(function(v){ if(v.id) postTagsMarca(v.id, body.marcaNome, token, _proxyUrl); }); entry.fixes.push('tag-var:'+rdT.variacoes.length); } } } catch(e) {}
               }
+              // FIX 9b: tag extra (cross_docking)
+              if (resp.status >= 200 && resp.status < 300 && body.tagExtraNome) {
+                try { var rdTE = JSON.parse(t); if (rdTE.id) { postTagsMarca(rdTE.id, body.tagExtraNome, token, _proxyUrl, null); entry.fixes.push('tag-extra:'+body.tagExtraNome); if (rdTE.variacoes && rdTE.variacoes.length) { rdTE.variacoes.forEach(function(v){ if(v.id) postTagsMarca(v.id, body.tagExtraNome, token, _proxyUrl, null); }); } } } catch(e) {}
+              }
               });
               return resp;
             });
@@ -2574,6 +2581,10 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
             // FIX 9: tag de marca (produto simples)
             if (resp.status >= 200 && resp.status < 300 && body.marcaNome && opts.method !== 'PUT') {
               try { var rdS = JSON.parse(t); if (rdS.id) { postTagsMarca(rdS.id, body.marcaNome, token, _proxyUrl); entry.fixes.push('tag:'+body.marcaNome); } } catch(e) {}
+            }
+            // FIX 9b: tag extra (cross_docking)
+            if (resp.status >= 200 && resp.status < 300 && body.tagExtraNome) {
+              try { var rdSE = JSON.parse(t); if (rdSE.id) { postTagsMarca(rdSE.id, body.tagExtraNome, token, _proxyUrl, null); entry.fixes.push('tag-extra:'+body.tagExtraNome); } } catch(e) {}
             }
           });
           return resp;
