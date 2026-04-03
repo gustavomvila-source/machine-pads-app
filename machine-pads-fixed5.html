@@ -2559,7 +2559,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
                 }
               // FIX 9: tag de marca (tipo V)
               if (resp.status >= 200 && resp.status < 300 && body.marcaNome) {
-                try { var rdT = JSON.parse(t); if (rdT.id) { postTagsMarca(rdT.id, body.marcaNome, token, _proxyUrl); entry.fixes.push('tag:'+body.marcaNome); } } catch(e) {}
+                try { var rdT = JSON.parse(t); if (rdT.id) { postTagsMarca(rdT.id, body.marcaNome, token, _proxyUrl); entry.fixes.push('tag:'+body.marcaNome); if (rdT.variacoes && rdT.variacoes.length) { rdT.variacoes.forEach(function(v){ if(v.id) postTagsMarca(v.id, body.marcaNome, token, _proxyUrl); }); entry.fixes.push('tag-var:'+rdT.variacoes.length); } } } catch(e) {}
               }
               });
               return resp;
