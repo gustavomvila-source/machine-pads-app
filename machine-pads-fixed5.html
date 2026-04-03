@@ -2324,7 +2324,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
 
   </script>
 
-<!-- ═══ Machine PADS – Tiny API field-mapping fixes (auto-interceptor v4) ═══ -->
+<!-- ═══ Machine PADS – Tiny API field-mapping fixes (auto-interceptor v5) ═══ -->
 <script id="__mpFixes">
 (function () {
   'use strict';
@@ -2350,7 +2350,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
         console.log('[MachinePADS] brandMap:', Object.keys(window.__brandMap).length, 'marcas');
       }).catch(function(e){ window.__brandMapLoading = false; });
     }
-    // FIX: pré-carrega marcas imediatamente usando token salvo no localStorage
+    // Pré-carrega marcas usando token salvo no localStorage
     try {
       var _k = JSON.parse(localStorage.getItem('mpads_keys') || '{}');
       if (_k.tiny) loadBrands('Bearer ' + _k.tiny);
@@ -2363,7 +2363,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
         var entry = { url:url, ts:Date.now(), fixes:[] };
         try {
           var body = JSON.parse(opts.body||'{}');
-          // FIX 1: grade[] at root for tipo V
+          // FIX 1: grade[] at root para tipo V
           if (body.tipo==='V' && body.variacoes && !body.grade) {
             var keys={}; body.variacoes.forEach(function(v){ if(v.grade) v.grade.forEach(function(g){ keys[g.chave]=true; }); });
             body.grade=Object.keys(keys); entry.fixes.push('grade');
@@ -2374,15 +2374,32 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
           if (body.unidadeMedida!==undefined) { body.unidade=body.unidadeMedida; delete body.unidadeMedida; entry.fixes.push('unidade'); }
           // FIX 4: garantia number -> "N meses"
           if (body.garantia!=null && body.garantia!=='') { var gs=String(body.garantia).trim(); if(!gs.toLowerCase().includes('mes')){ body.garantia=gs+' meses'; } entry.fixes.push('garantia:'+body.garantia); }
-          // FIX 5: flat dimensions -> dimensoes object
+          // FIX 5: normalizar nomes de coluna com unidade + flat dimensions -> dimensoes object
+          // Suporte a variações: "Peso (Kg)", "Altura (cm)", "Peso (kg)", "Peso", etc.
+          var colAliases = {
+            'Peso (Kg)':'peso','Peso (kg)':'peso','peso (kg)':'peso','Peso (KG)':'peso','Peso':'peso',
+            'Altura (cm)':'altura','Altura (CM)':'altura',
+            'Largura (cm)':'largura','Largura (CM)':'largura',
+            'Comprimento (cm)':'comprimento','Comprimento (CM)':'comprimento'
+          };
+          Object.keys(colAliases).forEach(function(alias) {
+            if (body[alias] !== undefined) { body[colAliases[alias]] = body[alias]; delete body[alias]; }
+          });
           var dimKeys=['largura','altura','comprimento','peso','pesoBruto','pesoLiquido'];
           if (dimKeys.some(function(k){ return body[k]!==undefined; })) {
-            function n(v){ return v!==undefined?Number(String(v).replace(',','.')):undefined; }
-            body.dimensoes={ largura:n(body.largura), altura:n(body.altura), comprimento:n(body.comprimento),
+            function n(v){
+              if (v===undefined||v===null||v==='') return undefined;
+              var num = Number(String(v).replace(',','.'));
+              return isNaN(num) ? undefined : num;
+            }
+            body.dimensoes={
+              largura:n(body.largura), altura:n(body.altura), comprimento:n(body.comprimento),
               pesoLiquido:body.pesoLiquido!==undefined?n(body.pesoLiquido):n(body.peso),
-              pesoBruto:body.pesoBruto!==undefined?n(body.pesoBruto):n(body.peso) };
+              pesoBruto:body.pesoBruto!==undefined?n(body.pesoBruto):n(body.peso)
+            };
             Object.keys(body.dimensoes).forEach(function(k){ if(body.dimensoes[k]===undefined) delete body.dimensoes[k]; });
-            dimKeys.forEach(function(k){ delete body[k]; }); entry.fixes.push('dimensoes');
+            dimKeys.forEach(function(k){ delete body[k]; });
+            entry.fixes.push('dimensoes:'+JSON.stringify(body.dimensoes));
           }
           // FIX 6: marca via lookup no brandMap
           if (!body.marca && body.nome && Object.keys(window.__brandMap).length>0) {
@@ -2407,7 +2424,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
       }
       return _native(url,opts);
     };
-    console.log('[MachinePADS] interceptor v4 instalado (7 fixes)');
+    console.log('[MachinePADS] interceptor v5 instalado (7 fixes)');
   }
   if (document.readyState==='complete') { installInterceptor(); }
   else { window.addEventListener('load', installInterceptor); }
