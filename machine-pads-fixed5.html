@@ -2377,7 +2377,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
         if (camposFixos.dimensoes) payload.dimensoes = camposFixos.dimensoes;
         if (camposFixos.marca)     payload.marca     = camposFixos.marca;
         if (camposFixos.unidade)   payload.unidade   = camposFixos.unidade;
-        if (camposFixos.garantia)  payload.garantia  = camposFixos.garantia;
+        if (camposFixos.garantia)    payload.garantia    = camposFixos.garantia;
+        if (camposFixos.tributacao) payload.tributacao = camposFixos.tributacao;
         _native('https://corsproxy.io/?url=' + encodeURIComponent(baseUrl + v.id), {
           method: 'PUT',
           headers: { 'Authorization': token, 'Content-Type': 'application/json' },
@@ -2464,13 +2465,17 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
           entry.tipo = body.tipo;
           opts.body  = JSON.stringify(body);
 
+          // FIX 8: tributacao.classeIPI = "999" (Código de Enquadramento IPI) para todos os produtos
+          body.tributacao = Object.assign({}, body.tributacao || {}, { classeIPI: '999' });
+          entry.fixes.push('tributacao.classeIPI:999');
           // FIX 7: após POST de tipo V bem-sucedido, PUT dimensoes/marca/unidade/garantia em cada variação
           if (body.tipo === 'V' && opts.method !== 'PUT') {
             var camposParaVariacoes = {};
             if (body.dimensoes) camposParaVariacoes.dimensoes = body.dimensoes;
             if (body.marca)     camposParaVariacoes.marca     = body.marca;
             if (body.unidade)   camposParaVariacoes.unidade   = body.unidade;
-            if (body.garantia)  camposParaVariacoes.garantia  = body.garantia;
+            if (body.garantia)    camposParaVariacoes.garantia    = body.garantia;
+            if (body.tributacao) camposParaVariacoes.tributacao = body.tributacao;
 
             return _native(url, opts).then(function(resp) {
               resp.clone().text().then(function(t) {
@@ -2498,7 +2503,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
       }
       return _native(url, opts);
     };
-    console.log('[MachinePADS] interceptor v6 instalado – PUT automático em variações');
+    console.log('[MachinePADS] interceptor v7 instalado – PUT automático em variações + tributacao.classeIPI');
   }
   if (document.readyState === 'complete') { installInterceptor(); }
   else { window.addEventListener('load', installInterceptor); }
