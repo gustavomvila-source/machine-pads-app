@@ -2439,16 +2439,19 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
       });
     }
 
-    // FIX 9: Aplica tag de marca (grupo Fornecedores) via Tiny API v3
-    function postTagsMarca(produtoId, marcaNome, token) {
+    // FIX 9: Aplica tag de marca (grupo Fornecedores) via Tiny API v3 (v11: _native + proxy dinâmico)
+    function postTagsMarca(produtoId, marcaNome, token, proxyUrl) {
       if (!produtoId || !marcaNome) return;
-      var xhr = new XMLHttpRequest();
-      xhr.open('POST', 'https://corsproxy.io/?url=' + encodeURIComponent('https://api.tiny.com.br/public-api/v3/produtos/' + produtoId + '/tags'));
-      xhr.setRequestHeader('Authorization', token);
-      xhr.setRequestHeader('Content-Type', 'application/json');
-      xhr.onload = function() { console.log('[MachinePADS] tag "' + marcaNome + '" -> produto ' + produtoId + ': ' + xhr.status); };
-      xhr.onerror = function() { console.warn('[MachinePADS] tag XHR erro: produto ' + produtoId); };
-      xhr.send(JSON.stringify([{ nome: marcaNome, nomeGrupoTag: 'Fornecedores' }]));
+      var tinyTagBase = 'https://api.tiny.com.br/public-api/v3/produtos/' + produtoId + '/tags';
+      var fullTagUrl = proxyUrl ? proxyUrl + encodeURIComponent(tinyTagBase) : tinyTagBase;
+      _native(fullTagUrl, {
+        method: 'POST',
+        headers: { 'Authorization': token, 'Content-Type': 'application/json' },
+        body: JSON.stringify([{ nome: marcaNome, nomeGrupoTag: 'Fornecedores' }])
+      }).then(function(r) {
+        console.log('[MachinePADS] tag "' + marcaNome + '" -> produto ' + produtoId + ': ' + r.status);
+        if (r.status >= 400) { r.text().then(function(txt) { console.warn('[MachinePADS] tag falhou:', txt.substring(0,200)); }); }
+      }).catch(function(e) { console.warn('[MachinePADS] tag erro: ' + e.message); });
     }
 
     window.fetch = function(url, opts) {
@@ -2456,6 +2459,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
         opts = Object.assign({ method:'POST', headers:{}, body:null }, opts||{});
         var token = opts.headers['Authorization'] || opts.headers['authorization'] || '';
         if (token) { window.__freshToken = token; loadBrands(token); }
+        var _tinyIdx = url.indexOf('https://api.tiny.com.br');
+        var _proxyUrl = _tinyIdx > 0 ? url.substring(0, _tinyIdx) : '';
         var entry = { url:url, ts:Date.now(), fixes:[] };
         try {
           var body = JSON.parse(opts.body || '{}');
@@ -2554,7 +2559,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
                 }
               // FIX 9: tag de marca (tipo V)
               if (resp.status >= 200 && resp.status < 300 && body.marcaNome) {
-                try { var rdT = JSON.parse(t); if (rdT.id) { postTagsMarca(rdT.id, body.marcaNome, token); entry.fixes.push('tag:'+body.marcaNome); } } catch(e) {}
+                try { var rdT = JSON.parse(t); if (rdT.id) { postTagsMarca(rdT.id, body.marcaNome, token, _proxyUrl); entry.fixes.push('tag:'+body.marcaNome); } } catch(e) {}
               }
               });
               return resp;
@@ -2568,7 +2573,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
             entry.response = t; entry.status = resp.status;
             // FIX 9: tag de marca (produto simples)
             if (resp.status >= 200 && resp.status < 300 && body.marcaNome && opts.method !== 'PUT') {
-              try { var rdS = JSON.parse(t); if (rdS.id) { postTagsMarca(rdS.id, body.marcaNome, token); entry.fixes.push('tag:'+body.marcaNome); } } catch(e) {}
+              try { var rdS = JSON.parse(t); if (rdS.id) { postTagsMarca(rdS.id, body.marcaNome, token, _proxyUrl); entry.fixes.push('tag:'+body.marcaNome); } } catch(e) {}
             }
           });
           return resp;
