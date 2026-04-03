@@ -22,8 +22,8 @@
     body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
     #root { min-height: 100vh; }
 
-    /* ── Machine PADS — Paleta da Empresa ── */
-    /* Azul escuro #4870B5 → substitui indigo */
+    /* ââ Machine PADS â Paleta da Empresa ââ */
+    /* Azul escuro #4870B5 â substitui indigo */
     .bg-indigo-600                   { background-color: #4870B5 !important; }
     .bg-indigo-700                   { background-color: #3a5a9e !important; }
     .bg-indigo-500                   { background-color: #5880c0 !important; }
@@ -43,23 +43,23 @@
     .hover\:border-indigo-400:hover  { border-color: #6a8fc5 !important; }
     .focus\:ring-indigo-500:focus    { --tw-ring-color: rgba(72,112,181,0.5) !important; }
     .shadow-indigo-200               { --tw-shadow-color: rgba(72,112,181,0.25) !important; }
-    /* Gradientes: #4870B5 → #00C9FF (azul claro) */
+    /* Gradientes: #4870B5 â #00C9FF (azul claro) */
     .from-indigo-500, .from-indigo-600 {
       --tw-gradient-from: #4870B5 !important;
       --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(72,112,181,0)) !important;
     }
     .to-purple-500, .to-purple-600   { --tw-gradient-to: #00C9FF !important; }
-    /* Fundo geral → #FFFEE1 (branco da empresa) */
+    /* Fundo geral â #FFFEE1 (branco da empresa) */
     .bg-slate-50                     { background-color: #FFFEE1 !important; }
-    /* Texto principal → #232323 (preto da empresa) */
+    /* Texto principal â #232323 (preto da empresa) */
     .text-gray-900                   { color: #232323 !important; }
-    /* Caixas de info azul → tint do #00C9FF */
+    /* Caixas de info azul â tint do #00C9FF */
     .bg-blue-50                      { background-color: rgba(0,201,255,0.08) !important; }
     .text-blue-700                   { color: #007aa3 !important; }
     .text-blue-500                   { color: #00b3e0 !important; }
-    /* Cards / seções internas — azul-frio leve para contrastar com fundo #FFFEE1 */
+    /* Cards / seÃ§Ãµes internas â azul-frio leve para contrastar com fundo #FFFEE1 */
     .bg-gray-50                      { background-color: #F0F4FA !important; }
-    /* Header — fundo azul escuro, texto branco */
+    /* Header â fundo azul escuro, texto branco */
     header { background-color: #4870B5 !important; border-color: #3a5a9e !important; }
     header h1 { color: #ffffff !important; }
     header p  { color: rgba(220,232,245,0.9) !important; }
@@ -76,59 +76,59 @@ const { Upload, CheckCircle, XCircle, AlertCircle, ChevronRight, ChevronLeft, Se
 const ImageIcon = LucideReact.Image;
 
 
-// ─────────────────────────────────────────────
+// âââââââââââââââââââââââââââââââââââââââââââââ
 // CONSTANTS
-// ─────────────────────────────────────────────
+// âââââââââââââââââââââââââââââââââââââââââââââ
 const REQUIRED_FIELDS = ["ean", "ncm", "preco_venda", "peso", "altura", "largura", "comprimento"];
 const FIELD_LABELS = {
-  ean: "EAN", ncm: "NCM", preco_venda: "Preço de venda",
+  ean: "EAN", ncm: "NCM", preco_venda: "PreÃ§o de venda",
   peso: "Peso", altura: "Altura", largura: "Largura", comprimento: "Comprimento",
 };
 const STEPS = ["upload", "validation", "enrichment", "review", "sync"];
 
-// ─────────────────────────────────────────────
+// âââââââââââââââââââââââââââââââââââââââââââââ
 // MARKETPLACE CONFIG
-// ─────────────────────────────────────────────
+// âââââââââââââââââââââââââââââââââââââââââââââ
 const MARKETPLACES = [
   {
-    id: "mercadolivre", label: "Mercado Livre", icon: "🛒", limit: 60,
-    rules: "Máx 60 chars. Formato: Marca + Produto + Spec principal + Voltagem. Sem adjetivos (melhor, incrível). Sem pontuação final. Sem repetição de palavras. Tudo em português claro.",
+    id: "mercadolivre", label: "Mercado Livre", icon: "ð", limit: 60,
+    rules: "MÃ¡x 60 chars. Formato: Marca + Produto + Spec principal + Voltagem. Sem adjetivos (melhor, incrÃ­vel). Sem pontuaÃ§Ã£o final. Sem repetiÃ§Ã£o de palavras. Tudo em portuguÃªs claro.",
   },
   {
-    id: "shopee", label: "Shopee", icon: "🛍️", limit: 120,
-    rules: "Máx 120 chars. Comece com a palavra-chave principal (produto). Inclua modelo, specs e marca. Pode usar hífen como separador. Linguagem direta e objetiva.",
+    id: "shopee", label: "Shopee", icon: "ðï¸", limit: 120,
+    rules: "MÃ¡x 120 chars. Comece com a palavra-chave principal (produto). Inclua modelo, specs e marca. Pode usar hÃ­fen como separador. Linguagem direta e objetiva.",
   },
   {
-    id: "amazon", label: "Amazon", icon: "📦", limit: 200,
-    rules: "Máx 200 chars. Formato: Marca + Produto + Modelo + Specs detalhadas. Use vírgula ou travessão como separadores. Não use CAPS excessivo. Sem preços ou promoções. Português formal.",
+    id: "amazon", label: "Amazon", icon: "ð¦", limit: 200,
+    rules: "MÃ¡x 200 chars. Formato: Marca + Produto + Modelo + Specs detalhadas. Use vÃ­rgula ou travessÃ£o como separadores. NÃ£o use CAPS excessivo. Sem preÃ§os ou promoÃ§Ãµes. PortuguÃªs formal.",
   },
   {
-    id: "magalu", label: "Magalu", icon: "🏪", limit: 120,
-    rules: "Máx 120 chars. Linguagem acessível e descritiva. Inclua marca e principais características. Público amplo, não apenas técnico.",
+    id: "magalu", label: "Magalu", icon: "ðª", limit: 120,
+    rules: "MÃ¡x 120 chars. Linguagem acessÃ­vel e descritiva. Inclua marca e principais caracterÃ­sticas. PÃºblico amplo, nÃ£o apenas tÃ©cnico.",
   },
   {
-    id: "tiktok", label: "TikTok Shop", icon: "🎵", limit: 100,
-    rules: "Máx 100 chars. Destaque o benefício principal primeiro. Tom mais informal e envolvente. Mencione o diferencial do produto. Evite jargão técnico excessivo.",
+    id: "tiktok", label: "TikTok Shop", icon: "ðµ", limit: 100,
+    rules: "MÃ¡x 100 chars. Destaque o benefÃ­cio principal primeiro. Tom mais informal e envolvente. Mencione o diferencial do produto. Evite jargÃ£o tÃ©cnico excessivo.",
   },
   {
-    id: "madeiramadeira", label: "Madeira Madeira", icon: "🪵", limit: 120,
-    rules: "Máx 120 chars. Tom técnico e detalhado. Inclua material, acabamento ou especificação construtiva quando relevante. Marca + produto + specs completas.",
+    id: "madeiramadeira", label: "Madeira Madeira", icon: "ðªµ", limit: 120,
+    rules: "MÃ¡x 120 chars. Tom tÃ©cnico e detalhado. Inclua material, acabamento ou especificaÃ§Ã£o construtiva quando relevante. Marca + produto + specs completas.",
   },
 ];
 
-// ─────────────────────────────────────────────
+// âââââââââââââââââââââââââââââââââââââââââââââ
 // COLUMN RESOLUTION
-// Maps various real-world column name variations → canonical internal names
-// ─────────────────────────────────────────────
+// Maps various real-world column name variations â canonical internal names
+// âââââââââââââââââââââââââââââââââââââââââââââ
 const COLUMN_ALIASES = {
-  // NCM: "NCM Classificação Fiscal", "NCM", "ncm_fiscal" etc → "ncm"
+  // NCM: "NCM ClassificaÃ§Ã£o Fiscal", "NCM", "ncm_fiscal" etc â "ncm"
   ncm: "ncm",
-  // Preço: "Preço de Venda", "Preco_venda", "Preço Venda" etc → "preco_venda"
+  // PreÃ§o: "PreÃ§o de Venda", "Preco_venda", "PreÃ§o Venda" etc â "preco_venda"
   preco_de_venda: "preco_venda",
   preco_venda: "preco_venda",
   valor_venda: "preco_venda",
   preco: "preco_venda",
-  // Dimensões com sufixo de unidade
+  // DimensÃµes com sufixo de unidade
   peso_kg: "peso",
   peso: "peso",
   altura_cm: "altura",
@@ -152,7 +152,7 @@ function resolveColumnName(raw) {
   // 1. Normalize the key
   const nk = String(raw)
     .toLowerCase()
-    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .normalize("NFD").replace(/[Ì-Í¯]/g, "")
     .replace(/[^a-z0-9]+/g, "_")
     .replace(/^_|_$/g, "");
   // 2. Direct match
@@ -164,18 +164,18 @@ function resolveColumnName(raw) {
   return nk;
 }
 
-// ─────────────────────────────────────────────
+// âââââââââââââââââââââââââââââââââââââââââââââ
 // UTILITIES
-// ─────────────────────────────────────────────
+// âââââââââââââââââââââââââââââââââââââââââââââ
 function normalizeKey(key) {
   return String(key)
     .toLowerCase()
-    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .normalize("NFD").replace(/[Ì-Í¯]/g, "")
     .replace(/[^a-z0-9]+/g, "_")
     .replace(/^_|_$/g, "");
 }
 
-// Cleans values that Excel stores as floats (e.g. EAN: 7893946001234.0 → "7893946001234")
+// Cleans values that Excel stores as floats (e.g. EAN: 7893946001234.0 â "7893946001234")
 function cleanNumericString(val) {
   if (val === null || val === undefined || val === "") return "";
   const s = String(val).trim();
@@ -183,14 +183,14 @@ function cleanNumericString(val) {
   return s;
 }
 
-// ─────────────────────────────────────────────
+// âââââââââââââââââââââââââââââââââââââââââââââ
 // TINY FIELD MAPPING
-// ─────────────────────────────────────────────
+// âââââââââââââââââââââââââââââââââââââââââââââ
 function mapOrigem(origem) {
   const o = (origem || "").toLowerCase().trim();
   if (o.includes("import") || o.includes("estrang"))
-    return "2 - Estrangeira - Adquirida no mercado interno, exceto a indicada no código 7";
-  return "0 - Nacional, exceto as indicadas nos códigos 3 a 5";
+    return "2 - Estrangeira - Adquirida no mercado interno, exceto a indicada no cÃ³digo 7";
+  return "0 - Nacional, exceto as indicadas nos cÃ³digos 3 a 5";
 }
 
 function mapGarantia(val) {
@@ -199,7 +199,7 @@ function mapGarantia(val) {
   return num ? `${num} meses` : String(val);
 }
 
-// After all products are enriched, resolve V→K parent/child relationships
+// After all products are enriched, resolve VâK parent/child relationships
 function resolveParentChild(products) {
   const vProds = products.filter(p => (p.tipo_de_produto || "S").toUpperCase() === "V");
 
@@ -208,7 +208,7 @@ function resolveParentChild(products) {
     if ((p.tipo_de_produto || "S").toUpperCase() !== "K") return p;
     const kSku = (p.enriched?.sku_interno || "").toUpperCase();
     const kName = (p.produto_fornecedor || "").toLowerCase()
-      .replace(/\s*[-–]\s*(110v|220v|127v|220|110|127|bivolt)\s*$/i, "").trim();
+      .replace(/\s*[-â]\s*(110v|220v|127v|220|110|127|bivolt)\s*$/i, "").trim();
 
     let parent = null;
     // Match by SKU prefix
@@ -220,7 +220,7 @@ function resolveParentChild(products) {
     if (!parent) {
       for (const v of vProds) {
         const vName = (v.produto_fornecedor || "").toLowerCase()
-          .replace(/\s*[-–]\s*(110v|220v|127v|220|110|127|bivolt)\s*$/i, "").trim();
+          .replace(/\s*[-â]\s*(110v|220v|127v|220|110|127|bivolt)\s*$/i, "").trim();
         if (vName.length > 5 && kName.includes(vName.substring(0, Math.min(vName.length, 25)))) {
           parent = v; break;
         }
@@ -253,74 +253,74 @@ function resolveParentChild(products) {
 }
 
 const TINY_HEADERS = [
-  "ID","Código (SKU)","Descrição","Unidade","Classificação fiscal","Origem","Preço",
-  "Valor IPI fixo","Observações","Situação","Estoque","Preço de custo","Cód do Fornecedor",
-  "Fornecedor","Localização","Estoque máximo","Estoque mínimo","Peso líquido (Kg)",
-  "Peso bruto (Kg)","GTIN/EAN","GTIN/EAN tributável","Descrição complementar","CEST",
-  "Código de Enquadramento IPI","Formato embalagem","Largura embalagem","Altura embalagem",
-  "Comprimento embalagem","Diâmetro embalagem","Tipo do produto","URL imagem 1","URL imagem 2",
-  "URL imagem 3","URL imagem 4","URL imagem 5","URL imagem 6","Categoria","Código do pai",
-  "Variações","Marca","Garantia","Sob encomenda","Preço promocional","URL imagem externa 1",
+  "ID","CÃ³digo (SKU)","DescriÃ§Ã£o","Unidade","ClassificaÃ§Ã£o fiscal","Origem","PreÃ§o",
+  "Valor IPI fixo","ObservaÃ§Ãµes","SituaÃ§Ã£o","Estoque","PreÃ§o de custo","CÃ³d do Fornecedor",
+  "Fornecedor","LocalizaÃ§Ã£o","Estoque mÃ¡ximo","Estoque mÃ­nimo","Peso lÃ­quido (Kg)",
+  "Peso bruto (Kg)","GTIN/EAN","GTIN/EAN tributÃ¡vel","DescriÃ§Ã£o complementar","CEST",
+  "CÃ³digo de Enquadramento IPI","Formato embalagem","Largura embalagem","Altura embalagem",
+  "Comprimento embalagem","DiÃ¢metro embalagem","Tipo do produto","URL imagem 1","URL imagem 2",
+  "URL imagem 3","URL imagem 4","URL imagem 5","URL imagem 6","Categoria","CÃ³digo do pai",
+  "VariaÃ§Ãµes","Marca","Garantia","Sob encomenda","PreÃ§o promocional","URL imagem externa 1",
   "URL imagem externa 2","URL imagem externa 3","URL imagem externa 4","URL imagem externa 5",
-  "URL imagem externa 6","Link do vídeo","Título SEO","Descrição SEO","Palavras chave SEO",
-  "Slug","Dias para preparação","Controlar lotes","Unidade por caixa","URL imagem externa 7",
+  "URL imagem externa 6","Link do vÃ­deo","TÃ­tulo SEO","DescriÃ§Ã£o SEO","Palavras chave SEO",
+  "Slug","Dias para preparaÃ§Ã£o","Controlar lotes","Unidade por caixa","URL imagem externa 7",
   "URL imagem externa 8","URL imagem externa 9","URL imagem externa 10","Markup",
-  "Permitir inclusão nas vendas","EX TIPI",
+  "Permitir inclusÃ£o nas vendas","EX TIPI",
 ];
 
 function buildTinyRow(p) {
   const img = p.generatedImage || "";
   return [
     "",                                          // ID
-    p.enriched?.sku_interno || "",               // Código (SKU)
-    p.enriched?.titulo_otimizado || p.produto_fornecedor || "", // Descrição (título mestre → Tiny)
+    p.enriched?.sku_interno || "",               // CÃ³digo (SKU)
+    p.enriched?.titulo_otimizado || p.produto_fornecedor || "", // DescriÃ§Ã£o (tÃ­tulo mestre â Tiny)
     "UN",                                        // Unidade
-    p.ncm || "",                                 // Classificação fiscal
+    p.ncm || "",                                 // ClassificaÃ§Ã£o fiscal
     mapOrigem(p.origem),                         // Origem
-    (p.preco_venda || "").replace(".", ","),      // Preço
+    (p.preco_venda || "").replace(".", ","),      // PreÃ§o
     "",                                          // Valor IPI fixo
-    "",                                          // Observações
-    "Ativo",                                     // Situação
+    "",                                          // ObservaÃ§Ãµes
+    "Ativo",                                     // SituaÃ§Ã£o
     "",                                          // Estoque
-    "",                                          // Preço de custo
-    p.codigo_fornecedor || "",                   // Cód do Fornecedor
+    "",                                          // PreÃ§o de custo
+    p.codigo_fornecedor || "",                   // CÃ³d do Fornecedor
     p.fornecedor || "",                          // Fornecedor
-    "",                                          // Localização
-    "",                                          // Estoque máximo
-    "",                                          // Estoque mínimo
-    (p.peso || "").toString().replace(".", ","), // Peso líquido
+    "",                                          // LocalizaÃ§Ã£o
+    "",                                          // Estoque mÃ¡ximo
+    "",                                          // Estoque mÃ­nimo
+    (p.peso || "").toString().replace(".", ","), // Peso lÃ­quido
     (p.peso || "").toString().replace(".", ","), // Peso bruto
     p.ean || "",                                 // GTIN/EAN
-    "",                                          // GTIN/EAN tributável
-    p.enriched?.descricao || "",                 // Descrição complementar (HTML rica → Tiny)
+    "",                                          // GTIN/EAN tributÃ¡vel
+    p.enriched?.descricao || "",                 // DescriÃ§Ã£o complementar (HTML rica â Tiny)
     p.enriched?.cest || "",                      // CEST
-    "999",                                       // Código de Enquadramento IPI
+    "999",                                       // CÃ³digo de Enquadramento IPI
     "Pacote / Caixa",                            // Formato embalagem
     (p.largura || "").toString().replace(".", ","),    // Largura
     (p.altura || "").toString().replace(".", ","),     // Altura
     (p.comprimento || "").toString().replace(".", ","),// Comprimento
-    "0",                                         // Diâmetro
+    "0",                                         // DiÃ¢metro
     (p.tipo_de_produto || "S").toUpperCase(),    // Tipo do produto
     img, "", "", "", "", "",                      // URLs imagem 1-6
     p.categoria_sugerida || "",                  // Categoria
-    p._codigoPai || "",                          // Código do pai
-    p.enriched?.variacoes || "",                 // Variações
+    p._codigoPai || "",                          // CÃ³digo do pai
+    p.enriched?.variacoes || "",                 // VariaÃ§Ãµes
     p.marca || "",                               // Marca
     mapGarantia(p.garantia),                     // Garantia
-    "não",                                       // Sob encomenda
-    "",                                          // Preço promocional
+    "nÃ£o",                                       // Sob encomenda
+    "",                                          // PreÃ§o promocional
     "", "", "", "", "", "",                       // URL imagem externa 1-6
-    "",                                          // Link do vídeo
-    p.enriched?.titulo_seo || "",                // Título SEO
-    p.enriched?.descricao_seo || "",             // Descrição SEO
+    "",                                          // Link do vÃ­deo
+    p.enriched?.titulo_seo || "",                // TÃ­tulo SEO
+    p.enriched?.descricao_seo || "",             // DescriÃ§Ã£o SEO
     p.enriched?.palavras_chave_seo || "",        // Palavras chave SEO
     p.enriched?.sku_interno || "",               // Slug
-    "0",                                         // Dias para preparação
-    "não",                                       // Controlar lotes
+    "0",                                         // Dias para preparaÃ§Ã£o
+    "nÃ£o",                                       // Controlar lotes
     "",                                          // Unidade por caixa
     "", "", "", "",                              // URL imagem externa 7-10
     "",                                          // Markup
-    "sim",                                       // Permitir inclusão nas vendas
+    "sim",                                       // Permitir inclusÃ£o nas vendas
     "",                                          // EX TIPI
   ];
 }
@@ -337,7 +337,7 @@ function buildTinyCSV(products) {
 }
 
 function downloadCSV(content, filename) {
-  const bom = "﻿"; // UTF-8 BOM for Excel compatibility
+  const bom = "ï»¿"; // UTF-8 BOM for Excel compatibility
   const blob = new Blob([bom + content], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -353,11 +353,11 @@ function parseNumber(val) {
   if (s.startsWith("#")) return null;
   s = s.replace(/[R$\s]/g, "");
   if (!s) return null;
-  // Brazilian format "1.234,56" → has both period (thousands) and comma (decimal)
+  // Brazilian format "1.234,56" â has both period (thousands) and comma (decimal)
   if (s.includes(",") && s.includes(".")) {
-    s = s.replace(/\./g, "").replace(",", ".");        // "1.234,56" → "1234.56"
+    s = s.replace(/\./g, "").replace(",", ".");        // "1.234,56" â "1234.56"
   } else if (s.includes(",") && !s.includes(".")) {
-    s = s.replace(",", ".");                            // "1234,56"  → "1234.56"
+    s = s.replace(",", ".");                            // "1234,56"  â "1234.56"
   }
   // Remove any remaining non-numeric characters except period and minus
   s = s.replace(/[^0-9.\-]/g, "");
@@ -385,19 +385,19 @@ function validateProduct(p) {
   const isV = tipo === "V";
 
   for (const f of REQUIRED_FIELDS) {
-    // EAN é opcional para produtos do tipo V (produto pai com variações)
+    // EAN Ã© opcional para produtos do tipo V (produto pai com variaÃ§Ãµes)
     if (f === "ean" && isV) continue;
-    if (!p[f] && p[f] !== 0) errors.push({ field: f, msg: `${FIELD_LABELS[f]} é obrigatório` });
+    if (!p[f] && p[f] !== 0) errors.push({ field: f, msg: `${FIELD_LABELS[f]} Ã© obrigatÃ³rio` });
   }
-  if (p.ean && !isValidEAN(p.ean)) errors.push({ field: "ean", msg: `EAN deve ter 8 ou 13 dígitos numéricos (recebido: "${p.ean}")` });
-  if (p.ncm && !isValidNCM(p.ncm)) errors.push({ field: "ncm", msg: `NCM deve ter 8 dígitos numéricos (recebido: "${p.ncm}")` });
-  if (p.preco_venda && !isValidPrice(p.preco_venda)) errors.push({ field: "preco_venda", msg: `Preço deve ser um número válido (recebido: "${p.preco_venda}")` });
+  if (p.ean && !isValidEAN(p.ean)) errors.push({ field: "ean", msg: `EAN deve ter 8 ou 13 dÃ­gitos numÃ©ricos (recebido: "${p.ean}")` });
+  if (p.ncm && !isValidNCM(p.ncm)) errors.push({ field: "ncm", msg: `NCM deve ter 8 dÃ­gitos numÃ©ricos (recebido: "${p.ncm}")` });
+  if (p.preco_venda && !isValidPrice(p.preco_venda)) errors.push({ field: "preco_venda", msg: `PreÃ§o deve ser um nÃºmero vÃ¡lido (recebido: "${p.preco_venda}")` });
   return errors;
 }
 
-// ─────────────────────────────────────────────
+// âââââââââââââââââââââââââââââââââââââââââââââ
 // API FUNCTIONS
-// ─────────────────────────────────────────────
+// âââââââââââââââââââââââââââââââââââââââââââââ
 async function enrichProductWithAI(product, apiKey, rules = {}, onPhase) {
   const {
     titleTemplate = "", descriptionStyles = [], additionalInstructions = "",
@@ -406,28 +406,28 @@ async function enrichProductWithAI(product, apiKey, rules = {}, onPhase) {
   } = rules;
   const apiBase = corsProxy ? `${corsProxy}https://api.openai.com` : "https://api.openai.com";
 
-  // ── STEP 1: Web research + CEST lookup ──────────────────────────────────
+  // ââ STEP 1: Web research + CEST lookup ââââââââââââââââââââââââââââââââââ
   onPhase?.("Pesquisando na web...");
   let webContext = "";
   try {
-    const searchPrompt = `Produto: "${product.produto_fornecedor}" | Marca: "${product.marca || "—"}" | NCM: ${product.ncm}
+    const searchPrompt = `Produto: "${product.produto_fornecedor}" | Marca: "${product.marca || "â"}" | NCM: ${product.ncm}
 
-TAREFA 1 — CEST (PRIORIDADE MÁXIMA):
-Consulte o Convênio ICMS 142/2018 (tabela CEST) e encontre o código CEST correspondente ao NCM ${product.ncm} para o produto "${product.produto_fornecedor}". Retorne o código no formato XX.XXX.XX. Se houver mais de um CEST possível para o NCM, escolha o mais específico para o tipo de produto. Retorne o CEST encontrado claramente identificado como "CEST: XX.XXX.XX".
+TAREFA 1 â CEST (PRIORIDADE MÃXIMA):
+Consulte o ConvÃªnio ICMS 142/2018 (tabela CEST) e encontre o cÃ³digo CEST correspondente ao NCM ${product.ncm} para o produto "${product.produto_fornecedor}". Retorne o cÃ³digo no formato XX.XXX.XX. Se houver mais de um CEST possÃ­vel para o NCM, escolha o mais especÃ­fico para o tipo de produto. Retorne o CEST encontrado claramente identificado como "CEST: XX.XXX.XX".
 
-TAREFA 2 — ESPECIFICAÇÕES TÉCNICAS:
-Busque a ficha técnica completa deste produto: potência (W), tensão (V/bivolt), velocidade (RPM), capacidade, dimensões (mm), peso (kg), disco/acessório incluído, classe de proteção (IP), certificações (INMETRO, CE, UL), aplicações recomendadas, tipo de motor, características de segurança.
+TAREFA 2 â ESPECIFICAÃÃES TÃCNICAS:
+Busque a ficha tÃ©cnica completa deste produto: potÃªncia (W), tensÃ£o (V/bivolt), velocidade (RPM), capacidade, dimensÃµes (mm), peso (kg), disco/acessÃ³rio incluÃ­do, classe de proteÃ§Ã£o (IP), certificaÃ§Ãµes (INMETRO, CE, UL), aplicaÃ§Ãµes recomendadas, tipo de motor, caracterÃ­sticas de seguranÃ§a.
 
-TAREFA 3 — SEO E MERCADO:
-Identifique as 10 principais palavras-chave que consumidores brasileiros usam para buscar este produto no Mercado Livre, Amazon BR e Shopee. Inclua variações com voltagem, aplicação e marca.
+TAREFA 3 â SEO E MERCADO:
+Identifique as 10 principais palavras-chave que consumidores brasileiros usam para buscar este produto no Mercado Livre, Amazon BR e Shopee. Inclua variaÃ§Ãµes com voltagem, aplicaÃ§Ã£o e marca.
 
-Retorne as três seções claramente separadas.`;
+Retorne as trÃªs seÃ§Ãµes claramente separadas.`;
     const res1 = await fetch(`${apiBase}/v1/chat/completions`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
       body: JSON.stringify({
         model: "gpt-4o-search-preview",
-        // Note: gpt-4o-search-preview does NOT support temperature — omit it
+        // Note: gpt-4o-search-preview does NOT support temperature â omit it
         messages: [{ role: "user", content: searchPrompt }],
       }),
     });
@@ -437,110 +437,110 @@ Retorne as três seções claramente separadas.`;
     }
     // If not ok, silently fall through to step 2 with empty webContext
   } catch (_) {
-    // web research failed — proceed with data-only enrichment
+    // web research failed â proceed with data-only enrichment
   }
 
-  // ── STEP 2: Structured generation (JSON mode) ───────────────────────────
-  onPhase?.("Gerando conteúdo...");
+  // ââ STEP 2: Structured generation (JSON mode) âââââââââââââââââââââââââââ
+  onPhase?.("Gerando conteÃºdo...");
 
   const titleInstruction = titleTemplate
-    ? `Siga EXATAMENTE este padrão: "${titleTemplate}". Substitua cada variável ({Marca}, {Produto}, {Potência}, {Tensão}, etc.) pelo valor extraído dos dados. Omita variáveis que não se aplicam. Máx 60 chars.`
-    : `Crie o título-mestre do produto (campo "Descrição" no Tiny ERP, base para anúncios em marketplaces).
-   ESTRUTURA: [Tipo do produto] [Especificação principal] [Modelo/Referência] [Marca]
-   Exemplos: "Parafusadeira/Furadeira 20V 1/2pol PFV120 Vonder" | "Serra Mármore 1400W 110mm SM1400 Vonder" | "Esmerilhadeira Angular 9pol 2200W GWS2200 Bosch"
-   Regras: máx 60 chars • sem pipes "|" nem aspas no conteúdo • inclua potência/voltagem/capacidade quando relevante • inclua código de referência do modelo quando disponível • termine com a marca • use abreviações: "pol" para polegadas, "W" para watts, "V" para volts`;
+    ? `Siga EXATAMENTE este padrÃ£o: "${titleTemplate}". Substitua cada variÃ¡vel ({Marca}, {Produto}, {PotÃªncia}, {TensÃ£o}, etc.) pelo valor extraÃ­do dos dados. Omita variÃ¡veis que nÃ£o se aplicam. MÃ¡x 60 chars.`
+    : `Crie o tÃ­tulo-mestre do produto (campo "DescriÃ§Ã£o" no Tiny ERP, base para anÃºncios em marketplaces).
+   ESTRUTURA: [Tipo do produto] [EspecificaÃ§Ã£o principal] [Modelo/ReferÃªncia] [Marca]
+   Exemplos: "Parafusadeira/Furadeira 20V 1/2pol PFV120 Vonder" | "Serra MÃ¡rmore 1400W 110mm SM1400 Vonder" | "Esmerilhadeira Angular 9pol 2200W GWS2200 Bosch"
+   Regras: mÃ¡x 60 chars â¢ sem pipes "|" nem aspas no conteÃºdo â¢ inclua potÃªncia/voltagem/capacidade quando relevante â¢ inclua cÃ³digo de referÃªncia do modelo quando disponÃ­vel â¢ termine com a marca â¢ use abreviaÃ§Ãµes: "pol" para polegadas, "W" para watts, "V" para volts`;
 
   const activeMPs = MARKETPLACES.filter(m => activeMarketplaces.includes(m.id));
   const mpInstructions = activeMPs.map(m => `  - "${m.id}": ${m.rules}`).join("\n");
 
   const STYLE_LABELS = {
-    tecnico: "tom técnico com foco em especificações detalhadas",
-    marketplace: "linguagem otimizada para marketplace com palavras-chave estratégicas",
-    beneficios: "destaque os benefícios práticos para o usuário final",
+    tecnico: "tom tÃ©cnico com foco em especificaÃ§Ãµes detalhadas",
+    marketplace: "linguagem otimizada para marketplace com palavras-chave estratÃ©gicas",
+    beneficios: "destaque os benefÃ­cios prÃ¡ticos para o usuÃ¡rio final",
     garantia: "sempre mencione a garantia do produto",
     origem: "sempre mencione a origem (importado/nacional)",
   };
   const styleText = descriptionStyles.length
     ? `Estilo: ${descriptionStyles.map(s => STYLE_LABELS[s] || s).join("; ")}.`
-    : "Descrição clara, completa e profissional.";
+    : "DescriÃ§Ã£o clara, completa e profissional.";
   const extraInstructions = additionalInstructions.trim()
-    ? `\nInstruções adicionais: ${additionalInstructions.trim()}` : "";
+    ? `\nInstruÃ§Ãµes adicionais: ${additionalInstructions.trim()}` : "";
 
-  const prompt = `Você é especialista em cadastro de produtos para e-commerce brasileiro.
-Com base nos dados abaixo, gere em PORTUGUÊS DO BRASIL todos os campos para o Tiny ERP.
+  const prompt = `VocÃª Ã© especialista em cadastro de produtos para e-commerce brasileiro.
+Com base nos dados abaixo, gere em PORTUGUÃS DO BRASIL todos os campos para o Tiny ERP.
 
 CONTEXTO DA PESQUISA WEB:
-${webContext || "(pesquisa não disponível — use seu conhecimento)"}
+${webContext || "(pesquisa nÃ£o disponÃ­vel â use seu conhecimento)"}
 
-INSTRUÇÕES DE GERAÇÃO:
+INSTRUÃÃES DE GERAÃÃO:
 
-1. "sku_interno": SKU interno no padrão [CATEG]-[SPEC]-[MODELO]-[MARCA][-VARIAÇÃO] em MAIÚSCULAS com hífens.
+1. "sku_interno": SKU interno no padrÃ£o [CATEG]-[SPEC]-[MODELO]-[MARCA][-VARIAÃÃO] em MAIÃSCULAS com hÃ­fens.
    Exemplos: "LAV-1200W-LK1305-KALA-127V", "SER-1400W-SM1400-VOND-220V", "FUR-710W-HP0704-BOSH"
-   Use abreviações: LAV=Lavadora, SER=Serra, FUR=Furadeira, PAR=Parafusadeira, ESM=Esmerilhadeira, LIX=Lixadeira, AMP=Amplificador, GER=Gerador, POL=Poliadeira, etc.
-   Para tipo K (variante), inclua a variação ao final (ex: -127V, -220V, -BIVOLT).
+   Use abreviaÃ§Ãµes: LAV=Lavadora, SER=Serra, FUR=Furadeira, PAR=Parafusadeira, ESM=Esmerilhadeira, LIX=Lixadeira, AMP=Amplificador, GER=Gerador, POL=Poliadeira, etc.
+   Para tipo K (variante), inclua a variaÃ§Ã£o ao final (ex: -127V, -220V, -BIVOLT).
 
-2. "cest": Código CEST para NCM ${product.ncm} conforme Convênio ICMS 142/2018 (Anexo II do Convênio ICMS 92/2015 e atualizações). Formato obrigatório: "XX.XXX.XX".
-   IMPORTANTE: Se o contexto da pesquisa web trouxer o CEST, use-o. Se não trouxer, determine o CEST com base no NCM e no tipo de produto usando seu conhecimento da tabela CEST. Retorne "" APENAS se for genuinamente impossível determinar — não retorne vazio por falta de tentativa.
+2. "cest": CÃ³digo CEST para NCM ${product.ncm} conforme ConvÃªnio ICMS 142/2018 (Anexo II do ConvÃªnio ICMS 92/2015 e atualizaÃ§Ãµes). Formato obrigatÃ³rio: "XX.XXX.XX".
+   IMPORTANTE: Se o contexto da pesquisa web trouxer o CEST, use-o. Se nÃ£o trouxer, determine o CEST com base no NCM e no tipo de produto usando seu conhecimento da tabela CEST. Retorne "" APENAS se for genuinamente impossÃ­vel determinar â nÃ£o retorne vazio por falta de tentativa.
 
-3. "descricao_complementar": Tagline de venda do produto — 1 a 2 frases curtas e comerciais (máx 160 chars) que resumem o diferencial principal e o benefício para o comprador. Tom persuasivo, direto, sem clichês genéricos.
-   Exemplo: "Parafusadeira profissional 20V com torque de 45Nm e bateria de longa duração — ideal para marcenaria, construção e manutenção."
+3. "descricao_complementar": Tagline de venda do produto â 1 a 2 frases curtas e comerciais (mÃ¡x 160 chars) que resumem o diferencial principal e o benefÃ­cio para o comprador. Tom persuasivo, direto, sem clichÃªs genÃ©ricos.
+   Exemplo: "Parafusadeira profissional 20V com torque de 45Nm e bateria de longa duraÃ§Ã£o â ideal para marcenaria, construÃ§Ã£o e manutenÃ§Ã£o."
 
 4. "titulo_otimizado": ${titleInstruction}
 
-5. "titulos": Objeto com título para cada marketplace abaixo, respeitando RIGOROSAMENTE limite de chars e regras:
+5. "titulos": Objeto com tÃ­tulo para cada marketplace abaixo, respeitando RIGOROSAMENTE limite de chars e regras:
 ${mpInstructions}
 
-6. "descricao": Descrição HTML COMPLETA do produto — será importada como "Descrição complementar" no Tiny ERP e enviada ao e-commerce/marketplace como descrição longa.
+6. "descricao": DescriÃ§Ã£o HTML COMPLETA do produto â serÃ¡ importada como "DescriÃ§Ã£o complementar" no Tiny ERP e enviada ao e-commerce/marketplace como descriÃ§Ã£o longa.
    ${styleText}${extraInstructions}
 
-   ESTRUTURA OBRIGATÓRIA (6 blocos, nesta ordem, em HTML limpo com <h3>, <p>, <ul>, <li>, <strong>):
+   ESTRUTURA OBRIGATÃRIA (6 blocos, nesta ordem, em HTML limpo com <h3>, <p>, <ul>, <li>, <strong>):
 
-   BLOCO 1 — <h3>Sobre o Produto</h3>
-   Parágrafo de abertura comercial (4-6 linhas): o que é o produto, para que serve, para quem é indicado. Tom profissional e persuasivo. Contextualize o valor para o comprador — não apenas "é uma furadeira", mas "é a ferramenta ideal para quem precisa de X com performance Y".
+   BLOCO 1 â <h3>Sobre o Produto</h3>
+   ParÃ¡grafo de abertura comercial (4-6 linhas): o que Ã© o produto, para que serve, para quem Ã© indicado. Tom profissional e persuasivo. Contextualize o valor para o comprador â nÃ£o apenas "Ã© uma furadeira", mas "Ã© a ferramenta ideal para quem precisa de X com performance Y".
 
-   BLOCO 2 — <h3>Principais Aplicações</h3>
-   Lista <ul> com 5-7 aplicações práticas e casos de uso reais, específicos ao produto.
+   BLOCO 2 â <h3>Principais AplicaÃ§Ãµes</h3>
+   Lista <ul> com 5-7 aplicaÃ§Ãµes prÃ¡ticas e casos de uso reais, especÃ­ficos ao produto.
 
-   BLOCO 3 — <h3>Diferenciais e Benefícios</h3>
-   Lista <ul> com 4-6 diferenciais competitivos: durabilidade, ergonomia, tecnologia, segurança, rendimento, facilidade de uso, economia de energia, certificações. Seja específico — não use "alta qualidade" genérico.
+   BLOCO 3 â <h3>Diferenciais e BenefÃ­cios</h3>
+   Lista <ul> com 4-6 diferenciais competitivos: durabilidade, ergonomia, tecnologia, seguranÃ§a, rendimento, facilidade de uso, economia de energia, certificaÃ§Ãµes. Seja especÃ­fico â nÃ£o use "alta qualidade" genÃ©rico.
 
-   BLOCO 4 — <h3>Especificações Técnicas</h3>
-   Lista <ul> completa com TODOS os atributos técnicos relevantes: potência (W), tensão (V), velocidade (RPM), torque, capacidade, disco/bit incluído, dimensões, peso, nível de ruído, classe de proteção IP, certificações (INMETRO, CE, UL). Use <strong>Nome do atributo:</strong> Valor.
+   BLOCO 4 â <h3>EspecificaÃ§Ãµes TÃ©cnicas</h3>
+   Lista <ul> completa com TODOS os atributos tÃ©cnicos relevantes: potÃªncia (W), tensÃ£o (V), velocidade (RPM), torque, capacidade, disco/bit incluÃ­do, dimensÃµes, peso, nÃ­vel de ruÃ­do, classe de proteÃ§Ã£o IP, certificaÃ§Ãµes (INMETRO, CE, UL). Use <strong>Nome do atributo:</strong> Valor.
 
-   BLOCO 5 — <h3>Conteúdo da Embalagem</h3>
-   Lista <ul> com os itens inclusos na embalagem (infira com base no tipo de produto se não especificado).
+   BLOCO 5 â <h3>ConteÃºdo da Embalagem</h3>
+   Lista <ul> com os itens inclusos na embalagem (infira com base no tipo de produto se nÃ£o especificado).
 
-   BLOCO 6 — Parágrafo de fechamento com CTA (2-3 linhas):
-   Reforce o benefício principal, crie urgência ou confiança (garantia, suporte, qualidade), e termine com um call-to-action de compra. Ex: "Invista em performance e durabilidade. Adquira agora a [Produto] [Marca] e tenha à disposição a ferramenta que profissionais confiam."
+   BLOCO 6 â ParÃ¡grafo de fechamento com CTA (2-3 linhas):
+   Reforce o benefÃ­cio principal, crie urgÃªncia ou confianÃ§a (garantia, suporte, qualidade), e termine com um call-to-action de compra. Ex: "Invista em performance e durabilidade. Adquira agora a [Produto] [Marca] e tenha Ã  disposiÃ§Ã£o a ferramenta que profissionais confiam."
 
-   REQUISITOS: mínimo 400 palavras • use apenas tags HTML básicas (<h3>, <p>, <ul>, <li>, <strong>) • sem inline CSS • sem classes • inclua palavras-chave naturalmente para SEO sem forçar • conteúdo deve informar E convencer
+   REQUISITOS: mÃ­nimo 400 palavras â¢ use apenas tags HTML bÃ¡sicas (<h3>, <p>, <ul>, <li>, <strong>) â¢ sem inline CSS â¢ sem classes â¢ inclua palavras-chave naturalmente para SEO sem forÃ§ar â¢ conteÃºdo deve informar E convencer
 
-7. "atributos": Array [{nome, valor}] com especificações técnicas do produto.
+7. "atributos": Array [{nome, valor}] com especificaÃ§Ãµes tÃ©cnicas do produto.
 
 8. "tags": Array de 10 a 15 palavras-chave para SEO.
 
-9. "titulo_seo": Título SEO (máx 70 chars). Palavra-chave principal + marca. Ex: "Serra Mármore 1400W 220V Vonder SM-1400 Disco 110mm"
+9. "titulo_seo": TÃ­tulo SEO (mÃ¡x 70 chars). Palavra-chave principal + marca. Ex: "Serra MÃ¡rmore 1400W 220V Vonder SM-1400 Disco 110mm"
 
-10. "descricao_seo": Meta description SEO (máx 160 chars) descrevendo o produto para buscadores.
+10. "descricao_seo": Meta description SEO (mÃ¡x 160 chars) descrevendo o produto para buscadores.
 
-11. "palavras_chave_seo": String com 8-12 termos separados por vírgula para campo SEO.
+11. "palavras_chave_seo": String com 8-12 termos separados por vÃ­rgula para campo SEO.
 
 12. "variacoes": Se tipo_de_produto for "K" (variante filho), retorne "Atributo: valor" (ex: "Voltagem: 127V"). Para "S" ou "V", retorne "".
 
-Retorne APENAS JSON válido com exatamente estas chaves: sku_interno, cest, descricao_complementar, titulo_otimizado, titulos, descricao, atributos, tags, titulo_seo, descricao_seo, palavras_chave_seo, variacoes.
+Retorne APENAS JSON vÃ¡lido com exatamente estas chaves: sku_interno, cest, descricao_complementar, titulo_otimizado, titulos, descricao, atributos, tags, titulo_seo, descricao_seo, palavras_chave_seo, variacoes.
 
 DADOS DO PRODUTO:
 Nome: ${product.produto_fornecedor}
-Marca: ${product.marca || "—"}
-Categoria: ${product.categoria_sugerida || "—"}
+Marca: ${product.marca || "â"}
+Categoria: ${product.categoria_sugerida || "â"}
 NCM: ${product.ncm}
-Origem: ${product.origem || "—"}
+Origem: ${product.origem || "â"}
 Tipo: ${product.tipo_de_produto || "S"}
-Peso: ${product.peso}kg | Dimensões: ${product.altura}×${product.largura}×${product.comprimento}cm
-Preço: R$ ${product.preco_venda}
-Garantia: ${product.garantia || "—"} meses
-Observações: ${product.observacoes || "—"}
-${product.link_benchmark ? `Referência mercado: ${product.link_benchmark}` : ""}`;
+Peso: ${product.peso}kg | DimensÃµes: ${product.altura}Ã${product.largura}Ã${product.comprimento}cm
+PreÃ§o: R$ ${product.preco_venda}
+Garantia: ${product.garantia || "â"} meses
+ObservaÃ§Ãµes: ${product.observacoes || "â"}
+${product.link_benchmark ? `ReferÃªncia mercado: ${product.link_benchmark}` : ""}`;
 
   let res2;
   try {
@@ -555,14 +555,14 @@ ${product.link_benchmark ? `Referência mercado: ${product.link_benchmark}` : ""
       }),
     });
   } catch (netErr) {
-    throw new Error(`❌ Erro de rede: não foi possível conectar à OpenAI. Causas comuns: firewall corporativo, extensão do navegador bloqueando a requisição, ou VPN. Configure um Proxy CORS nas Configurações para contornar. (${netErr.message})`);
+    throw new Error(`â Erro de rede: nÃ£o foi possÃ­vel conectar Ã  OpenAI. Causas comuns: firewall corporativo, extensÃ£o do navegador bloqueando a requisiÃ§Ã£o, ou VPN. Configure um Proxy CORS nas ConfiguraÃ§Ãµes para contornar. (${netErr.message})`);
   }
   if (!res2.ok) {
     const err = await res2.json().catch(() => ({}));
     let msg = err?.error?.message || `OpenAI HTTP ${res2.status}`;
-    if (res2.status === 429) msg = "⚠️ Limite de uso atingido. Adicione créditos em platform.openai.com/settings/billing";
-    if (res2.status === 401) msg = "🔑 Chave de API inválida ou expirada. Verifique nas Configurações.";
-    if (res2.status === 403) msg = "🚫 Acesso negado. Chave sem permissão para este modelo.";
+    if (res2.status === 429) msg = "â ï¸ Limite de uso atingido. Adicione crÃ©ditos em platform.openai.com/settings/billing";
+    if (res2.status === 401) msg = "ð Chave de API invÃ¡lida ou expirada. Verifique nas ConfiguraÃ§Ãµes.";
+    if (res2.status === 403) msg = "ð« Acesso negado. Chave sem permissÃ£o para este modelo.";
     throw new Error(msg);
   }
   const data2 = await res2.json();
@@ -572,11 +572,11 @@ ${product.link_benchmark ? `Referência mercado: ${product.link_benchmark}` : ""
   try {
     return JSON.parse(cleaned);
   } catch {
-    throw new Error(`Resposta da IA não é JSON válido. Trecho: "${cleaned.slice(0, 80)}"`);
+    throw new Error(`Resposta da IA nÃ£o Ã© JSON vÃ¡lido. Trecho: "${cleaned.slice(0, 80)}"`);
   }
 }
 
-// ─── OAuth2 PKCE helpers (Tiny ERP) ─────────────────────────────────────────
+// âââ OAuth2 PKCE helpers (Tiny ERP) âââââââââââââââââââââââââââââââââââââââââ
 async function generatePKCE() {
   const arr = new Uint8Array(32);
   crypto.getRandomValues(arr);
@@ -621,10 +621,10 @@ async function refreshTinyTokenFn(refreshToken, clientId, clientSecret, corsProx
   if (!resp.ok) throw new Error(`Refresh failed: ${resp.status}`);
   return resp.json();
 }
-// ─────────────────────────────────────────────────────────────────────────────
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 async function generateProductImage(productName, enrichedDesc, customPrompt, apiKey) {
-  const fullPrompt = `Fotografia lifestyle profissional de alta qualidade, iluminação cinematográfica natural, fundo desfocado bokeh. Produto: ${productName}. ${customPrompt}. Estilo: anúncio comercial premium para e-commerce brasileiro. Ultra realista, 4K.`;
+  const fullPrompt = `Fotografia lifestyle profissional de alta qualidade, iluminaÃ§Ã£o cinematogrÃ¡fica natural, fundo desfocado bokeh. Produto: ${productName}. ${customPrompt}. Estilo: anÃºncio comercial premium para e-commerce brasileiro. Ultra realista, 4K.`;
   const res = await fetch(`${rules?.corsProxy ? `${rules.corsProxy}https://api.openai.com` : "https://api.openai.com"}/v1/images/generations`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
@@ -644,56 +644,56 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
     : "https://api.tiny.com.br/public-api/v3";
 
   const tipoRaw = (product.tipo_de_produto || "S").toUpperCase();
-  // API v3: V = Com Variações (filhos K vão em variacoes[]), K individual = fallback S, S = Simples
+  // API v3: V = Com VariaÃ§Ãµes (filhos K vÃ£o em variacoes[]), K individual = fallback S, S = Simples
   const tipoApi = tipoRaw === "V" ? "V" : "S";
 
-  // garantia: API v3 espera número inteiro (meses), não string
+  // garantia: API v3 espera nÃºmero inteiro (meses), nÃ£o string
   const garantiaNum = (() => {
     const n = parseInt(String(product.garantia || "").replace(/\D/g, ""), 10);
     return isNaN(n) ? undefined : n;
   })();
 
   const body = {
-    // ── Identificação ──────────────────────────────────────
+    // ââ IdentificaÃ§Ã£o ââââââââââââââââââââââââââââââââââââââ
     nome:           product.enriched?.titulo_otimizado || product.produto_fornecedor,
     sku:            product.enriched?.sku_interno || product.codigo_fornecedor || "",
     ean:            String(product.ean || ""),
     situacao:       "A",
     tipo:           tipoApi,
 
-    // ── Preços ─────────────────────────────────────────────
+    // ââ PreÃ§os âââââââââââââââââââââââââââââââââââââââââââââ
     preco:          parseNumber(product.preco_venda) ?? 0,
     precoCusto:     parseNumber(product.preco_custo) ?? undefined,
 
-    // ── Classificação fiscal ───────────────────────────────
+    // ââ ClassificaÃ§Ã£o fiscal âââââââââââââââââââââââââââââââ
     unidadeMedida:  product.unidade || "UN",
     ncm:            String(product.ncm || "").replace(/\D/g, ""),
     cest:           product.enriched?.cest || "",
     origem:         (product.origem || "").toLowerCase().includes("import") ? "2" : "0",
 
-    // ── Descrições ─────────────────────────────────────────
-    // "descricao" = título mestre (campo "Descrição" no Tiny, base de marketplaces)
+    // ââ DescriÃ§Ãµes âââââââââââââââââââââââââââââââââââââââââ
+    // "descricao" = tÃ­tulo mestre (campo "DescriÃ§Ã£o" no Tiny, base de marketplaces)
     descricao:               product.enriched?.titulo_otimizado || product.produto_fornecedor,
-    // "descricaoComplementar" = HTML rico (campo "Descrição complementar" no Tiny)
+    // "descricaoComplementar" = HTML rico (campo "DescriÃ§Ã£o complementar" no Tiny)
     descricaoComplementar:   product.enriched?.descricao || "",
 
-    // ── Logística ──────────────────────────────────────────
+    // ââ LogÃ­stica ââââââââââââââââââââââââââââââââââââââââââ
     peso:           parseNumber(product.peso) ?? 0,
     pesoBruto:      parseNumber(product.peso) ?? 0,
     largura:        parseNumber(product.largura) ?? 0,
     altura:         parseNumber(product.altura) ?? 0,
     comprimento:    parseNumber(product.comprimento) ?? 0,
 
-    // ── Marketing ──────────────────────────────────────────
+    // ââ Marketing ââââââââââââââââââââââââââââââââââââââââââ
     marcaId:        product._marcaId || undefined,
     marcaNome:      product._marcaSearch || product.marca || undefined,
-    // marca: API v3 exige {id, nome} com ID cadastrado no Tiny — omitir para evitar erro 400
+    // marca: API v3 exige {id, nome} com ID cadastrado no Tiny â omitir para evitar erro 400
     garantia:       garantiaNum,
     palavrasChave:  Array.isArray(product.enriched?.tags)
                       ? product.enriched.tags.join(", ")
                       : (product.enriched?.tags || ""),
 
-    // ── SEO ────────────────────────────────────────────────
+    // ââ SEO ââââââââââââââââââââââââââââââââââââââââââââââââ
     seo: {
       titulo:    product.enriched?.titulo_seo || "",
       descricao: product.enriched?.descricao_seo || "",
@@ -701,11 +701,11 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
                    .toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]/g, ""),
     },
 
-    // ── Imagens ────────────────────────────────────────────
+    // ââ Imagens ââââââââââââââââââââââââââââââââââââââââââââ
     imagens: product.generatedImage ? [{ url: product.generatedImage }] : [],
   };
 
-  // Para produtos V: incluir variações dos filhos K no payload
+  // Para produtos V: incluir variaÃ§Ãµes dos filhos K no payload
   if (tipoApi === "V" && children.length > 0) {
     body.variacoes = children.map(k => {
       const grade = [];
@@ -731,7 +731,7 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
     });
   }
 
-  // Remove campos vazios/null para não poluir o payload
+  // Remove campos vazios/null para nÃ£o poluir o payload
   const clean = (obj) => Object.fromEntries(
     Object.entries(obj).filter(([, v]) => v !== "" && v !== null && v !== undefined)
   );
@@ -751,7 +751,7 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
     const m = netErr.message.toLowerCase();
     if (m.includes("failed to fetch") || m.includes("cors") || m.includes("network")) {
       throw new Error(
-        "CORS bloqueado — configure o Proxy CORS nas Configurações " +
+        "CORS bloqueado â configure o Proxy CORS nas ConfiguraÃ§Ãµes " +
         "(ex: https://corsproxy.io/?). O Tiny bloqueia chamadas diretas do navegador."
       );
     }
@@ -764,22 +764,22 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
     const detail = err?.mensagem
       || (err?.detalhes || []).map(d => `${d.campo}: ${d.mensagem}`).join(", ")
       || err?.message || `HTTP ${res.status}`;
-    if (res.status === 401) throw new Error("Token inválido ou expirado — atualize nas Configurações.");
-    if (res.status === 422) throw new Error(`Dados inválidos: ${detail}`);
-    if (res.status === 429) throw new Error("Rate limit — aguarde e tente novamente.");
+    if (res.status === 401) throw new Error("Token invÃ¡lido ou expirado â atualize nas ConfiguraÃ§Ãµes.");
+    if (res.status === 422) throw new Error(`Dados invÃ¡lidos: ${detail}`);
+    if (res.status === 429) throw new Error("Rate limit â aguarde e tente novamente.");
     throw new Error(detail);
   }
   return await res.json();
 }
 
-// ─────────────────────────────────────────────
+// âââââââââââââââââââââââââââââââââââââââââââââ
 // STEP BAR
-// ─────────────────────────────────────────────
+// âââââââââââââââââââââââââââââââââââââââââââââ
 const STEP_META = [
   { id: "upload", label: "Upload", Icon: Upload },
-  { id: "validation", label: "Validação", Icon: CheckCircle },
+  { id: "validation", label: "ValidaÃ§Ã£o", Icon: CheckCircle },
   { id: "enrichment", label: "Enriquecimento", Icon: Zap },
-  { id: "review", label: "Revisão", Icon: Eye },
+  { id: "review", label: "RevisÃ£o", Icon: Eye },
   { id: "sync", label: "Envio", Icon: Send },
 ];
 
@@ -815,30 +815,30 @@ function StepBar({ current, onNavigate }) {
   );
 }
 
-// ─────────────────────────────────────────────
+// âââââââââââââââââââââââââââââââââââââââââââââ
 // SETTINGS MODAL (APIs + Regras de IA)
-// ─────────────────────────────────────────────
+// âââââââââââââââââââââââââââââââââââââââââââââ
 const TITLE_VARIABLES = [
   { label: "{Marca}", desc: "Marca do produto" },
   { label: "{Produto}", desc: "Nome do produto" },
-  { label: "{Modelo}", desc: "Código/modelo" },
-  { label: "{Potência}", desc: "Potência em W" },
-  { label: "{Tensão}", desc: "Tensão/voltagem" },
-  { label: "{Capacidade}", desc: "Capacidade (L, Ah…)" },
-  { label: "{Especificação}", desc: "Spec principal" },
+  { label: "{Modelo}", desc: "CÃ³digo/modelo" },
+  { label: "{PotÃªncia}", desc: "PotÃªncia em W" },
+  { label: "{TensÃ£o}", desc: "TensÃ£o/voltagem" },
+  { label: "{Capacidade}", desc: "Capacidade (L, Ahâ¦)" },
+  { label: "{EspecificaÃ§Ã£o}", desc: "Spec principal" },
 ];
 
 const DESCRIPTION_STYLES = [
-  { id: "tecnico", label: "Tom técnico", desc: "Foco em especificações detalhadas" },
-  { id: "marketplace", label: "Otimizado para marketplace", desc: "Palavras-chave estratégicas" },
-  { id: "beneficios", label: "Foco em benefícios", desc: "Vantagens práticas para o usuário" },
+  { id: "tecnico", label: "Tom tÃ©cnico", desc: "Foco em especificaÃ§Ãµes detalhadas" },
+  { id: "marketplace", label: "Otimizado para marketplace", desc: "Palavras-chave estratÃ©gicas" },
+  { id: "beneficios", label: "Foco em benefÃ­cios", desc: "Vantagens prÃ¡ticas para o usuÃ¡rio" },
   { id: "garantia", label: "Mencionar garantia", desc: "Inclui info de garantia sempre" },
   { id: "origem", label: "Mencionar origem", desc: "Destaca importado / nacional" },
 ];
 
 const AI_MODELS = [
   { id: "gpt-4o", label: "GPT-4o", desc: "Melhor qualidade, mais lento" },
-  { id: "gpt-4o-mini", label: "GPT-4o mini", desc: "Rápido e econômico" },
+  { id: "gpt-4o-mini", label: "GPT-4o mini", desc: "RÃ¡pido e econÃ´mico" },
 ];
 
 function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
@@ -870,10 +870,10 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
   const previewTitle = () => {
     const tpl = localRules.titleTemplate || "";
     return tpl
-      .replace("{Marca}", "Vonder").replace("{Produto}", "Serra Mármore")
-      .replace("{Modelo}", "SM-1400").replace("{Potência}", "1400")
-      .replace("{Tensão}", "220V").replace("{Capacidade}", "—")
-      .replace("{Especificação}", "Disco 110mm") || "—";
+      .replace("{Marca}", "Vonder").replace("{Produto}", "Serra MÃ¡rmore")
+      .replace("{Modelo}", "SM-1400").replace("{PotÃªncia}", "1400")
+      .replace("{TensÃ£o}", "220V").replace("{Capacidade}", "â")
+      .replace("{EspecificaÃ§Ã£o}", "Disco 110mm") || "â";
   };
 
   return (
@@ -881,7 +881,7 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="p-5 border-b border-gray-100 flex items-center justify-between shrink-0">
-          <h2 className="text-lg font-bold flex items-center gap-2"><Settings size={18} /> Configurações</h2>
+          <h2 className="text-lg font-bold flex items-center gap-2"><Settings size={18} /> ConfiguraÃ§Ãµes</h2>
           <div className="flex gap-1 bg-gray-100 p-1 rounded-xl">
             {[{ id: "apis", label: "APIs" }, { id: "rules", label: "Regras de IA" }].map(({ id, label }) => (
               <button key={id} onClick={() => setTab(id)}
@@ -906,12 +906,12 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
                     {showPwd.openai ? "ocultar" : "ver"}
                   </button>
                 </div>
-                <p className="text-xs text-gray-400 mt-1">Usada para enriquecimento de texto e geração de imagens</p>
+                <p className="text-xs text-gray-400 mt-1">Usada para enriquecimento de texto e geraÃ§Ã£o de imagens</p>
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                   Tiny ERP <span className="px-1.5 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] rounded font-medium ml-1">OAuth2 v3</span>
-                  {localKeys.tiny && <span className="ml-2 px-1.5 py-0.5 bg-green-100 text-green-700 text-[10px] rounded font-medium">✓ Conectado</span>}
+                  {localKeys.tiny && <span className="ml-2 px-1.5 py-0.5 bg-green-100 text-green-700 text-[10px] rounded font-medium">â Conectado</span>}
                 </label>
                 <div className="space-y-2">
                   <input type="text" value={localKeys.tinyClientId || ""} onChange={e => setKey("tinyClientId", e.target.value)}
@@ -928,15 +928,15 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
                     onClick={() => { setKeys(localKeys); try { localStorage.setItem('mpads_keys', JSON.stringify(localKeys)); } catch {} initiateTinyOAuth(localKeys.tinyClientId, localKeys.corsProxy); }}
                     disabled={!localKeys.tinyClientId || !localKeys.tinyClientSecret}
                     className="w-full py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-40 transition-colors flex items-center justify-center gap-2">
-                    🔗 Autenticar com Tiny ERP
+                    ð Autenticar com Tiny ERP
                   </button>
                   {localKeys.tiny && localKeys.tinyExpiry > 0 && (
-                    <p className="text-xs text-green-600">✓ Token expira em {new Date(localKeys.tinyExpiry).toLocaleString('pt-BR')}</p>
+                    <p className="text-xs text-green-600">â Token expira em {new Date(localKeys.tinyExpiry).toLocaleString('pt-BR')}</p>
                   )}
                 </div>
-                <p className="text-xs text-gray-400 mt-1.5">Cole o Client ID e Secret do app em Tiny → Aplicativos API. Você será redirecionado para login uma única vez. Válido por 4h (refresh automático).</p>
+                <p className="text-xs text-gray-400 mt-1.5">Cole o Client ID e Secret do app em Tiny â Aplicativos API. VocÃª serÃ¡ redirecionado para login uma Ãºnica vez. VÃ¡lido por 4h (refresh automÃ¡tico).</p>
                 <details className="mt-2">
-                  <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-600">▸ Colar token Bearer manualmente</summary>
+                  <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-600">â¸ Colar token Bearer manualmente</summary>
                   <div className="mt-2 relative">
                     <input type={showPwd.tiny ? "text" : "password"} value={localKeys.tiny} onChange={e => setKey("tiny", e.target.value)}
                       placeholder="Bearer token OAuth2 manual" className="w-full border border-gray-300 rounded-xl px-4 py-2.5 pr-16 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
@@ -948,14 +948,14 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
                 </details>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Proxy CORS <span className="font-normal text-gray-400">(necessário para API Tiny)</span></label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Proxy CORS <span className="font-normal text-gray-400">(necessÃ¡rio para API Tiny)</span></label>
                 <input type="text" value={localKeys.corsProxy || ""} onChange={e => setKey("corsProxy", e.target.value)}
                   placeholder="https://corsproxy.io/?" className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                <p className="text-xs text-gray-400 mt-1">Prefixo do proxy CORS — usado para OpenAI e Tiny (ambas bloqueiam chamadas diretas do navegador). Cole apenas o prefixo, ex: <code className="bg-gray-100 px-1 rounded">https://corsproxy.io/?</code></p>
+                <p className="text-xs text-gray-400 mt-1">Prefixo do proxy CORS â usado para OpenAI e Tiny (ambas bloqueiam chamadas diretas do navegador). Cole apenas o prefixo, ex: <code className="bg-gray-100 px-1 rounded">https://corsproxy.io/?</code></p>
               </div>
               <div className="p-3 bg-blue-50 rounded-xl text-xs text-blue-700 space-y-2">
-                <p>🔒 As chaves são salvas no seu navegador (localStorage) e não são enviadas a nenhum servidor além das APIs correspondentes.</p>
-                <button type="button" onClick={() => { if(window.confirm("Apagar todas as configurações salvas?")) { localStorage.removeItem('mpads_keys'); localStorage.removeItem('mpads_rules'); setKey("openai",""); setKey("tiny",""); setKey("corsProxy",""); setKey("tinyClientId",""); setKey("tinyClientSecret",""); setKey("tinyRefresh",""); setKey("tinyExpiry",0); } }}
+                <p>ð As chaves sÃ£o salvas no seu navegador (localStorage) e nÃ£o sÃ£o enviadas a nenhum servidor alÃ©m das APIs correspondentes.</p>
+                <button type="button" onClick={() => { if(window.confirm("Apagar todas as configuraÃ§Ãµes salvas?")) { localStorage.removeItem('mpads_keys'); localStorage.removeItem('mpads_rules'); setKey("openai",""); setKey("tiny",""); setKey("corsProxy",""); setKey("tinyClientId",""); setKey("tinyClientSecret",""); setKey("tinyRefresh",""); setKey("tinyExpiry",0); } }}
                   className="text-blue-500 hover:text-red-500 underline text-xs transition-colors">
                   Limpar dados salvos
                 </button>
@@ -981,8 +981,8 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
 
               {/* Title template */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Padrão de título</label>
-                <p className="text-xs text-gray-400 mb-2">Monte o template clicando nas variáveis ou digitando diretamente.</p>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">PadrÃ£o de tÃ­tulo</label>
+                <p className="text-xs text-gray-400 mb-2">Monte o template clicando nas variÃ¡veis ou digitando diretamente.</p>
                 {/* Variable chips */}
                 <div className="flex flex-wrap gap-1.5 mb-2">
                   {TITLE_VARIABLES.map(v => (
@@ -997,7 +997,7 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
                   type="text"
                   value={localRules.titleTemplate || ""}
                   onChange={e => setRule("titleTemplate", e.target.value)}
-                  placeholder='Ex: {Marca} {Produto} {Potência}W {Tensão}'
+                  placeholder='Ex: {Marca} {Produto} {PotÃªncia}W {TensÃ£o}'
                   className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
                 {localRules.titleTemplate && (
@@ -1008,13 +1008,13 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
                   </div>
                 )}
                 {!localRules.titleTemplate && (
-                  <p className="text-xs text-gray-400 mt-1.5 italic">Sem padrão definido — a IA criará o título livremente.</p>
+                  <p className="text-xs text-gray-400 mt-1.5 italic">Sem padrÃ£o definido â a IA criarÃ¡ o tÃ­tulo livremente.</p>
                 )}
               </div>
 
               {/* Description style */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Estilo da descrição</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Estilo da descriÃ§Ã£o</label>
                 <div className="space-y-2">
                   {DESCRIPTION_STYLES.map(s => {
                     const active = (localRules.descriptionStyles || []).includes(s.id);
@@ -1037,7 +1037,7 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
               {/* Marketplace selector */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Marketplaces ativos</label>
-                <p className="text-xs text-gray-400 mb-3">A IA gerará um título personalizado para cada marketplace selecionado.</p>
+                <p className="text-xs text-gray-400 mb-3">A IA gerarÃ¡ um tÃ­tulo personalizado para cada marketplace selecionado.</p>
                 <div className="grid grid-cols-2 gap-2">
                   {MARKETPLACES.map(mp => {
                     const active = (localRules.activeMarketplaces ?? MARKETPLACES.map(m => m.id)).includes(mp.id);
@@ -1064,12 +1064,12 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
 
               {/* Additional instructions */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Instruções adicionais</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">InstruÃ§Ãµes adicionais</label>
                 <textarea
                   value={localRules.additionalInstructions || ""}
                   onChange={e => setRule("additionalInstructions", e.target.value)}
                   rows={3}
-                  placeholder='Ex: "Sempre mencione que o produto possui certificação INMETRO. Evite superlativos como melhor e perfeito."'
+                  placeholder='Ex: "Sempre mencione que o produto possui certificaÃ§Ã£o INMETRO. Evite superlativos como melhor e perfeito."'
                   className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
                 />
                 <p className="text-xs text-gray-400 mt-1">Texto livre enviado diretamente para a IA em todos os produtos.</p>
@@ -1087,7 +1087,7 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
             onClose();
           }}
             className="flex-1 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700">
-            Salvar configurações
+            Salvar configuraÃ§Ãµes
           </button>
         </div>
       </div>
@@ -1095,17 +1095,17 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
   );
 }
 
-// ─────────────────────────────────────────────
+// âââââââââââââââââââââââââââââââââââââââââââââ
 // CSV PARSER
 // Custom RFC-4180 CSV parser that:
 //   - Always uses comma as delimiter (no auto-detection)
 //   - Handles quoted fields with embedded commas/newlines
 //   - Preserves tabs inside field names (e.g. "Unidade\tPreco_venda")
-//   - Returns plain objects (header row → keys, data rows → values)
-// ─────────────────────────────────────────────
+//   - Returns plain objects (header row â keys, data rows â values)
+// âââââââââââââââââââââââââââââââââââââââââââââ
 function parseCSVText(text) {
   // Remove UTF-8 BOM if present
-  const s = text.replace(/^﻿/, "");
+  const s = text.replace(/^ï»¿/, "");
 
   // Parse all records into arrays of strings
   const records = [];
@@ -1151,9 +1151,9 @@ function parseCSVText(text) {
   });
 }
 
-// ─────────────────────────────────────────────
+// âââââââââââââââââââââââââââââââââââââââââââââ
 // UPLOAD STEP
-// ─────────────────────────────────────────────
+// âââââââââââââââââââââââââââââââââââââââââââââ
 function UploadStep({ onUpload }) {
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState("");
@@ -1163,28 +1163,28 @@ function UploadStep({ onUpload }) {
     setError("");
     const ext = file.name.split(".").pop().toLowerCase();
     if (!["xlsx", "xls", "csv"].includes(ext)) {
-      setError("Formato não suportado. Use Excel (.xlsx, .xls) ou CSV."); return;
+      setError("Formato nÃ£o suportado. Use Excel (.xlsx, .xls) ou CSV."); return;
     }
     try {
       let rawRows;
 
       if (ext === "csv") {
-        // ── CSV: read as text (proper UTF-8 decode) then parse manually.
-        // Avoids SheetJS binary→string encoding issues that garble accented chars
-        // (e.g. "Preço de Venda" decoded as Latin-1 → "PreÃ§o de Venda").
+        // ââ CSV: read as text (proper UTF-8 decode) then parse manually.
+        // Avoids SheetJS binaryâstring encoding issues that garble accented chars
+        // (e.g. "PreÃ§o de Venda" decoded as Latin-1 â "PreÃÂ§o de Venda").
         const text = await file.text();
         rawRows = parseCSVText(text);
       } else {
-        // ── XLSX / XLS: SheetJS binary read
+        // ââ XLSX / XLS: SheetJS binary read
         const buf = await file.arrayBuffer();
         const wb = XLSX.read(buf, { type: "array" });
         const ws = wb.Sheets[wb.SheetNames[0]];
         rawRows = XLSX.utils.sheet_to_json(ws, { raw: false, defval: "" });
       }
 
-      if (!rawRows.length) { setError("Arquivo sem dados reconhecíveis."); return; }
+      if (!rawRows.length) { setError("Arquivo sem dados reconhecÃ­veis."); return; }
 
-      // Build column map: original header → canonical name (for diagnostics)
+      // Build column map: original header â canonical name (for diagnostics)
       const columnMap = {};
       if (rawRows[0]) {
         Object.keys(rawRows[0]).forEach(k => { columnMap[k] = resolveColumnName(k); });
@@ -1208,7 +1208,7 @@ function UploadStep({ onUpload }) {
       const nonEmpty = normalized.filter(r => Object.values(r).some(v => String(v).trim() !== ""));
       onUpload(nonEmpty, columnMap);
     } catch (err) {
-      setError("Erro ao ler o arquivo. Verifique se está no formato correto.");
+      setError("Erro ao ler o arquivo. Verifique se estÃ¡ no formato correto.");
     }
   }, [onUpload]);
 
@@ -1219,7 +1219,7 @@ function UploadStep({ onUpload }) {
           <Package size={32} className="text-indigo-600" />
         </div>
         <h1 className="text-2xl font-bold text-gray-900">Cadastro Massivo de Produtos</h1>
-        <p className="text-gray-500 mt-1.5 text-sm">Faça upload da planilha para iniciar o processo de enriquecimento</p>
+        <p className="text-gray-500 mt-1.5 text-sm">FaÃ§a upload da planilha para iniciar o processo de enriquecimento</p>
       </div>
       <div
         onClick={() => inputRef.current?.click()}
@@ -1240,16 +1240,16 @@ function UploadStep({ onUpload }) {
         </div>
       )}
       <div className="mt-5 p-4 bg-gray-50 rounded-xl">
-        <p className="text-xs font-semibold text-gray-600 mb-2">📋 Colunas esperadas na planilha</p>
-        <p className="text-xs text-gray-400 leading-relaxed">EAN · Produto_fornecedor · Codigo_fornecedor · Marca · Fornecedor · Origem · NCM · Classificação_Fiscal · Cubagem · Peso · Altura · Largura · Comprimento · Link_imagens_drive · Link_benchmark · Categoria_sugerida · Observacoes · <strong>Status</strong> · Unidade · Preco_venda · Garantia</p>
+        <p className="text-xs font-semibold text-gray-600 mb-2">ð Colunas esperadas na planilha</p>
+        <p className="text-xs text-gray-400 leading-relaxed">EAN Â· Produto_fornecedor Â· Codigo_fornecedor Â· Marca Â· Fornecedor Â· Origem Â· NCM Â· ClassificaÃ§Ã£o_Fiscal Â· Cubagem Â· Peso Â· Altura Â· Largura Â· Comprimento Â· Link_imagens_drive Â· Link_benchmark Â· Categoria_sugerida Â· Observacoes Â· <strong>Status</strong> Â· Unidade Â· Preco_venda Â· Garantia</p>
       </div>
     </div>
   );
 }
 
-// ─────────────────────────────────────────────
+// âââââââââââââââââââââââââââââââââââââââââââââ
 // VALIDATION STEP
-// ─────────────────────────────────────────────
+// âââââââââââââââââââââââââââââââââââââââââââââ
 function ValidationStep({ raw, columnMap, onProceed, onBack }) {
   const valid = [], blocked = [], ignored = [];
   for (const p of raw) {
@@ -1269,7 +1269,7 @@ function ValidationStep({ raw, columnMap, onProceed, onBack }) {
   const missingRequired = REQUIRED_FIELDS.filter(f => !mappedCanonicals.has(f));
 
   const TABS = [
-    { id: "valid", label: "Válidos", count: valid.length, color: "green", Icon: CheckCircle },
+    { id: "valid", label: "VÃ¡lidos", count: valid.length, color: "green", Icon: CheckCircle },
     { id: "blocked", label: "Bloqueados", count: blocked.length, color: "red", Icon: XCircle },
     { id: "ignored", label: "Ignorados", count: ignored.length, color: "gray", Icon: AlertCircle },
   ];
@@ -1278,7 +1278,7 @@ function ValidationStep({ raw, columnMap, onProceed, onBack }) {
   return (
     <div>
       <div className="text-center mb-6">
-        <h2 className="text-xl font-bold text-gray-900">Validação dos Produtos</h2>
+        <h2 className="text-xl font-bold text-gray-900">ValidaÃ§Ã£o dos Produtos</h2>
         <p className="text-gray-500 text-sm mt-1">{raw.length} linhas lidas da planilha</p>
       </div>
 
@@ -1289,7 +1289,7 @@ function ValidationStep({ raw, columnMap, onProceed, onBack }) {
             <div className="p-3 mb-2 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-start gap-2">
               <AlertCircle size={13} className="shrink-0 mt-0.5" />
               <span>
-                <strong>Colunas obrigatórias não encontradas na planilha:</strong>{" "}
+                <strong>Colunas obrigatÃ³rias nÃ£o encontradas na planilha:</strong>{" "}
                 {missingRequired.map(f => FIELD_LABELS[f] || f).join(", ")}.
                 {" "}Verifique os nomes das colunas.
               </span>
@@ -1297,7 +1297,7 @@ function ValidationStep({ raw, columnMap, onProceed, onBack }) {
           )}
           <button onClick={() => setShowColMap(v => !v)}
             className="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1 transition-colors">
-            {showColMap ? "▲" : "▼"} Diagnóstico de colunas detectadas ({Object.keys(columnMap).length} colunas)
+            {showColMap ? "â²" : "â¼"} DiagnÃ³stico de colunas detectadas ({Object.keys(columnMap).length} colunas)
           </button>
           {showColMap && (
             <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-xl text-xs max-h-40 overflow-y-auto">
@@ -1307,9 +1307,9 @@ function ValidationStep({ raw, columnMap, onProceed, onBack }) {
                   return (
                     <div key={orig} className="flex gap-2 items-center">
                       <span className="text-gray-400 font-mono truncate max-w-[180px]" title={orig}>"{orig}"</span>
-                      <span className="text-gray-400">→</span>
+                      <span className="text-gray-400">â</span>
                       <span className={`font-mono font-semibold ${isRequired ? "text-indigo-600" : "text-gray-500"}`}>{canon}</span>
-                      {isRequired && <span className="text-indigo-400 text-[10px]">✓ obrigatório</span>}
+                      {isRequired && <span className="text-indigo-400 text-[10px]">â obrigatÃ³rio</span>}
                     </div>
                   );
                 })}
@@ -1358,13 +1358,13 @@ function ValidationStep({ raw, columnMap, onProceed, onBack }) {
                   <tr key={`r${i}`}
                     className={`border-t border-gray-100 transition-colors ${tab === "blocked" ? "cursor-pointer hover:bg-red-50" : ""}`}
                     onClick={() => tab === "blocked" && setExpanded(expanded === i ? null : i)}>
-                    <td className="px-4 py-3 font-mono text-xs text-gray-500">{p.ean || "—"}</td>
-                    <td className="px-4 py-3 font-medium text-gray-800 max-w-[200px] truncate">{p.produto_fornecedor || "—"}</td>
-                    <td className="px-4 py-3 text-gray-500 text-xs">{p.marca || "—"}</td>
+                    <td className="px-4 py-3 font-mono text-xs text-gray-500">{p.ean || "â"}</td>
+                    <td className="px-4 py-3 font-medium text-gray-800 max-w-[200px] truncate">{p.produto_fornecedor || "â"}</td>
+                    <td className="px-4 py-3 text-gray-500 text-xs">{p.marca || "â"}</td>
                     <td className="px-4 py-3">
                       {tab === "blocked" && (
                         <span className="inline-flex items-center gap-1 text-red-600 text-xs font-medium">
-                          <XCircle size={12} /> {p._errors.length} erro(s) {expanded === i ? "▲" : "▼"}
+                          <XCircle size={12} /> {p._errors.length} erro(s) {expanded === i ? "â²" : "â¼"}
                         </span>
                       )}
                       {tab === "ignored" && <span className="text-gray-400 text-xs">{p._reason}</span>}
@@ -1387,7 +1387,7 @@ function ValidationStep({ raw, columnMap, onProceed, onBack }) {
                         </ul>
                         {/* Debug: raw values received for all required fields */}
                         <div className="border-t border-red-200 pt-2">
-                          <p className="text-xs font-semibold text-red-500 mb-1.5">🔍 Valores lidos da planilha:</p>
+                          <p className="text-xs font-semibold text-red-500 mb-1.5">ð Valores lidos da planilha:</p>
                           <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
                             {REQUIRED_FIELDS.map(f => (
                               <div key={f} className="text-xs flex gap-1">
@@ -1418,11 +1418,11 @@ function ValidationStep({ raw, columnMap, onProceed, onBack }) {
         {valid.length > 0 ? (
           <button onClick={() => onProceed(valid)}
             className="flex-1 py-3.5 bg-indigo-600 text-white rounded-2xl font-semibold hover:bg-indigo-700 flex items-center justify-center gap-2 transition-colors shadow-md shadow-indigo-200">
-            Prosseguir com {valid.length} produto(s) válido(s) <ChevronRight size={18} />
+            Prosseguir com {valid.length} produto(s) vÃ¡lido(s) <ChevronRight size={18} />
           </button>
         ) : (
           <div className="flex-1 flex items-center justify-center py-3.5 bg-gray-50 rounded-2xl text-gray-500 text-sm text-center px-4">
-            Nenhum produto válido. Corrija os erros e volte.
+            Nenhum produto vÃ¡lido. Corrija os erros e volte.
           </div>
         )}
       </div>
@@ -1430,9 +1430,9 @@ function ValidationStep({ raw, columnMap, onProceed, onBack }) {
   );
 }
 
-// ─────────────────────────────────────────────
+// âââââââââââââââââââââââââââââââââââââââââââââ
 // ENRICHMENT STEP
-// ─────────────────────────────────────────────
+// âââââââââââââââââââââââââââââââââââââââââââââ
 function EnrichmentStep({ products, apiKey, rules, onDone, onBack }) {
   const [results, setResults] = useState([]);
   const [current, setCurrent] = useState(-1);
@@ -1503,34 +1503,34 @@ function EnrichmentStep({ products, apiKey, rules, onDone, onBack }) {
           : running
             ? "Processando produtos..."
             : done && !failedCount
-              ? "Enriquecimento concluído!"
+              ? "Enriquecimento concluÃ­do!"
               : done
                 ? `${failedCount} produto(s) com erro`
                 : "Processando..."}
       </h2>
       <p className="text-gray-500 text-sm mb-6">
-        {!started ? `A IA vai gerar título, descrição, atributos e tags para ${products.length} produto(s).` : ""}
+        {!started ? `A IA vai gerar tÃ­tulo, descriÃ§Ã£o, atributos e tags para ${products.length} produto(s).` : ""}
       </p>
 
       {!started && (
         <>
           {(rules?.titleTemplate || (rules?.descriptionStyles || []).length > 0 || rules?.additionalInstructions) && (
             <div className="mb-4 p-4 bg-indigo-50 border border-indigo-100 rounded-2xl text-left text-sm space-y-1.5">
-              <p className="font-semibold text-indigo-700 text-xs mb-2">📋 Regras configuradas</p>
+              <p className="font-semibold text-indigo-700 text-xs mb-2">ð Regras configuradas</p>
               {rules.aiModel && rules.aiModel !== "gpt-4o" && (
-                <p className="text-xs text-indigo-600">🤖 Modelo: <span className="font-medium">{rules.aiModel}</span></p>
+                <p className="text-xs text-indigo-600">ð¤ Modelo: <span className="font-medium">{rules.aiModel}</span></p>
               )}
               {rules.titleTemplate && (
-                <p className="text-xs text-indigo-600">🏷️ Padrão: <span className="font-mono font-medium">{rules.titleTemplate}</span></p>
+                <p className="text-xs text-indigo-600">ð·ï¸ PadrÃ£o: <span className="font-mono font-medium">{rules.titleTemplate}</span></p>
               )}
               {(rules.descriptionStyles || []).length > 0 && (
-                <p className="text-xs text-indigo-600">✍️ Estilos: <span className="font-medium">{rules.descriptionStyles.join(", ")}</span></p>
+                <p className="text-xs text-indigo-600">âï¸ Estilos: <span className="font-medium">{rules.descriptionStyles.join(", ")}</span></p>
               )}
             </div>
           )}
           {!apiKey && (
             <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-700 text-sm flex items-center gap-2">
-              <AlertCircle size={15} /> Configure a chave da OpenAI nas configurações antes de continuar.
+              <AlertCircle size={15} /> Configure a chave da OpenAI nas configuraÃ§Ãµes antes de continuar.
             </div>
           )}
           <div className="flex gap-3 justify-center">
@@ -1552,7 +1552,7 @@ function EnrichmentStep({ products, apiKey, rules, onDone, onBack }) {
         <div className="text-left">
           {/* Progress bar */}
           <div className="flex justify-between text-sm text-gray-500 mb-2">
-            <span>{successCount} ok · {failedCount} erro · {results.filter(r => r._pending).length} pendente</span>
+            <span>{successCount} ok Â· {failedCount} erro Â· {results.filter(r => r._pending).length} pendente</span>
             <span className="font-semibold text-indigo-600">{pct}%</span>
           </div>
           <div className="w-full bg-gray-100 rounded-full h-3 mb-5 overflow-hidden">
@@ -1568,7 +1568,7 @@ function EnrichmentStep({ products, apiKey, rules, onDone, onBack }) {
               </p>
               {phase && (
                 <p className="text-xs text-indigo-500 font-medium mt-1 flex items-center justify-center gap-1">
-                  {phase === "Pesquisando na web..." ? "🔍" : "✨"} {phase}
+                  {phase === "Pesquisando na web..." ? "ð" : "â¨"} {phase}
                 </p>
               )}
             </div>
@@ -1590,7 +1590,7 @@ function EnrichmentStep({ products, apiKey, rules, onDone, onBack }) {
                       : <XCircle size={14} className="shrink-0 cursor-pointer" />}
                   <span className="flex-1 truncate text-xs">{r.produto_fornecedor}</span>
                   {!r._ok && !r._pending && r._err && (
-                    <span className="text-xs opacity-60 shrink-0">{expandedErr === i ? "▲" : "▼"}</span>
+                    <span className="text-xs opacity-60 shrink-0">{expandedErr === i ? "â²" : "â¼"}</span>
                   )}
                 </div>
                 {/* Full error message, expandable */}
@@ -1624,9 +1624,9 @@ function EnrichmentStep({ products, apiKey, rules, onDone, onBack }) {
   );
 }
 
-// ─────────────────────────────────────────────
+// âââââââââââââââââââââââââââââââââââââââââââââ
 // REVIEW STEP
-// ─────────────────────────────────────────────
+// âââââââââââââââââââââââââââââââââââââââââââââ
 function ReviewStep({ products, apiKey, tinyToken, corsProxy, onDone, onBack }) {
   const [items, setItems] = useState(() =>
     products.map(p => ({ ...p, _approved: false, _imgPrompt: "", _generatedImage: null, _imgUrl: p.link_imagens_drive || "", _marcaId: null, _marcaSearch: p.marca || "" }))
@@ -1700,7 +1700,7 @@ function ReviewStep({ products, apiKey, tinyToken, corsProxy, onDone, onBack }) 
             </button>
           )}
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Revisão</h2>
+            <h2 className="text-xl font-bold text-gray-900">RevisÃ£o</h2>
             <p className="text-sm text-gray-500">Produto {idx + 1} de {items.length}</p>
           </div>
         </div>
@@ -1732,7 +1732,7 @@ function ReviewStep({ products, apiKey, tinyToken, corsProxy, onDone, onBack }) 
       <div className="flex items-center gap-3 mb-5 p-4 bg-gray-50 rounded-2xl">
         <div className="flex-1">
           <p className="font-bold text-gray-900">{cur.produto_fornecedor}</p>
-          <p className="text-xs text-gray-500 mt-0.5">{cur.marca} · EAN {cur.ean} · {cur.categoria_sugerida || "Sem categoria"}</p>
+          <p className="text-xs text-gray-500 mt-0.5">{cur.marca} Â· EAN {cur.ean} Â· {cur.categoria_sugerida || "Sem categoria"}</p>
             <div className="flex items-center gap-2 mt-2 flex-wrap">
               <label className="text-xs font-semibold text-gray-600 whitespace-nowrap">Marca Tiny:</label>
               {brandsLoaded ? (
@@ -1741,7 +1741,7 @@ function ReviewStep({ products, apiKey, tinyToken, corsProxy, onDone, onBack }) 
                   value={cur._marcaId || ""}
                   onChange={e => upd('_marcaId', e.target.value ? Number(e.target.value) : null)}
                 >
-                  <option value="">— Sem marca —</option>
+                  <option value="">â Sem marca â</option>
                   {brandList.map(b => <option key={b.id} value={b.id}>{b.descricao}</option>)}
                 </select>
               ) : tinyToken ? (
@@ -1749,7 +1749,7 @@ function ReviewStep({ products, apiKey, tinyToken, corsProxy, onDone, onBack }) 
               ) : null}
               {brandsLoaded && (cur._marcaId
                 ? <span className="text-xs text-green-600 font-medium ml-1">&#10003; {brandList.find(b => Number(b.id) === Number(cur._marcaId))?.descricao}</span>
-                : <span className="text-xs text-amber-500 font-medium ml-1">&#9888; Não mapeada</span>
+                : <span className="text-xs text-amber-500 font-medium ml-1">&#9888; NÃ£o mapeada</span>
               )}
             </div>
         </div>
@@ -1769,7 +1769,7 @@ function ReviewStep({ products, apiKey, tinyToken, corsProxy, onDone, onBack }) 
       {/* Tabs */}
       <div className="flex gap-1 mb-5 bg-gray-100 p-1 rounded-xl">
         {[
-          { id: "content", label: "Conteúdo IA", Icon: FileText },
+          { id: "content", label: "ConteÃºdo IA", Icon: FileText },
           { id: "image", label: "Imagem Lifestyle", Icon: ImageIcon },
           { id: "data", label: "Dados Originais", Icon: Package },
         ].map(({ id, label, Icon }) => (
@@ -1787,7 +1787,7 @@ function ReviewStep({ products, apiKey, tinyToken, corsProxy, onDone, onBack }) 
           {/* Marketplace titles table */}
           {cur.enriched?.titulos && Object.keys(cur.enriched.titulos).length > 0 && (
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-2">Títulos por Marketplace</label>
+              <label className="block text-xs font-semibold text-gray-600 mb-2">TÃ­tulos por Marketplace</label>
               <div className="border border-gray-200 rounded-xl overflow-hidden">
                 {MARKETPLACES.filter(mp => cur.enriched.titulos[mp.id] !== undefined).map((mp, i) => {
                   const title = cur.enriched.titulos[mp.id] || "";
@@ -1823,14 +1823,14 @@ function ReviewStep({ products, apiKey, tinyToken, corsProxy, onDone, onBack }) 
 
           {/* Generic title */}
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Título Geral</label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">TÃ­tulo Geral</label>
             <input type="text" value={cur.enriched?.titulo_otimizado || ""}
               onChange={e => updEnr("titulo_otimizado", e.target.value)}
               className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             <p className="text-xs text-gray-400 mt-1">{(cur.enriched?.titulo_otimizado || "").length} / 60 caracteres</p>
           </div>
 
-          {/* SKU Interno + CEST + Variações */}
+          {/* SKU Interno + CEST + VariaÃ§Ãµes */}
           <div>
             <label className="block text-xs font-semibold text-gray-600 mb-1.5">SKU Interno</label>
             <input type="text" value={cur.enriched?.sku_interno || ""}
@@ -1848,7 +1848,7 @@ function ReviewStep({ products, apiKey, tinyToken, corsProxy, onDone, onBack }) 
                 className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Variações <span className="font-normal text-gray-400">(tipo K)</span></label>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">VariaÃ§Ãµes <span className="font-normal text-gray-400">(tipo K)</span></label>
               <input type="text" value={cur.enriched?.variacoes || ""}
                 onChange={e => updEnr("variacoes", e.target.value)}
                 placeholder="Voltagem: 127V"
@@ -1857,7 +1857,7 @@ function ReviewStep({ products, apiKey, tinyToken, corsProxy, onDone, onBack }) 
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Tagline de Venda <span className="font-normal text-gray-400">(campo interno — máx 160 chars)</span></label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Tagline de Venda <span className="font-normal text-gray-400">(campo interno â mÃ¡x 160 chars)</span></label>
             <textarea value={cur.enriched?.descricao_complementar || ""}
               onChange={e => updEnr("descricao_complementar", e.target.value)}
               rows={2}
@@ -1866,24 +1866,24 @@ function ReviewStep({ products, apiKey, tinyToken, corsProxy, onDone, onBack }) 
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Descrição (HTML) <span className="font-normal text-gray-400">→ exportada como "Descrição complementar" no Tiny</span></label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">DescriÃ§Ã£o (HTML) <span className="font-normal text-gray-400">â exportada como "DescriÃ§Ã£o complementar" no Tiny</span></label>
             <textarea value={cur.enriched?.descricao || ""} onChange={e => updEnr("descricao", e.target.value)}
               rows={7} className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
-            <p className="text-xs text-gray-400 mt-1">{(cur.enriched?.descricao || "").length} chars — estrutura modular com especificações técnicas, benefícios e CTA</p>
+            <p className="text-xs text-gray-400 mt-1">{(cur.enriched?.descricao || "").length} chars â estrutura modular com especificaÃ§Ãµes tÃ©cnicas, benefÃ­cios e CTA</p>
           </div>
 
           {/* SEO fields */}
           <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl space-y-3">
-            <p className="text-xs font-bold text-blue-700 mb-1">🔍 Campos SEO</p>
+            <p className="text-xs font-bold text-blue-700 mb-1">ð Campos SEO</p>
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Título SEO <span className="font-normal text-gray-400">(máx 70 chars)</span></label>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">TÃ­tulo SEO <span className="font-normal text-gray-400">(mÃ¡x 70 chars)</span></label>
               <input type="text" value={cur.enriched?.titulo_seo || ""}
                 onChange={e => updEnr("titulo_seo", e.target.value)}
                 className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
               <p className="text-xs text-gray-400 mt-1">{(cur.enriched?.titulo_seo || "").length} / 70 caracteres</p>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Descrição SEO <span className="font-normal text-gray-400">(máx 160 chars)</span></label>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">DescriÃ§Ã£o SEO <span className="font-normal text-gray-400">(mÃ¡x 160 chars)</span></label>
               <textarea value={cur.enriched?.descricao_seo || ""}
                 onChange={e => updEnr("descricao_seo", e.target.value)}
                 rows={2}
@@ -1916,7 +1916,7 @@ function ReviewStep({ products, apiKey, tinyToken, corsProxy, onDone, onBack }) 
 
           {(cur.enriched?.atributos || []).length > 0 && (
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-2">Atributos Técnicos</label>
+              <label className="block text-xs font-semibold text-gray-600 mb-2">Atributos TÃ©cnicos</label>
               <div className="bg-gray-50 rounded-xl overflow-hidden border border-gray-100">
                 {(cur.enriched.atributos || []).map((a, i) => (
                   <div key={i} className={`flex text-sm px-4 py-2 ${i % 2 === 0 ? "bg-gray-50" : "bg-white"}`}>
@@ -1934,11 +1934,11 @@ function ReviewStep({ products, apiKey, tinyToken, corsProxy, onDone, onBack }) 
       {activeTab === "image" && (
         <div className="space-y-4">
           <div className="p-4 bg-purple-50 rounded-2xl text-xs text-purple-700 border border-purple-100">
-            💡 A IA gerará uma fotografia lifestyle profissional baseada no nome do produto e no contexto que você descrever abaixo.
+            ð¡ A IA gerarÃ¡ uma fotografia lifestyle profissional baseada no nome do produto e no contexto que vocÃª descrever abaixo.
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">URL da imagem do produto <span className="font-normal text-gray-400">(referência visual)</span></label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">URL da imagem do produto <span className="font-normal text-gray-400">(referÃªncia visual)</span></label>
             <input type="url" value={cur._imgUrl} onChange={e => upd("_imgUrl", e.target.value)}
               placeholder="https://drive.google.com/... ou link direto da imagem"
               className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
@@ -1968,7 +1968,7 @@ function ReviewStep({ products, apiKey, tinyToken, corsProxy, onDone, onBack }) 
               <div className="absolute bottom-2 right-2 flex gap-2">
                 <a href={cur._generatedImage} target="_blank" rel="noreferrer"
                   className="px-2.5 py-1 bg-white/90 rounded-lg text-xs font-medium hover:bg-white shadow-sm">
-                  Abrir ↗
+                  Abrir â
                 </a>
                 <button onClick={handleGenImage}
                   className="px-2.5 py-1 bg-white/90 rounded-lg text-xs font-medium hover:bg-white shadow-sm flex items-center gap-1">
@@ -1984,17 +1984,17 @@ function ReviewStep({ products, apiKey, tinyToken, corsProxy, onDone, onBack }) 
       {activeTab === "data" && (
         <div className="bg-gray-50 rounded-2xl overflow-hidden border border-gray-100">
           {[
-            ["EAN", cur.ean], ["Código fornecedor", cur.codigo_fornecedor], ["Marca", cur.marca],
+            ["EAN", cur.ean], ["CÃ³digo fornecedor", cur.codigo_fornecedor], ["Marca", cur.marca],
             ["Fornecedor", cur.fornecedor], ["Origem", cur.origem], ["NCM", cur.ncm],
-            ["Classificação Fiscal", cur.classificacao_fiscal], ["Preço de venda", cur.preco_venda ? `R$ ${cur.preco_venda}` : "—"],
-            ["Unidade", cur.unidade], ["Garantia", cur.garantia ? `${cur.garantia} meses` : "—"],
-            ["Peso", cur.peso ? `${cur.peso} kg` : "—"],
-            ["Dimensões (A×L×C)", cur.altura && cur.largura && cur.comprimento ? `${cur.altura} × ${cur.largura} × ${cur.comprimento} cm` : "—"],
-            ["Categoria sugerida", cur.categoria_sugerida], ["Observações", cur.observacoes],
+            ["ClassificaÃ§Ã£o Fiscal", cur.classificacao_fiscal], ["PreÃ§o de venda", cur.preco_venda ? `R$ ${cur.preco_venda}` : "â"],
+            ["Unidade", cur.unidade], ["Garantia", cur.garantia ? `${cur.garantia} meses` : "â"],
+            ["Peso", cur.peso ? `${cur.peso} kg` : "â"],
+            ["DimensÃµes (AÃLÃC)", cur.altura && cur.largura && cur.comprimento ? `${cur.altura} Ã ${cur.largura} Ã ${cur.comprimento} cm` : "â"],
+            ["Categoria sugerida", cur.categoria_sugerida], ["ObservaÃ§Ãµes", cur.observacoes],
           ].map(([label, value], i) => (
             <div key={i} className={`flex text-sm px-4 py-2.5 ${i % 2 === 0 ? "" : "bg-white"}`}>
               <span className="font-medium text-gray-500 w-1/2 shrink-0">{label}</span>
-              <span className="text-gray-800 break-all">{value || "—"}</span>
+              <span className="text-gray-800 break-all">{value || "â"}</span>
             </div>
           ))}
         </div>
@@ -2012,21 +2012,21 @@ function ReviewStep({ products, apiKey, tinyToken, corsProxy, onDone, onBack }) 
             cur._approved ? "bg-green-100 text-green-700 border border-green-300 hover:bg-green-200" : "bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-200"
           }`}>
           <CheckCircle size={15} />
-          {cur._approved ? "Aprovado ✓" : "Aprovar produto"}
+          {cur._approved ? "Aprovado â" : "Aprovar produto"}
         </button>
 
         <button onClick={() => setIdx(Math.min(items.length - 1, idx + 1))} disabled={idx === items.length - 1}
           className="px-4 py-2.5 border border-gray-300 rounded-xl text-sm font-medium hover:bg-gray-50 disabled:opacity-30 flex items-center gap-1">
-          Próximo <ChevronRight size={16} />
+          PrÃ³ximo <ChevronRight size={16} />
         </button>
       </div>
     </div>
   );
 }
 
-// ─────────────────────────────────────────────
+// âââââââââââââââââââââââââââââââââââââââââââââ
 // SYNC STEP (API v3 primary + CSV backup)
-// ─────────────────────────────────────────────
+// âââââââââââââââââââââââââââââââââââââââââââââ
 function SyncStep({ products, tinyToken, corsProxy, onRestart }) {
   const [syncing, setSyncing]           = useState(false);
   const [stopFlag, setStopFlag]         = useState({ stop: false });
@@ -2047,8 +2047,8 @@ function SyncStep({ products, tinyToken, corsProxy, onRestart }) {
     setCurrentIdx(0);
     const acc = [];
 
-    // Agrupa produtos V com seus filhos K: K vinculados a um V são enviados
-    // dentro do variacoes[] do pai — não como chamadas individuais.
+    // Agrupa produtos V com seus filhos K: K vinculados a um V sÃ£o enviados
+    // dentro do variacoes[] do pai â nÃ£o como chamadas individuais.
     const vSkuSet = new Set(
       items
         .filter(p => (p.tipo_de_produto || "S").toUpperCase() === "V")
@@ -2059,7 +2059,7 @@ function SyncStep({ products, tinyToken, corsProxy, onRestart }) {
     const tasks = [];
     for (const p of items) {
       const tipo = (p.tipo_de_produto || "S").toUpperCase();
-      // K com pai V: será incluído nas variacoes[] do pai — pular chamada individual
+      // K com pai V: serÃ¡ incluÃ­do nas variacoes[] do pai â pular chamada individual
       if (tipo === "K" && p._codigoPai && vSkuSet.has(p._codigoPai)) continue;
       if (tipo === "V") {
         const pSku = p.enriched?.sku_interno || p.codigo_fornecedor || "";
@@ -2133,7 +2133,7 @@ function SyncStep({ products, tinyToken, corsProxy, onRestart }) {
       {/* Token warning */}
       {!tinyToken && (
         <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-700 text-xs flex items-center gap-2 mb-4">
-          <AlertCircle size={13} /> Configure o token OAuth2 do Tiny nas <strong>Configurações</strong> para enviar via API.
+          <AlertCircle size={13} /> Configure o token OAuth2 do Tiny nas <strong>ConfiguraÃ§Ãµes</strong> para enviar via API.
         </div>
       )}
 
@@ -2141,7 +2141,7 @@ function SyncStep({ products, tinyToken, corsProxy, onRestart }) {
       {hasCors && (
         <div className="p-3 bg-orange-50 border border-orange-200 rounded-xl text-orange-800 text-xs mb-4 space-y-1">
           <div className="flex items-center gap-2 font-semibold"><AlertCircle size={13} /> CORS bloqueado pelo Tiny</div>
-          <p>O navegador não consegue chamar a API do Tiny diretamente. Configure um <strong>Proxy CORS</strong> nas Configurações (ex: <code>https://corsproxy.io/?</code>).</p>
+          <p>O navegador nÃ£o consegue chamar a API do Tiny diretamente. Configure um <strong>Proxy CORS</strong> nas ConfiguraÃ§Ãµes (ex: <code>https://corsproxy.io/?</code>).</p>
         </div>
       )}
 
@@ -2211,7 +2211,7 @@ function SyncStep({ products, tinyToken, corsProxy, onRestart }) {
                   onClick={() => !r._syncOk && setExpandedErr(prev => ({ ...prev, [i]: !prev[i] }))}>
                   {r._syncOk ? <CheckCircle size={12} className="shrink-0" /> : <XCircle size={12} className="shrink-0" />}
                   <span className="flex-1 truncate font-medium">{r.enriched?.titulo_otimizado || r.produto_fornecedor}</span>
-                  {!r._syncOk && <span className="opacity-60 text-[10px] shrink-0">{expandedErr[i] ? "▲" : "▼"}</span>}
+                  {!r._syncOk && <span className="opacity-60 text-[10px] shrink-0">{expandedErr[i] ? "â²" : "â¼"}</span>}
                 </button>
                 {!r._syncOk && expandedErr[i] && (
                   <div className="px-3 pb-2 text-[11px] opacity-80 break-words">{r._syncErr}</div>
@@ -2228,7 +2228,7 @@ function SyncStep({ products, tinyToken, corsProxy, onRestart }) {
           <FileText size={12} /> Prefere importar por planilha? <span className="underline">Exportar CSV</span>
         </summary>
         <div className="p-4 bg-white border border-gray-200 rounded-2xl space-y-2">
-          <p className="text-xs text-gray-500">Gera planilha no formato padrão Tiny ERP para importação manual em <strong>Produtos → Importar Planilha</strong>.</p>
+          <p className="text-xs text-gray-500">Gera planilha no formato padrÃ£o Tiny ERP para importaÃ§Ã£o manual em <strong>Produtos â Importar Planilha</strong>.</p>
           {exported && (
             <div className="p-2.5 bg-green-50 border border-green-200 rounded-xl text-green-700 text-xs flex items-center gap-2">
               <CheckCircle size={12} /> CSV baixado!
@@ -2249,9 +2249,9 @@ function SyncStep({ products, tinyToken, corsProxy, onRestart }) {
   );
 }
 
-// ─────────────────────────────────────────────
+// âââââââââââââââââââââââââââââââââââââââââââââ
 // MAIN APP
-// ─────────────────────────────────────────────
+// âââââââââââââââââââââââââââââââââââââââââââââ
 function App() {
   const [step, setStep] = useState("upload");
   const [apiKeys, setApiKeys] = useState(() => {
@@ -2260,7 +2260,7 @@ function App() {
       const base = { openai: "", tiny: "", corsProxy: "", tinyClientId: "", tinyClientSecret: "", tinyRefresh: "", tinyExpiry: 0 };
       if (!s) return base;
       const k = JSON.parse(s);
-      // Migrate old corsProxy format: "https://corsproxy.io/?https://api.openai.com" → "https://corsproxy.io/?"
+      // Migrate old corsProxy format: "https://corsproxy.io/?https://api.openai.com" â "https://corsproxy.io/?"
       if (k.corsProxy && /\?https?:\/\//.test(k.corsProxy)) {
         k.corsProxy = k.corsProxy.replace(/\?.*$/, '?');
       }
@@ -2305,7 +2305,7 @@ function App() {
         sessionStorage.removeItem('oauth_client_id');
         setShowSettings(false);
       })
-      .catch(err => alert('❌ Erro na autenticação Tiny: ' + err.message));
+      .catch(err => alert('â Erro na autenticaÃ§Ã£o Tiny: ' + err.message));
   }, []);
 
   const keysConfigured = apiKeys.openai && apiKeys.tiny;
@@ -2328,9 +2328,9 @@ function App() {
           <button onClick={() => setShowSettings(true)}
             className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-xl transition-colors">
             <Settings size={16} />
-            <span className="hidden sm:inline font-medium">Configurações</span>
+            <span className="hidden sm:inline font-medium">ConfiguraÃ§Ãµes</span>
             {keysConfigured
-              ? <span className="w-2 h-2 bg-green-500 rounded-full" title="Configurações salvas" />
+              ? <span className="w-2 h-2 bg-green-500 rounded-full" title="ConfiguraÃ§Ãµes salvas" />
               : <span className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" title="Configure as chaves de API" />
             }
           </button>
@@ -2373,7 +2373,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
 
   </script>
 
-<!-- ═══ Machine PADS – Tiny API field-mapping fixes (auto-interceptor v6) ═══ -->
+<!-- âââ Machine PADS â Tiny API field-mapping fixes (auto-interceptor v6) âââ -->
 <script id="__mpFixes">
 (function () {
   'use strict';
@@ -2401,20 +2401,20 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
       }).catch(function(){ window.__brandMapLoading = false; });
     }
 
-    // Pré-carrega marcas imediatamente via localStorage
+    // PrÃ©-carrega marcas imediatamente via localStorage
     try {
       var _k = JSON.parse(localStorage.getItem('mpads_keys') || '{}');
       if (_k.tiny) loadBrands('Bearer ' + _k.tiny);
     } catch(e) {}
 
-    // Converte número/string de dimensão, retorna undefined se inválido
+    // Converte nÃºmero/string de dimensÃ£o, retorna undefined se invÃ¡lido
     function n(v) {
       if (v === undefined || v === null || v === '') return undefined;
       var num = Number(String(v).replace(',', '.'));
       return isNaN(num) ? undefined : num;
     }
 
-    // PUT nas variações após criação do produto pai
+    // PUT nas variaÃ§Ãµes apÃ³s criaÃ§Ã£o do produto pai
     function putVariacoes(parentId, variacoes, camposFixos, token) {
       var baseUrl = 'https://api.tiny.com.br/public-api/v3/produtos/' + parentId + '/variacoes/';
       variacoes.forEach(function(v) {
@@ -2433,9 +2433,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
           headers: { 'Authorization': token, 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         }).then(function(r) {
-          console.log('[MachinePADS] PUT variação ' + v.id + ': ' + r.status);
+          console.log('[MachinePADS] PUT variaÃ§Ã£o ' + v.id + ': ' + r.status);
           window.__mpReqs.push({ tipo:'PUT-var', varId:v.id, status:r.status, ts:Date.now() });
-        }).catch(function(e) { console.warn('[MachinePADS] PUT variação erro:', e); });
+        }).catch(function(e) { console.warn('[MachinePADS] PUT variaÃ§Ã£o erro:', e); });
       });
     }
 
@@ -2447,6 +2447,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
       xhr.setRequestHeader('Authorization', token);
       xhr.setRequestHeader('Content-Type', 'application/json');
       xhr.onload = function() { console.log('[MachinePADS] tag "' + marcaNome + '" -> produto ' + produtoId + ': ' + xhr.status); };
+      xhr.onerror = function() { console.warn('[MachinePADS] tag XHR erro: produto ' + produtoId); };
       xhr.send(JSON.stringify([{ nome: marcaNome, nomeGrupoTag: 'Fornecedores' }]));
     }
 
@@ -2527,10 +2528,10 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
           entry.tipo = body.tipo;
           opts.body  = JSON.stringify(body);
 
-          // FIX 8: tributacao.classeIPI = "999" (Código de Enquadramento IPI) para todos os produtos
+          // FIX 8: tributacao.classeIPI = "999" (CÃ³digo de Enquadramento IPI) para todos os produtos
           body.tributacao = Object.assign({}, body.tributacao || {}, { classeIPI: '999' });
           entry.fixes.push('tributacao.classeIPI:999');
-          // FIX 7: após POST de tipo V bem-sucedido, PUT dimensoes/marca/unidade/garantia em cada variação
+          // FIX 7: apÃ³s POST de tipo V bem-sucedido, PUT dimensoes/marca/unidade/garantia em cada variaÃ§Ã£o
           if (body.tipo === 'V' && opts.method !== 'PUT') {
             var camposParaVariacoes = {};
             if (body.dimensoes) camposParaVariacoes.dimensoes = body.dimensoes;
@@ -2552,7 +2553,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
                   } catch(e) {}
                 }
               // FIX 9: tag de marca (tipo V)
-              if ((resp.status === 200 || resp.status === 201) && body.marcaNome) {
+              if (resp.status >= 200 && resp.status < 300 && body.marcaNome) {
                 try { var rdT = JSON.parse(t); if (rdT.id) { postTagsMarca(rdT.id, body.marcaNome, token); entry.fixes.push('tag:'+body.marcaNome); } } catch(e) {}
               }
               });
@@ -2566,7 +2567,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
           resp.clone().text().then(function(t) {
             entry.response = t; entry.status = resp.status;
             // FIX 9: tag de marca (produto simples)
-            if ((resp.status === 200 || resp.status === 201) && body.marcaNome && opts.method !== 'PUT') {
+            if (resp.status >= 200 && resp.status < 300 && body.marcaNome && opts.method !== 'PUT') {
               try { var rdS = JSON.parse(t); if (rdS.id) { postTagsMarca(rdS.id, body.marcaNome, token); entry.fixes.push('tag:'+body.marcaNome); } } catch(e) {}
             }
           });
@@ -2575,7 +2576,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
       }
       return _native(url, opts);
     };
-    console.log('[MachinePADS] interceptor v7 instalado – PUT automático em variações + tributacao.classeIPI');
+    console.log('[MachinePADS] interceptor v7 instalado â PUT automÃ¡tico em variaÃ§Ãµes + tributacao.classeIPI');
   }
   if (document.readyState === 'complete') { installInterceptor(); }
   else { window.addEventListener('load', installInterceptor); }
