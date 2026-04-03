@@ -1638,23 +1638,29 @@ function ReviewStep({ products, apiKey, tinyToken, corsProxy, onDone, onBack }) 
   const [brandsLoaded, setBrandsLoaded] = React.useState(false);
   React.useEffect(() => {
     if (!tinyToken) { setBrandsLoaded(true); return; }
-    const proxy = corsProxy || 'https://corsproxy.io/?url=';
-    fetch(proxy + encodeURIComponent('https://api.tiny.com.br/public-api/v3/marcas'), {
-      headers: { Authorization: 'Bearer ' + tinyToken }
-    })
-    .then(r => r.json())
-    .then(d => {
-      const list = d.itens || d.data || [];
-      setBrandList(list);
-      setItems(prev => prev.map(item => {
-        if (item._marcaId) return item;
-        const search = (item._marcaSearch || item.marca || '').toLowerCase().trim();
-        const match = list.find(b => b.descricao.toLowerCase().trim() === search);
-        return { ...item, _marcaId: match ? match.id : null };
-      }));
+    // XHR bypasses the fetch interceptor that would corrupt GET /marcas
+    var proxy = (corsProxy || 'https://corsproxy.io/?') + 'url=' + encodeURIComponent('https://api.tiny.com.br/public-api/v3/marcas');
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', proxy);
+    xhr.setRequestHeader('Authorization', 'Bearer ' + tinyToken);
+    xhr.onload = function() {
+      try {
+        var d = JSON.parse(xhr.responseText);
+        var list = d.itens || d.data || [];
+        setBrandList(list);
+        setItems(function(prev) {
+          return prev.map(function(item) {
+            if (item._marcaId) return item;
+            var search = (item._marcaSearch || item.marca || '').toLowerCase().trim();
+            var match = list.find(function(b) { return b.descricao.toLowerCase().trim() === search; });
+            return Object.assign({}, item, { _marcaId: match ? match.id : null });
+          });
+        });
+      } catch(e) {}
       setBrandsLoaded(true);
-    })
-    .catch(() => setBrandsLoaded(true));
+    };
+    xhr.onerror = function() { setBrandsLoaded(true); };
+    xhr.send();
   }, [tinyToken, corsProxy]);
 
   const cur = items[idx];
