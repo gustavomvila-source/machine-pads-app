@@ -2576,7 +2576,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
               }
               // FIX 9b: tag extra (cross_docking)
               if (resp.status >= 200 && resp.status < 300 && body.tagExtraNome) {
-                try { var rdTE = JSON.parse(t); if (rdTE.id) { scheduleTag(rdTE.id, body.tagExtraNome, token, _proxyUrl, 'Cross-Docking'); entry.fixes.push('tag-extra:'+body.tagExtraNome); if (rdTE.variacoes && rdTE.variacoes.length) { rdTE.variacoes.forEach(function(v){ if(v.id) scheduleTag(v.id, body.tagExtraNome, token, _proxyUrl, 'Cross-Docking'); }); } } } catch(e) {}
+                try { var rdTE = JSON.parse(t); if (rdTE.id) { scheduleTag(rdTE.id, body.tagExtraNome, token, _proxyUrl, 'Prateleira Infinita'); entry.fixes.push('tag-extra:'+body.tagExtraNome); if (rdTE.variacoes && rdTE.variacoes.length) { rdTE.variacoes.forEach(function(v){ if(v.id) scheduleTag(v.id, body.tagExtraNome, token, _proxyUrl, 'Prateleira Infinita'); }); } } } catch(e) {}
               }
               });
               return resp;
@@ -2594,7 +2594,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
             }
             // FIX 9b: tag extra (cross_docking)
             if (resp.status >= 200 && resp.status < 300 && body.tagExtraNome) {
-              try { var rdSE = JSON.parse(t); if (rdSE.id) { scheduleTag(rdSE.id, body.tagExtraNome, token, _proxyUrl, 'Cross-Docking'); entry.fixes.push('tag-extra:'+body.tagExtraNome); } } catch(e) {}
+              try { var rdSE = JSON.parse(t); if (rdSE.id) { scheduleTag(rdSE.id, body.tagExtraNome, token, _proxyUrl, 'Prateleira Infinita'); entry.fixes.push('tag-extra:'+body.tagExtraNome); } } catch(e) {}
             }
           });
           return resp;
