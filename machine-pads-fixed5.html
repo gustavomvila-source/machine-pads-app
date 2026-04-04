@@ -740,6 +740,12 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
       if (gtin) varItem.gtin = gtin;
       return varItem;
     });
+    // v22: grade obrigatorio para tipo V - extrair chaves das variacoes
+    const gradeKeys = {};
+    body.variacoes.forEach(v => { if (v.grade) v.grade.forEach(g => { gradeKeys[g.chave] = true; }); });
+    body.grade = Object.keys(gradeKeys);
+    if (!body.grade.length) body.grade = ['Variacao'];
+    console.log('[MachinePADS v22] grade a enviar:', JSON.stringify(body.grade));
   }
 
   // Remove campos vazios/null para não poluir o payload
@@ -2065,13 +2071,14 @@ function SyncStep({ products, tinyToken, corsProxy, onRestart }) {
       items
         .filter(p => (p.tipo_de_produto || "S").toUpperCase() === "V")
         .map(p => p.enriched?.sku_interno || p.codigo_fornecedor || "")
+      .filter(Boolean)
         );
 
     const tasks = [];
     for (const p of items) {
       const tipo = (p.tipo_de_produto || "S").toUpperCase();
       // K com pai V: será incluído nas variacoes[] do pai — pular chamada individual
-              if (tipo === "K" && p._codigoPai !== null && vSkuSet.has(p._codigoPai)) continue; // v21
+              if (tipo === "K" && p._codigoPai && vSkuSet.has(p._codigoPai)) continue;
       if (tipo === "V") {
         const pSku = p.enriched?.sku_interno || p.codigo_fornecedor || "";
         const kChildren = items.filter(k =>
