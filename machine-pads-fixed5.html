@@ -721,6 +721,15 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
           }
         });
       }
+      // Fallback: se grade vazia, extrai variação do nome filho vs. pai
+              if (!grade.length) {
+                        const pNome = (product.produto_fornecedor || '').trim();
+                                  const kNome = (k.produto_fornecedor || '').trim();
+                                            const suffix = (kNome.toLowerCase().startsWith(pNome.toLowerCase()))
+                                                        ? kNome.substring(pNome.length).replace(/^[\s\-–]+/, '').trim()
+                                                                    : kNome;
+                                                                              grade.push({ chave: 'Variação', valor: suffix || k.codigo_fornecedor || String(children.indexOf(k) + 1) });
+                                                                                      }
       const varItem = {
         sku:    k.enriched?.sku_interno || k.codigo_fornecedor || "",
         precos: { preco: parseNumber(k.preco_venda) ?? 0 },
