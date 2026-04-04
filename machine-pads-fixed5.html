@@ -763,9 +763,9 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     // API v3 retorna { mensagem, detalhes: [{campo, mensagem}] }
-    const detail = err?.mensagem
-      || (err?.detalhes || []).map(d => `${d.campo}: ${d.mensagem}`).join(", ")
-      || err?.message || `HTTP ${res.status}`;
+    const _detalhes = (err?.detalhes || []).map(d => `${d.campo}: ${d.mensagem}`).join("; ");
+              const detail = (err?.mensagem ? err.mensagem + (_detalhes ? ` [${_detalhes}]` : '') : null)
+                          || _detalhes || err?.message || `HTTP ${res.status}`;
     if (res.status === 401) throw new Error("Token inválido ou expirado — atualize nas Configurações.");
     if (res.status === 422) throw new Error(`Dados inválidos: ${detail}`);
     if (res.status === 429) throw new Error("Rate limit — aguarde e tente novamente.");
