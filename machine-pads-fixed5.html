@@ -740,6 +740,7 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
   if (body.variacoes) payload.variacoes = body.variacoes;
   if (!payload.imagens.length) delete payload.imagens;
   if (!Object.keys(payload.seo).length) delete payload.seo;
+  delete payload.tagExtraNome; // não enviar ao Tiny — usado só internamente
 
   let res;
   try {
@@ -2575,8 +2576,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
                 try { var rdT = JSON.parse(t); if (rdT.id) { scheduleTag(rdT.id, body.marcaNome, token, _proxyUrl); entry.fixes.push('tag:'+body.marcaNome); if (rdT.variacoes && rdT.variacoes.length) { rdT.variacoes.forEach(function(v){ if(v.id) scheduleTag(v.id, body.marcaNome, token, _proxyUrl); }); entry.fixes.push('tag-var:'+rdT.variacoes.length); } } } catch(e) {}
               }
               // FIX 9b: tag extra (cross_docking)
-              if (resp.status >= 200 && resp.status < 300 ) {
-              try { var rdTE = JSON.parse(t); if (rE.id) { if(body.tagExtraNome){scheduleTag(rdTE.id, body.tagExtraNome, token, _proxyUrl, 'Prateleira Infinita'); entry.fixes.push('tag-extra:'+body.tagExtraNome);} if) { (rdTE.variacoes && rdTE.variacoes.length) { rdTE.variacoes.forEach(function(v,idx){ if(v.id){var _ch=children[idx];var _chCd=_ch?(_ch.cross_docking||'').trim():'';if(_chCd&&_chCd.toLowerCase()!=='não'){scheduleTag(v.id,_chCd,token,_proxyUrl,'Prateleira Infinita');entry.fixes.push('tag-extra:'+_chCd);}} }); } } } catch(e) {}
+              if (resp.status >= 200 && resp.status< 300 ) {
+              try { var rdTE = JSON.parse(t); if (rdTE.id) { if(body.tagExtraNome){scheduleTag(rdTE.id, body.tagExtraNome, token, _proxyUrl, 'Prateleira Infinita'); entry.fixes.push('tag-extra:'+body.tagExtraNome);} if) { (rdTE.variacoes && rdTE.variacoes.length) { rdTE.variacoes.forEach(function(v,idx){ if(v.id){var _ch=children[idx];var _chCd=_ch?(_ch.cross_docking||'').trim():'';if(_chCd&&_chCd.toLowerCase()!=='não'){scheduleTag(v.id,_chCd,token,_proxyUrl,'Prateleira Infinita');entry.fixes.push('tag-extra:'+_chCd);}} }); } } } catch(e) {}
               }
               });
               return resp;
