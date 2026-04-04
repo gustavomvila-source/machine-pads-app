@@ -687,7 +687,7 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
     // ── Marketing ──────────────────────────────────────────
     marcaId:        product._marcaId || undefined,
     marcaNome:      product._marcaSearch || product.marca || undefined,
-    tagExtraNome:   (() => { var _cd = (product.cross_docking || '').trim(); if (!_cd || _cd.toLowerCase() === 'não') { var _k = children.find(function(c){ return c.cross_docking && c.cross_docking.toLowerCase() !== 'não'; }); _cd = _k ? _k.cross_docking.trim() : ''; } return (_cd && _cd.toLowerCase() !== 'não') ? _cd : undefined; })(),
+    tagExtraNome:   (() => { var _cd = (product.cross_docking || '').trim(); return (_cd && _cd.toLowerCase() !== 'não') ? _cd : undefined; })(),
     // marca: API v3 exige {id, nome} com ID cadastrado no Tiny — omitir para evitar erro 400
     garantia:       garantiaNum,
     palavrasChave:  Array.isArray(product.enriched?.tags)
@@ -2575,8 +2575,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
                 try { var rdT = JSON.parse(t); if (rdT.id) { scheduleTag(rdT.id, body.marcaNome, token, _proxyUrl); entry.fixes.push('tag:'+body.marcaNome); if (rdT.variacoes && rdT.variacoes.length) { rdT.variacoes.forEach(function(v){ if(v.id) scheduleTag(v.id, body.marcaNome, token, _proxyUrl); }); entry.fixes.push('tag-var:'+rdT.variacoes.length); } } } catch(e) {}
               }
               // FIX 9b: tag extra (cross_docking)
-              if (resp.status >= 200 && resp.status < 300 && body.tagExtraNome) {
-                try { var rdTE = JSON.parse(t); if (rdTE.id) { scheduleTag(rdTE.id, body.tagExtraNome, token, _proxyUrl, 'Prateleira Infinita'); entry.fixes.push('tag-extra:'+body.tagExtraNome); if (rdTE.variacoes && rdTE.variacoes.length) { rdTE.variacoes.forEach(function(v){ if(v.id) scheduleTag(v.id, body.tagExtraNome, token, _proxyUrl, 'Prateleira Infinita'); }); } } } catch(e) {}
+              if (resp.status >= 200 && resp.status < 300 ) {
+              try { var rdTE = JSON.parse(t); if (rE.id) { if(body.tagExtraNome){scheduleTag(rdTE.id, body.tagExtraNome, token, _proxyUrl, 'Prateleira Infinita'); entry.fixes.push('tag-extra:'+body.tagExtraNome);} if) { (rdTE.variacoes && rdTE.variacoes.length) { rdTE.variacoes.forEach(function(v,idx){ if(v.id){var _ch=children[idx];var _chCd=_ch?(_ch.cross_docking||'').trim():'';if(_chCd&&_chCd.toLowerCase()!=='não'){scheduleTag(v.id,_chCd,token,_proxyUrl,'Prateleira Infinita');entry.fixes.push('tag-extra:'+_chCd);}} }); } } } catch(e) {}
               }
               });
               return resp;
@@ -2593,8 +2593,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
               try { var rdS = JSON.parse(t); if (rdS.id) { scheduleTag(rdS.id, body.marcaNome, token, _proxyUrl); entry.fixes.push('tag:'+body.marcaNome); } } catch(e) {}
             }
             // FIX 9b: tag extra (cross_docking)
-            if (resp.status >= 200 && resp.status < 300 && body.tagExtraNome) {
-              try { var rdSE = JSON.parse(t); if (rdSE.id) { scheduleTag(rdSE.id, body.tagExtraNome, token, _proxyUrl, 'Prateleira Infinita'); entry.fixes.push('tag-extra:'+body.tagExtraNome); } } catch(e) {}
+            if (resp.status >= 200 && resp.status < 300 ) {
+              try { var rdSE = JSON.parse(t); if (rdSE.id && body.tagExtraNome) { scheduleTag(rdSE.id, body.tagExtraNome, token, _proxyUrl, 'Prateleira Infinita'); entry.fixes.push('tag-extra:'+body.tagExtraNome); } } catch(e) {}
             }
           });
           return resp;
