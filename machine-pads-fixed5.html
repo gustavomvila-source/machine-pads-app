@@ -2441,6 +2441,16 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
     }
 
     // FIX 9: Aplica tag de marca (grupo Fornecedores) via Tiny API v3 (v11: _native + proxy dinâmico)
+    // Tag queue para evitar rate limiting (429)
+    var _tagQueue = Promise.resolve();
+    function scheduleTag(pId, tNome, tok, pUrl, gNome) {
+      _tagQueue = _tagQueue.then(function() {
+        return new Promise(function(res) {
+          postTagsMarca(pId, tNome, tok, pUrl, gNome);
+          setTimeout(res, 400);
+        });
+      });
+    }
     function postTagsMarca(produtoId, marcaNome, token, proxyUrl, grupoNome) {
       if (!produtoId || !marcaNome) return;
       var tinyTagBase = 'https://api.tiny.com.br/public-api/v3/produtos/' + produtoId + '/tags';
@@ -2562,11 +2572,11 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
                 }
               // FIX 9: tag de marca (tipo V)
               if (resp.status >= 200 && resp.status < 300 && body.marcaNome) {
-                try { var rdT = JSON.parse(t); if (rdT.id) { postTagsMarca(rdT.id, body.marcaNome, token, _proxyUrl); entry.fixes.push('tag:'+body.marcaNome); if (rdT.variacoes && rdT.variacoes.length) { rdT.variacoes.forEach(function(v){ if(v.id) postTagsMarca(v.id, body.marcaNome, token, _proxyUrl); }); entry.fixes.push('tag-var:'+rdT.variacoes.length); } } } catch(e) {}
+                try { var rdT = JSON.parse(t); if (rdT.id) { scheduleTag(rdT.id, body.marcaNome, token, _proxyUrl); entry.fixes.push('tag:'+body.marcaNome); if (rdT.variacoes && rdT.variacoes.length) { rdT.variacoes.forEach(function(v){ if(v.id) scheduleTag(v.id, body.marcaNome, token, _proxyUrl); }); entry.fixes.push('tag-var:'+rdT.variacoes.length); } } } catch(e) {}
               }
               // FIX 9b: tag extra (cross_docking)
               if (resp.status >= 200 && resp.status < 300 && body.tagExtraNome) {
-                try { var rdTE = JSON.parse(t); if (rdTE.id) { postTagsMarca(rdTE.id, body.tagExtraNome, token, _proxyUrl, null); entry.fixes.push('tag-extra:'+body.tagExtraNome); if (rdTE.variacoes && rdTE.variacoes.length) { rdTE.variacoes.forEach(function(v){ if(v.id) postTagsMarca(v.id, body.tagExtraNome, token, _proxyUrl, null); }); } } } catch(e) {}
+                try { var rdTE = JSON.parse(t); if (rdTE.id) { scheduleTag(rdTE.id, body.tagExtraNome, token, _proxyUrl, 'Cross-Docking'); entry.fixes.push('tag-extra:'+body.tagExtraNome); if (rdTE.variacoes && rdTE.variacoes.length) { rdTE.variacoes.forEach(function(v){ if(v.id) scheduleTag(v.id, body.tagExtraNome, token, _proxyUrl, 'Cross-Docking'); }); } } } catch(e) {}
               }
               });
               return resp;
@@ -2580,11 +2590,11 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
             entry.response = t; entry.status = resp.status;
             // FIX 9: tag de marca (produto simples)
             if (resp.status >= 200 && resp.status < 300 && body.marcaNome && opts.method !== 'PUT') {
-              try { var rdS = JSON.parse(t); if (rdS.id) { postTagsMarca(rdS.id, body.marcaNome, token, _proxyUrl); entry.fixes.push('tag:'+body.marcaNome); } } catch(e) {}
+              try { var rdS = JSON.parse(t); if (rdS.id) { scheduleTag(rdS.id, body.marcaNome, token, _proxyUrl); entry.fixes.push('tag:'+body.marcaNome); } } catch(e) {}
             }
             // FIX 9b: tag extra (cross_docking)
             if (resp.status >= 200 && resp.status < 300 && body.tagExtraNome) {
-              try { var rdSE = JSON.parse(t); if (rdSE.id) { postTagsMarca(rdSE.id, body.tagExtraNome, token, _proxyUrl, null); entry.fixes.push('tag-extra:'+body.tagExtraNome); } } catch(e) {}
+              try { var rdSE = JSON.parse(t); if (rdSE.id) { scheduleTag(rdSE.id, body.tagExtraNome, token, _proxyUrl, 'Cross-Docking'); entry.fixes.push('tag-extra:'+body.tagExtraNome); } } catch(e) {}
             }
           });
           return resp;
