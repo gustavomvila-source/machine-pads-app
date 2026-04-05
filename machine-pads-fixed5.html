@@ -226,7 +226,7 @@ function resolveParentChild(products) {
         }
       }
     }
-    return { ...p, _codigoPai: parent?.enriched?.sku_interno || "" };
+    return { ...p, _codigoPai: parent !== null ? (parent.enriched?.sku_interno || parent.codigo_fornecedor || "") : null }; // v24
   });
 
   // Step 2: update V products' variacoes based on their K children
@@ -645,7 +645,7 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
 
   const tipoRaw = (product.tipo_de_produto || "S").toUpperCase();
   // API v3: V = Com Variações (filhos K vão em variacoes[]), K individual = fallback S, S = Simples
-  const tipoApi = tipoRaw === "V" ? "V" : "S";
+  const tipoApi = (tipoRaw === "V" && children.length > 0) ? "V" : "S"; // v24: V sem filhos → S
 
   // garantia: API v3 espera número inteiro (meses), não string
   const garantiaNum = (() => {
@@ -721,6 +721,15 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
           }
         });
       }
+      // Fallback: se grade vazia, extrai variação do nome filho vs. pai
+              if (!grade.length) {
+                        const pNome = (product.produto_fornecedor || '').trim();
+                                  const kNome = (k.produto_fornecedor || '').trim();
+                                            const suffix = (kNome.toLowerCase().startsWith(pNome.toLowerCase()))
+                                                        ? kNome.substring(pNome.length).replace(/^[\s\-–]+/, '').trim()
+                                                                    : kNome;
+                                                                              grade.push({ chave: 'Variação', valor: suffix || k.codigo_fornecedor || String(children.indexOf(k) + 1) });
+                                                                                      }
       const varItem = {
         sku:    k.enriched?.sku_interno || k.codigo_fornecedor || "",
         precos: { preco: parseNumber(k.preco_venda) ?? 0 },
@@ -730,6 +739,28 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
       if (gtin) varItem.gtin = gtin;
       return varItem;
     });
+  }
+
+  // v24: herdar logistica/CEST de filho K quando produto pai V não tem dados
+  if (tipoApi === "V" && children.length > 0) {
+    if (!body.peso) {
+      for (const refK of children) {
+        const kPeso = parseNumber(refK.peso);
+        if (kPeso > 0) {
+          body.peso        = kPeso;
+          body.pesoBruto   = parseNumber(refK.pesoBruto) || kPeso;
+          body.largura     = parseNumber(refK.largura)   || 0;
+          body.altura      = parseNumber(refK.altura)    || 0;
+          body.comprimento = parseNumber(refK.comprimento) || 0;
+          break;
+        }
+      }
+    }
+    if (!body.cest) {
+      for (const refK of children) {
+        if (refK.enriched?.cest) { body.cest = refK.enriched.cest; break; }
+      }
+    }
   }
 
   // Remove campos vazios/null para não poluir o payload
@@ -2062,7 +2093,7 @@ function SyncStep({ products, tinyToken, corsProxy, onRestart }) {
     for (const p of items) {
       const tipo = (p.tipo_de_produto || "S").toUpperCase();
       // K com pai V: será incluído nas variacoes[] do pai — pular chamada individual
-      if (tipo === "K" && p._codigoPai && vSkuSet.has(p._codigoPai)) continue;
+      if (tipo === "K" && p._codigoPai !== null && vSkuSet.has(p._codigoPai)) continue; // v24
       if (tipo === "V") {
         const pSku = p.enriched?.sku_interno || p.codigo_fornecedor || "";
         const kChildren = items.filter(k =>
@@ -2430,6 +2461,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
         if (camposFixos.unidade)   payload.unidade   = camposFixos.unidade;
         if (camposFixos.garantia)    payload.garantia    = camposFixos.garantia;
         if (camposFixos.tributacao) payload.tributacao = camposFixos.tributacao;
+        if (camposFixos.codigoEspecificadorSubstituicaoTributaria) payload.codigoEspecificadorSubstituicaoTributaria = camposFixos.codigoEspecificadorSubstituicaoTributaria; // v24
         _native('https://corsproxy.io/?url=' + encodeURIComponent(baseUrl + v.id), {
           method: 'PUT',
           headers: { 'Authorization': token, 'Content-Type': 'application/json' },
@@ -2519,7 +2551,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
             if (body[alias] !== undefined) { body[colAliases[alias]] = body[alias]; delete body[alias]; }
           });
           var dimKeys = ['largura','altura','comprimento','peso','pesoBruto','pesoLiquido'];
-          if (dimKeys.some(function(k){ return body[k] !== undefined; })) {
+          if (dimKeys.some(function(k){ return body[k] !== undefined && body[k] > 0; })) { // v24
             body.dimensoes = {
               largura:     n(body.largura),
               altura:      n(body.altura),
@@ -2558,6 +2590,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
             if (body.unidade)   camposParaVariacoes.unidade   = body.unidade;
             if (body.garantia)    camposParaVariacoes.garantia    = body.garantia;
             if (body.tributacao) camposParaVariacoes.tributacao = body.tributacao;
+            if (body.codigoEspecificadorSubstituicaoTributaria) camposParaVariacoes.codigoEspecificadorSubstituicaoTributaria = body.codigoEspecificadorSubstituicaoTributaria; // v24
 
             return _native(url, opts).then(function(resp) {
               resp.clone().text().then(function(t) {
