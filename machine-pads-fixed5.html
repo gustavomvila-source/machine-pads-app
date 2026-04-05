@@ -668,7 +668,7 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
     // ── Classificação fiscal ───────────────────────────────
     unidadeMedida:  product.unidade || "UN",
     ncm:            String(product.ncm || "").replace(/\D/g, ""),
-    cest:           product.enriched?.cest || "",
+    cest:           product.enriched?.cest || product.cest || "",  // v24-hf2
     origem:         (product.origem || "").toLowerCase().includes("import") ? "2" : "0",
 
     // ── Descrições ─────────────────────────────────────────
@@ -763,7 +763,7 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
     }
     if (!body.cest) {
       for (const refK of children) {
-        if (refK.enriched?.cest) { body.cest = refK.enriched.cest; break; }
+          if (refK.enriched?.cest || refK.cest) { body.cest = refK.enriched?.cest || refK.cest; break; } // v24-hf2
       }
     }
   }
