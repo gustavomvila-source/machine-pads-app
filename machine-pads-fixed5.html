@@ -686,7 +686,7 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
 
     // ── Marketing ──────────────────────────────────────────
     marcaId:        product._marcaId || undefined,
-    marcaNome:      product._marcaSearch || product.marca || undefined,
+    marcaNome:      product._marcaSearch || product.enriched?.marca || product.marca || undefined,  // v24-hf3
     tagExtraNome:   (() => { var _cd = (product.cross_docking || '').trim(); return (_cd && _cd.toLowerCase() !== 'não') ? _cd : undefined; })(),
     // marca: API v3 exige {id, nome} com ID cadastrado no Tiny — omitir para evitar erro 400
     garantia:       garantiaNum,
@@ -1690,7 +1690,7 @@ function ReviewStep({ products, apiKey, tinyToken, corsProxy, onDone, onBack }) 
         setItems(function(prev) {
           return prev.map(function(item) {
             if (item._marcaId) return item;
-            var search = (item._marcaSearch || item.marca || '').toLowerCase().trim();
+            var search = (item._marcaSearch || item.enriched?.marca || item.marca || '').toLowerCase().trim(); // v24-hf3
             var match = list.find(function(b) { return b.descricao.toLowerCase().trim() === search; });
             return Object.assign({}, item, { _marcaId: match ? match.id : null });
           });
@@ -2572,8 +2572,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
           // FIX 6: marca via brandMap
           if (!body.marca && body.marcaId) {
           body.marca = { id: Number(body.marcaId) }; delete body.marcaId; entry.fixes.push('marcaId:' + body.marca.id);
-        } else if (!body.marca && body.descricao && Object.keys(window.__brandMap).length > 0) {
-            var nl = body.descricao.toLowerCase(), best = null;
+        } else if (!body.marca && (body.marcaNome || body.descricao) && Object.keys(window.__brandMap).length > 0) { // v24-hf3
+            var nl = ((body.marcaNome||'') + ' ' + (body.descricao||'')).toLowerCase(), best = null; // v24-hf3
             Object.keys(window.__brandMap).forEach(function(nm) {
               if (nl.includes(nm) && (!best || nm.length > best.nome.length)) best = { nome:nm, id:window.__brandMap[nm] };
             });
@@ -2636,7 +2636,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
               try { var rdSE = JSON.parse(t); if (rdSE.id && body.tagExtraNome) { scheduleTag(rdSE.id, body.tagExtraNome, token, _proxyUrl, 'Prateleira Infinita'); entry.fixes.push('tag-extra:'+body.tagExtraNome); } } catch(e) {}
             }
           });
-          return resp;
+          return resp;Page_UpPage_Up
         });
       }
       return _native(url, opts);
