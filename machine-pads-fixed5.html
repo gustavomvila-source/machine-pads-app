@@ -668,7 +668,7 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
     // ── Classificação fiscal ───────────────────────────────
     unidadeMedida:  product.unidade || "UN",
     ncm:            String(product.ncm || "").replace(/\D/g, ""),
-    cest:           product.enriched?.cest || product.cest || "",  // v24-hf2
+    tributacao:     (() => { const t = { classeIPI: "999" }; const c = product.enriched?.cest || product.cest || ""; if (c) t.codigoEspecificadorSubstituicaoTributaria = String(c); return t; })(),  // v24-hf4
     origem:         (product.origem || "").toLowerCase().includes("import") ? "2" : "0",
 
     // ── Descrições ─────────────────────────────────────────
@@ -761,9 +761,9 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
         }
       }
     }
-    if (!body.cest) {
+    if (!body.tributacao?.codigoEspecificadorSubstituicaoTributaria) { // v24-hf4
       for (const refK of children) {
-          if (refK.enriched?.cest || refK.cest) { body.cest = refK.enriched?.cest || refK.cest; break; } // v24-hf2
+          const _kc = refK.enriched?.cest || refK.cest; if (_kc) { if (!body.tributacao) body.tributacao = { classeIPI: '999' }; body.tributacao.codigoEspecificadorSubstituicaoTributaria = String(_kc); break; } // v24-hf4
       }
     }
   }
@@ -2524,9 +2524,10 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
             entry.fixes.push('grade');
           }
 
-          // FIX 2: cest -> codigoEspecificadorSubstituicaoTributaria
+          // FIX 2: cest -> tributacao.codigoEspecificadorSubstituicaoTributaria (v24-hf4)
           if (body.cest != null && body.cest !== '') {
-            body.codigoEspecificadorSubstituicaoTributaria = String(body.cest);
+            if (!body.tributacao) body.tributacao = {};
+            body.tributacao.codigoEspecificadorSubstituicaoTributaria = String(body.cest); // v24-hf4
             delete body.cest;
             entry.fixes.push('cest');
           }
@@ -2580,13 +2581,13 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
             if (best) { body.marca = { id: best.id }; entry.fixes.push('marca:' + best.nome); }
           }
 
+          // FIX 8: tributacao.classeIPI = "999" (v24-hf4: movido para antes da serialização)
+          body.tributacao = Object.assign({}, body.tributacao || {}, { classeIPI: '999' });
+          entry.fixes.push('tributacao.classeIPI:999');
+
           entry.sku  = body.sku;
           entry.tipo = body.tipo;
           opts.body  = JSON.stringify(body);
-
-          // FIX 8: tributacao.classeIPI = "999" (Código de Enquadramento IPI) para todos os produtos
-          body.tributacao = Object.assign({}, body.tributacao || {}, { classeIPI: '999' });
-          entry.fixes.push('tributacao.classeIPI:999');
           // FIX 7: após POST de tipo V bem-sucedido, PUT dimensoes/marca/unidade/garantia em cada variação
           if (body.tipo === 'V' && opts.method !== 'PUT') {
             var camposParaVariacoes = {};
