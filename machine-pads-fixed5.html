@@ -1690,13 +1690,8 @@ function ReviewStep({ products, apiKey, tinyToken, corsProxy, onDone, onBack }) 
         setItems(function(prev) {
           return prev.map(function(item) {
             if (item._marcaId) return item;
-<<<<<<< HEAD
             var search = (item._marcaSearch || item.marca || '').toLowerCase().trim();
             var match = list.find(function(b) { return (b.descricao||b.nome||'').toLowerCase().trim() === search; });  // v24-hf5
-=======
-            var search = (item._marcaSearch || item.enriched?.marca || item.marca || '').toLowerCase().trim(); // v24-hf3
-            var match = list.find(function(b) { return b.descricao.toLowerCase().trim() === search; });
->>>>>>> d028943a25bb6044a85761c3c4a2a795d26bdc5f
             return Object.assign({}, item, { _marcaId: match ? match.id : null });
           });
         });
