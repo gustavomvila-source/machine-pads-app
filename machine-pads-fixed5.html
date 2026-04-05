@@ -746,6 +746,17 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
     body.grade = Object.keys(gradeKeys);
     if (!body.grade.length) body.grade = ['Variacao'];
     console.log('[MachinePADS v22] grade a enviar:', JSON.stringify(body.grade));
+    // v23: herdar logistica do primeiro filho K se o produto pai nao tiver
+    const refK = children[0];
+    const refPeso = parseNumber(refK.peso);
+    if (!body.peso && refPeso) {
+    body.peso        = refPeso;
+    body.pesoBruto   = parseNumber(refK.pesoBruto) || refPeso;
+    body.largura     = parseNumber(refK.largura)   || 0;
+    body.altura      = parseNumber(refK.altura)    || 0;
+    body.comprimento = parseNumber(refK.comprimento) || 0;
+    }
+    if (!body.cest && refK.enriched?.cest) body.cest = refK.enriched.cest;
   }
 
   // Remove campos vazios/null para não poluir o payload
