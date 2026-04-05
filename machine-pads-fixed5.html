@@ -226,7 +226,7 @@ function resolveParentChild(products) {
         }
       }
     }
-            return { ...p, _codigoPai: parent !== null ? (parent.enriched?.sku_interno || "") : null }; // v21
+    return { ...p, _codigoPai: parent?.enriched?.sku_interno || "" };
   });
 
   // Step 2: update V products' variacoes based on their K children
@@ -645,8 +645,7 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
 
   const tipoRaw = (product.tipo_de_produto || "S").toUpperCase();
   // API v3: V = Com Variações (filhos K vão em variacoes[]), K individual = fallback S, S = Simples
-  const tipoApi = (tipoRaw === "V" && children.length > 0) ? "V" : "S"; // v21: V sem filhos → S
-        console.log('[MachinePADS v21] sendToTiny:', product.produto_fornecedor, '| tipoRaw:', tipoRaw, '| tipoApi:', tipoApi, '| children:', children.length);
+  const tipoApi = tipoRaw === "V" ? "V" : "S";
 
   // garantia: API v3 espera número inteiro (meses), não string
   const garantiaNum = (() => {
@@ -2065,19 +2064,19 @@ function SyncStep({ products, tinyToken, corsProxy, onRestart }) {
       items
         .filter(p => (p.tipo_de_produto || "S").toUpperCase() === "V")
         .map(p => p.enriched?.sku_interno || p.codigo_fornecedor || "")
-        );
+        .filter(Boolean)
+    );
 
     const tasks = [];
     for (const p of items) {
       const tipo = (p.tipo_de_produto || "S").toUpperCase();
       // K com pai V: será incluído nas variacoes[] do pai — pular chamada individual
-              if (tipo === "K" && p._codigoPai !== null && vSkuSet.has(p._codigoPai)) continue; // v21
+      if (tipo === "K" && p._codigoPai && vSkuSet.has(p._codigoPai)) continue;
       if (tipo === "V") {
         const pSku = p.enriched?.sku_interno || p.codigo_fornecedor || "";
         const kChildren = items.filter(k =>
           (k.tipo_de_produto || "S").toUpperCase() === "K" && k._codigoPai === pSku
         );
-                console.log('[MachinePADS v21] V pai:', p.produto_fornecedor, '| pSku:', pSku, '| filhos K:', kChildren.length);
         tasks.push({ main: p, children: kChildren });
       } else {
         tasks.push({ main: p, children: [] });
