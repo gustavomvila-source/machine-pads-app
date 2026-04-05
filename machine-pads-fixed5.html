@@ -739,6 +739,11 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
       if (gtin) varItem.gtin = gtin;
       return varItem;
     });
+    // v24-hf: grade obrigatório no sendToTiny (não depender só do interceptor)
+    const _gk = {};
+    body.variacoes.forEach(v => { if (v.grade) v.grade.forEach(g => { _gk[g.chave] = true; }); });
+    body.grade = Object.keys(_gk);
+    if (!body.grade.length) body.grade = ['Variação'];
   }
 
   // v24: herdar logistica/CEST de filho K quando produto pai V não tem dados
