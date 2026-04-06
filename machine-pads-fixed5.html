@@ -72,7 +72,7 @@
 
   <script type="text/babel" data-presets="react">
 const { useState, useCallback, useRef, Fragment } = React;
-const { Upload, CheckCircle, XCircle, AlertCircle, ChevronRight, ChevronLeft, Settings, Loader, Send, Tag, FileText, Package, Zap, Eye, Edit2, RefreshCw, Home } = LucideReact;
+const { Upload, CheckCircle, XCircle, AlertCircle, ChevronRight, ChevronLeft, Settings, Loader, Send, Tag, FileText, Package, Zap, Eye, Edit2, RefreshCw, Home , Tag} = LucideReact;
 const ImageIcon = LucideReact.Image;
 
 
@@ -812,6 +812,34 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
     throw new Error(detail);
   }
   return await res.json();
+// ─── TAG HELPERS (v30) ────────────────────────────────────────────────────────
+function fetchTinyTagsXHR(token, corsProxy) {
+  return new Promise((resolve) => {
+    const base = corsProxy ? corsProxy + 'https://api.tiny.com.br/public-api/v3' : 'https://api.tiny.com.br/public-api/v3';
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', base + '/tags?limit=200', true);
+    xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try { resolve(JSON.parse(xhr.responseText)?.itens || []); } catch(_) { resolve([]); }
+      } else resolve([]);
+    };
+    xhr.onerror = () => resolve([]);
+    xhr.send();
+  });
+}
+async function assignTagsToProduct(productId, tagIds, token, corsProxy) {
+  if (!productId || !tagIds || !tagIds.length) return;
+  const base = corsProxy ? corsProxy + 'https://api.tiny.com.br/public-api/v3' : 'https://api.tiny.com.br/public-api/v3';
+  try {
+    await fetch(base + '/produtos/' + productId + '/tags', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify(tagIds.map(id => ({ idTag: id }))),
+    });
+  } catch(_) {}
+}
+
 }
 
 // ─────────────────────────────────────────────
@@ -1679,7 +1707,18 @@ function ReviewStep({ products, apiKey, tinyToken, corsProxy, onDone, onBack }) 
   const [activeTab, setActiveTab] = useState("content");
   const [brandList, setBrandList] = React.useState([]);
   const [brandsLoaded, setBrandsLoaded] = React.useState(false);
-  React.useEffect(() => {
+  React.  const [availableTags, setAvailableTags] = useState([]);
+  const [tagsLoading, setTagsLoading] = useState(false);
+  const [selectedTagIds, setSelectedTagIds] = useState(new Set());
+  useEffect(() => {
+    if (!tinyToken) return;
+    setTagsLoading(true);
+    fetchTinyTagsXHR(tinyToken, corsProxy || '').then(tags => {
+      setAvailableTags(tags);
+      setTagsLoading(false);
+    });
+  }, [tinyToken]);
+useEffect(() => {
     if (!tinyToken) { setBrandsLoaded(true); return; }
     // XHR bypasses the fetch interceptor that would corrupt GET /marcas
     var proxy = (corsProxy || 'https://corsproxy.io/?') + 'url=' + encodeURIComponent('https://api.tiny.com.br/public-api/v3/marcas?limit=100');  // v25
@@ -1749,7 +1788,7 @@ function ReviewStep({ products, apiKey, tinyToken, corsProxy, onDone, onBack }) 
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-500">{approved.length} aprovados</span>
           {approved.length > 0 && (
-            <button onClick={() => onDone(approved)}
+            <button onClick={() => onDone(approved, [...selectedTagIds])}
               className="px-4 py-2 bg-green-600 text-white rounded-xl text-sm font-semibold hover:bg-green-700 flex items-center gap-1.5 shadow-sm">
               <Send size={14} /> Exportar {approved.length} produto(s)
             </button>
@@ -1757,7 +1796,39 @@ function ReviewStep({ products, apiKey, tinyToken, corsProxy, onDone, onBack }) 
         </div>
       </div>
 
-      {/* Dot navigator */}
+            {/* Tags Tiny (v30) */}
+      {tinyToken && (
+        <div className="bg-white border border-gray-200 rounded-2xl px-4 py-3 mb-4 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-semibold text-gray-600 flex items-center gap-1.5 uppercase tracking-wide">
+              <Tag size={13} className="shrink-0" /> Tags Tiny {tagsLoading && <span className="font-normal text-gray-400 normal-case tracking-normal ml-1">carregando…</span>}
+            </span>
+            {selectedTagIds.size > 0 && (
+              <span className="text-[11px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-semibold">
+                {selectedTagIds.size} tag{selectedTagIds.size > 1 ? 's' : ''}
+              </span>
+            )}
+          </div>
+          {availableTags.length > 0 ? (
+            <div className="flex flex-wrap gap-1.5">
+              {availableTags.map(tag => {
+                const sel = selectedTagIds.has(tag.id);
+                return (
+                  <button key={tag.id}
+                    onClick={() => setSelectedTagIds(prev => { const n = new Set(prev); sel ? n.delete(tag.id) : n.add(tag.id); return n; })}
+                    className={'text-xs px-2.5 py-0.5 rounded-full border transition-all ' + (sel ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : 'bg-gray-50 text-gray-600 border-gray-300 hover:border-indigo-400 hover:text-indigo-600')}
+                    title={tag.grupo || ''}>
+                    {tag.nome}
+                  </button>
+                );
+              })}
+            </div>
+          ) : !tagsLoading && (
+            <p className="text-xs text-gray-400 italic">Sem tags cadastradas no Tiny</p>
+          )}
+        </div>
+      )}
+{/* Dot navigator */}
       <div className="flex gap-1.5 mb-5 flex-wrap">
         {items.map((p, i) => (
           <button key={i} onClick={() => setIdx(i)}
@@ -2069,7 +2140,7 @@ function ReviewStep({ products, apiKey, tinyToken, corsProxy, onDone, onBack }) 
 // ─────────────────────────────────────────────
 // SYNC STEP (API v3 primary + CSV backup)
 // ─────────────────────────────────────────────
-function SyncStep({ products, tinyToken, corsProxy, onRestart }) {
+function SyncStep({ products, tinyToken, corsProxy, onRestart , selectedTagIds = []}) {
   const [syncing, setSyncing]           = useState(false);
   const [stopFlag, setStopFlag]         = useState({ stop: false });
   const [syncResults, setSyncResults]   = useState([]);
@@ -2120,7 +2191,8 @@ function SyncStep({ products, tinyToken, corsProxy, onRestart }) {
       setCurrentIdx(i + 1);
       setCurrentName(main.enriched?.titulo_otimizado || main.produto_fornecedor || "");
       try {
-        await sendToTiny(main, tinyToken, corsProxy || "", children);
+        const _tr = await sendToTiny(main, tinyToken, corsProxy || "", children);
+        if (_tr && _tr.id && selectedTagIds && selectedTagIds.length) await assignTagsToProduct(_tr.id, selectedTagIds, tinyToken, corsProxy || "");
         acc.push({ ...main, _syncOk: true });
         children.forEach(k => acc.push({ ...k, _syncOk: true }));
       } catch (e) {
@@ -2322,6 +2394,7 @@ function App() {
   const [valid, setValid] = useState([]);
   const [enriched, setEnriched] = useState([]);
   const [approved, setApproved] = useState([]);
+  const [selectedTagIds, setSelectedTagIds] = useState([]);
 
   const restart = () => { setStep("upload"); setRaw([]); setColumnMap({}); setValid([]); setEnriched([]); setApproved([]); };
 
@@ -2393,10 +2466,10 @@ function App() {
           <EnrichmentStep products={valid} apiKey={apiKeys.openai} rules={{...enrichmentRules, corsProxy: apiKeys.corsProxy}} onDone={e => { setEnriched(resolveParentChild(e)); setStep("review"); }} onBack={() => setStep("validation")} />
         )}
         {step === "review" && (
-          <ReviewStep products={enriched} apiKey={apiKeys.openai} tinyToken={apiKeys.tiny} corsProxy={apiKeys.corsProxy} onDone={a => { setApproved(a); setStep("sync"); }} onBack={() => setStep("enrichment")} />
+          <ReviewStep products={enriched} apiKey={apiKeys.openai} tinyToken={apiKeys.tiny} corsProxy={apiKeys.corsProxy} onDone={(a,t) => { setApproved(a); setSelectedTagIds(t||[]); setStep("sync"); }} onBack={() => setStep("enrichment")} />
         )}
         {step === "sync" && (
-          <SyncStep products={approved} tinyToken={apiKeys.tiny} corsProxy={apiKeys.corsProxy} onRestart={restart} />
+          <SyncStep products={approved} tinyToken={apiKeys.tiny} corsProxy={apiKeys.corsProxy} onRestart={restart} selectedTagIds={selectedTagIds} />
         )}
       </main>
 
