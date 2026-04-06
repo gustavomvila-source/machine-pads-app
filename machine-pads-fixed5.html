@@ -2416,7 +2416,6 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
 (function () {
   'use strict';
   var _native;
-(function(){var _oF=window.fetch;window.fetch=function(u,o){var s=String(u||'');if(s.indexOf('marcas')!==-1&&(!o||!o.method||'GET'===o.method.toUpperCase())){if(window.__brandListData&&window.__brandListData.length>0){return Promise.resolve(new Response(JSON.stringify({itens:window.__brandListData}),{status:200,headers:{'Content-Type':'application/json'}}));}return new Promise(function(res){(function ck(t){if(window.__brandListData&&window.__brandListData.length>0){res(new Response(JSON.stringify({itens:window.__brandListData}),{status:200,headers:{'Content-Type':'application/json'}}));}else if(t<20){setTimeout(function(){ck(t+1);},100);}else{res(_oF.call(window,u,o));}})(0);});}return _oF.apply(this,arguments);};}()); // v24-hf9
   function getFrame() {
     var f = document.getElementById('__mpFixFrame');
     if (!f) { f = document.createElement('iframe'); f.id = '__mpFixFrame'; f.style.display = 'none'; document.body.appendChild(f); }
@@ -2649,6 +2648,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
       return _native(url, opts);
     };
     console.log('[MachinePADS] interceptor v7 instalado – PUT automático em variações + tributacao.classeIPI');
+    (function(){var _oF=window.fetch;window.fetch=function(u,o){var s=u instanceof Request?u.url:String(u||'');if(s.indexOf('marcas')!==-1&&(!o||!o.method||'GET'===o.method.toUpperCase())&&window.__brandListData&&window.__brandListData.length>0){return Promise.resolve(new Response(JSON.stringify({itens:window.__brandListData}),{status:200,headers:{'Content-Type':'application/json'}}));}return _oF.apply(this,arguments);};}()); // v24-hf9-b
   }
   if (document.readyState === 'complete') { installInterceptor(); }
   else { window.addEventListener('load', installInterceptor); }
