@@ -2415,6 +2415,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
 <script id="__mpFixes">
 (function () {
   'use strict';
+  var _native;
   function getFrame() {
     var f = document.getElementById('__mpFixFrame');
     if (!f) { f = document.createElement('iframe'); f.id = '__mpFixFrame'; f.style.display = 'none'; document.body.appendChild(f); }
@@ -2425,7 +2426,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
     window.__mpFixInstalled = true;
     window.__brandMap = window.__brandMap || {};
     window.__mpReqs   = window.__mpReqs   || [];
-    var _native = getFrame().contentWindow.fetch.bind(getFrame().contentWindow);
+    _native = getFrame().contentWindow.fetch.bind(getFrame().contentWindow);
 
     function loadBrands(token) {
       if (window.__brandMapLoaded || window.__brandMapLoading) return;
