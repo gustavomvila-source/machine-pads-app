@@ -2431,7 +2431,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
     function loadBrands(token) {
       if (window.__brandMapLoaded || window.__brandMapLoading) return;
       window.__brandMapLoading = true;
-      (typeof _native === 'function' ? _native : fetch))('https://corsproxy.io/?url=' + encodeURIComponent'https://api.tiny.com.br/public-api/v3/marcas?limit=100'), {
+      (typeof _native === 'function' ? _native : fetch)('https://corsproxy.io/?url=' + encodeURIComponent'https://api.tiny.com.br/public-api/v3/marcas?limit=100'), {
         headers: { 'Authorization': token, 'Content-Type': 'application/json' }
       }).then(function(r){return r.json();}).then(function(d){
         (d.itens||d.data||[]).forEach(function(b){ const nm=b.descricao||b.nome; if(nm) window.__brandMap[nm.toLowerCase()]=b.id; });  // v24-hf5)
