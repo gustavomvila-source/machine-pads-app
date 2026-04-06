@@ -838,6 +838,7 @@ function fetchTinyTagsXHR(token, corsProxy) {
       if (xhr.status >= 200 && xhr.status < 300) {
         try { const d = JSON.parse(xhr.responseText);
           resolve(d?.itens || d?.retorno?.itens || []);
+        } catch (_) { resolve([]); }
       } else resolve([]);
     };
     xhr.onerror = () => resolve([]);
