@@ -668,7 +668,7 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
     // ── Classificação fiscal ───────────────────────────────
     unidadeMedida:  product.unidade || "UN",
     ncm:            String(product.ncm || "").replace(/\D/g, ""),
-    tributacao:     (() => { const t = { classeIPI: "999" }; const c = product.enriched?.cest || product.cest || ""; if (c) t.codigoEspecificadorSubstituicaoTributaria = String(c); return t; })(),  // v24-hf4
+    tributacao:     (() => { const t = { classeIPI: "999" }; const c = product.enriched?.cest || product.cest || ""; if (c) t.cest = String(c); return t; })(),  // v24-hf4
     origem:         (product.origem || "").toLowerCase().includes("import") ? "2" : "0",
 
     // ── Descrições ─────────────────────────────────────────
@@ -761,9 +761,9 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
         }
       }
     }
-    if (!body.tributacao?.codigoEspecificadorSubstituicaoTributaria) { // v24-hf4
+    if (!body.tributacao?.cest) { // v24-hf4
       for (const refK of children) {
-          const _kc = refK.enriched?.cest || refK.cest; if (_kc) { if (!body.tributacao) body.tributacao = { classeIPI: '999' }; body.tributacao.codigoEspecificadorSubstituicaoTributaria = String(_kc); break; } // v24-hf4
+          const _kc = refK.enriched?.cest || refK.cest; if (_kc) { if (!body.tributacao) body.tributacao = { classeIPI: '999' }; body.tributacao.cest = String(_kc); break; } // v24-hf4
       }
     }
   }
@@ -2468,7 +2468,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
         if (camposFixos.unidade)   payload.unidade   = camposFixos.unidade;
         if (camposFixos.garantia)    payload.garantia    = camposFixos.garantia;
         if (camposFixos.tributacao) payload.tributacao = camposFixos.tributacao;
-        if (camposFixos.codigoEspecificadorSubstituicaoTributaria) payload.codigoEspecificadorSubstituicaoTributaria = camposFixos.codigoEspecificadorSubstituicaoTributaria; // v24
+        if (camposFixos.cest) payload.cest = camposFixos.cest; // v24
         _native('https://corsproxy.io/?url=' + encodeURIComponent(baseUrl + v.id), {
           method: 'PUT',
           headers: { 'Authorization': token, 'Content-Type': 'application/json' },
@@ -2526,10 +2526,10 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
             entry.fixes.push('grade');
           }
 
-          // FIX 2: cest -> tributacao.codigoEspecificadorSubstituicaoTributaria (v24-hf4)
+          // FIX 2: cest -> tributacao.cest (v24-hf4)
           if (body.cest != null && body.cest !== '') {
             if (!body.tributacao) body.tributacao = {};
-            body.tributacao.codigoEspecificadorSubstituicaoTributaria = String(body.cest); // v24-hf4
+            body.tributacao.cest = String(body.cest); // v24-hf4
             delete body.cest;
             entry.fixes.push('cest');
           }
@@ -2601,7 +2601,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
             if (body.unidade)   camposParaVariacoes.unidade   = body.unidade;
             if (body.garantia)    camposParaVariacoes.garantia    = body.garantia;
             if (body.tributacao) camposParaVariacoes.tributacao = body.tributacao;
-            if (body.codigoEspecificadorSubstituicaoTributaria) camposParaVariacoes.codigoEspecificadorSubstituicaoTributaria = body.codigoEspecificadorSubstituicaoTributaria; // v24
+            if (body.cest) camposParaVariacoes.cest = body.cest; // v24
 
             return _native(url, opts).then(function(resp) {
               resp.clone().text().then(function(t) {
@@ -2611,16 +2611,16 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
                     var rd = JSON.parse(t);
                     if (rd.id && rd.variacoes && rd.variacoes.length > 0) {
                       entry.fixes.push('variacoes-put:' + rd.variacoes.length);
-                      putVariacoes(rd.id, rd.variacoes, camposParaVariacoes, token);
+                      putVaricoes(rd.id, rd.variacoes, camposParaVariacoes, token);
                     }
                   } catch(e) {}
                 }
               // FIX 9: tag de marca (tipo V)
               if (resp.status >= 200 && resp.status < 300 && body.marcaNome) {
-                try { var rdT = JSON.parse(t); if (rdT.id) { scheduleTag(rdT.id, body.marcaNome, token, _proxyUrl); entry.fixes.push('tag:'+body.marcaNome); if (rdT.variacoes && rdT.variacoes.length) { rdT.variacoes.forEach(function(v){ if(v.id) scheduleTag(v.id, body.marcaNome, token, _proxyUrl); }); entry.fixes.push('tag-var:'+rdT.variacoes.length); } } } catch(e) {}
+                try { var rdT = JSON.parse(t); if (rdT.i) { scheduleTag(rdT.id, body.marcaNome, token, _proxyUrl); entry.fixes.push('tag:'+body.marcaNome); if (rdT.variacoes && rdT.variacoes.length) { rdT.variacoes.forEach(function(v){ if(v.id) scheduleTag(v.id, body.marcaNome, token, _proxyUrl); }); entry.fixes.push('tag-var:'+rdT.variacoes.length); } } } catch(e) {}
               }
               // FIX 9b: tag extra (cross_docking)
-              if (resp.status >= 200 && resp.status< 300 ) {
+              if (resp.status >= 200 && resp.status< 300) {
               try { var rdTE = JSON.parse(t); if (rdTE.id) { if(body.tagExtraNome){scheduleTag(rdTE.id, body.tagExtraNome, token, _proxyUrl, 'Prateleira Infinita'); entry.fixes.push('tag-extra:'+body.tagExtraNome);} if (rdTE.variacoes && rdTE.variacoes.length) { rdTE.variacoes.forEach(function(v,idx){ if(v.id){var _ch=children[idx];var _chCd=_ch?(_ch.cross_docking||'').trim():'';if(_chCd&&_chCd.toLowerCase()!=='não'){scheduleTag(v.id,_chCd,token,_proxyUrl,'Prateleira Infinita');entry.fixes.push('tag-extra:'+_chCd);}} }); } } } catch(e) {}
               }
               });
