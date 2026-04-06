@@ -7,7 +7,7 @@
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Process polyfill (must be first, before any module loading) -->
-  <script>window.process = window.process || { env: { NODE_ENV:'production' } };</script>
+  <script>window.process = window.process || { env: { NODE_ENV:production' } };</script>
   <!-- React 18 -->
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
@@ -1678,7 +1678,7 @@ function ReviewStep({ products, apiKey, tinyToken, corsProxy, onDone, onBack }) 
   React.useEffect(() => {
     if (!tinyToken) { setBrandsLoaded(true); return; }
     // XHR bypasses the fetch interceptor that would corrupt GET /marcas
-    var proxy = (corsProxy || 'https://corsproxy.io/?') + 'url=' + encodeURIComponent('https://api.tiny.com.br/public-api/v3/marcas?limit=200');  // v24-hf5
+    var proxy = (corsProxy || 'https://corsproxy.io/?') + 'url=' + encodeURIComponent('https://api.tiny.com.br/public-api/v3/marcas?limit=100');  // v25
     var xhr = new XMLHttpRequest();
     xhr.open('GET', proxy);
     xhr.setRequestHeader('Authorization', 'Bearer ' + tinyToken);
