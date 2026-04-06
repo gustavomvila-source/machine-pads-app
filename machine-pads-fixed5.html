@@ -668,7 +668,8 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
     // ── Classificação fiscal ───────────────────────────────
     unidadeMedida:  product.unidade || "UN",
     ncm:            String(product.ncm || "").replace(/\D/g, ""),
-    tributacao:     (() => { const t = { classeIPI: "999" }; const c = product.enriched?.cest || product.cest || ""; if (c) t.cest = String(c); return t; })(),  // v24-hf4
+    tributacao:     { classeIPI: "999" },  // v27
+    codigoEspecificadorSubstituicaoTributaria: (() => { const c = product.enriched?.cest || product.cest || ""; return c || null; })(),  // v27  // v24-hf4
     origem:         (product.origem || "").toLowerCase().includes("import") ? "2" : "0",
 
     // ── Descrições ─────────────────────────────────────────
@@ -761,9 +762,9 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
         }
       }
     }
-    if (!body.tributacao?.cest) { // v24-hf4
+    if (!body.codigoEspecificadorSubstituicaoTributaria) { // v27 // v24-hf4
       for (const refK of children) {
-          const _kc = refK.enriched?.cest || refK.cest; if (_kc) { if (!body.tributacao) body.tributacao = { classeIPI: '999' }; body.tributacao.cest = String(_kc); break; } // v24-hf4
+          const _kc = refK.enriched?.cest || refK.cest; if (_kc) { if (!body.tributacao) body.tributacao = { classeIPI: '999' }; body.codigoEspecificadorSubstituicaoTributaria = String(_kc); break; } // v27 } // v24-hf4
       }
     }
   }
@@ -2526,12 +2527,17 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
             entry.fixes.push('grade');
           }
 
-          // FIX 2: cest -> tributacao.cest (v24-hf4)
+          // FIX 2: cest/tributacao.cest -> codigoEspecificadorSubstituicaoTributaria (v27)
           if (body.cest != null && body.cest !== '') {
-            if (!body.tributacao) body.tributacao = {};
-            body.tributacao.cest = String(body.cest); // v24-hf4
+            
+            body.codigoEspecificadorSubstituicaoTributaria = body.codigoEspecificadorSubstituicaoTributaria || String(body.cest); // v27
             delete body.cest;
             entry.fixes.push('cest');
+          }
+          if (body.tributacao?.cest) {
+            body.codigoEspecificadorSubstituicaoTributaria = body.codigoEspecificadorSubstituicaoTributaria || String(body.tributacao.cest); // v27
+            delete body.tributacao.cest;
+            entry.fixes.push('cest_trib');
           }
 
           // FIX 3: unidadeMedida -> unidade
