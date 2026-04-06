@@ -668,7 +668,7 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
     // ── Classificação fiscal ───────────────────────────────
     unidadeMedida:  product.unidade || "UN",
     ncm:            String(product.ncm || "").replace(/\D/g, ""),
-    tributacao:     { classeIPI: "999" },  // v27
+    tributacao: (() => { const t = { classeIPI: "999" }; const c = product.enriched?.cest || product.cest || ""; if (c) t.cest = String(c); return t; })(),
     codigoEspecificadorSubstituicaoTributaria: (() => { const c = product.enriched?.cest || product.cest || ""; return c || null; })(),  // v27  // v24-hf4
     origem:         (product.origem || "").toLowerCase().includes("import") ? "2" : "0",
 
@@ -764,7 +764,7 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
     }
     if (!body.codigoEspecificadorSubstituicaoTributaria) { // v27 // v24-hf4
       for (const refK of children) {
-          const _kc = refK.enriched?.cest || refK.cest; if (_kc) { if (!body.tributacao) body.tributacao = { classeIPI: '999' }; body.codigoEspecificadorSubstituicaoTributaria = String(_kc); break; } // v27 } // v24-hf4
+          const _kc = refK.enriched?.cest || refK.cest; if (_kc) { if (!body.tributacao?.cest) { body.tributacao.cest = String(_kc); break; } } // v28 } // v24-hf4
       }
     }
   }
@@ -775,6 +775,7 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
   );
   const payload = { ...clean(body), seo: clean(body.seo), imagens: body.imagens };
   if (body.variacoes) payload.variacoes = body.variacoes;
+  body.variacoes.forEach(v => { const _eks=new Set((v.grade||[]).map(g=>g.chave)); body.grade.forEach(key=>{ if(!_eks.has(key)) (v.grade=v.grade||[]).push({chave:key,valor:'-'}); }); });
   if (!payload.imagens.length) delete payload.imagens;
   if (!Object.keys(payload.seo).length) delete payload.seo;
   delete payload.tagExtraNome; // não enviar ao Tiny — usado só internamente
