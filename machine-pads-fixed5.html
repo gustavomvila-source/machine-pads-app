@@ -1707,10 +1707,10 @@ function ReviewStep({ products, apiKey, tinyToken, corsProxy, onDone, onBack }) 
   const [activeTab, setActiveTab] = useState("content");
   const [brandList, setBrandList] = React.useState([]);
   const [brandsLoaded, setBrandsLoaded] = React.useState(false);
-  React.  const [availableTags, setAvailableTags] = useState([]);
+  const [availableTags, setAvailableTags] = useState([]);
   const [tagsLoading, setTagsLoading] = useState(false);
   const [selectedTagIds, setSelectedTagIds] = useState(new Set());
-  useEffect(() => {
+  React.useEffect(() => {
     if (!tinyToken) return;
     setTagsLoading(true);
     fetchTinyTagsXHR(tinyToken, corsProxy || '').then(tags => {
@@ -1718,7 +1718,7 @@ function ReviewStep({ products, apiKey, tinyToken, corsProxy, onDone, onBack }) 
       setTagsLoading(false);
     });
   }, [tinyToken]);
-useEffect(() => {
+React.useEffect(() => {
     if (!tinyToken) { setBrandsLoaded(true); return; }
     // XHR bypasses the fetch interceptor that would corrupt GET /marcas
     var proxy = (corsProxy || 'https://corsproxy.io/?') + 'url=' + encodeURIComponent('https://api.tiny.com.br/public-api/v3/marcas?limit=100');  // v25
