@@ -2416,6 +2416,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
 (function () {
   'use strict';
   var _native;
+(function(){var _oF=window.fetch;window.fetch=function(u,o){var s=String(u||'');if(s.indexOf('marcas')!==-1&&(!o||!o.method||'GET'===o.method.toUpperCase())){if(window.__brandListData&&window.__brandListData.length>0){return Promise.resolve(new Response(JSON.stringify({itens:window.__brandListData}),{status:200,headers:{'Content-Type':'application/json'}}));}return new Promise(function(res){(function ck(t){if(window.__brandListData&&window.__brandListData.length>0){res(new Response(JSON.stringify({itens:window.__brandListData}),{status:200,headers:{'Content-Type':'application/json'}}));}else if(t<20){setTimeout(function(){ck(t+1);},100);}else{res(_oF.call(window,u,o));}})(0);});}return _oF.apply(this,arguments);};}()); // v24-hf9
   function getFrame() {
     var f = document.getElementById('__mpFixFrame');
     if (!f) { f = document.createElement('iframe'); f.id = '__mpFixFrame'; f.style.display = 'none'; document.body.appendChild(f); }
@@ -2437,6 +2438,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
         (d.itens||d.data||[]).forEach(function(b){ const nm=b.descricao||b.nome; if(nm) window.__brandMap[nm.toLowerCase()]=b.id; });  // v24-hf5)
         window.__brandMapLoaded = true;
         console.log('[MachinePADS] brandMap:', Object.keys(window.__brandMap).length, 'marcas');
+        window.__brandListData=Object.keys(window.__brandMap).map(function(n){return{id:window.__brandMap[n],descricao:n,nome:n};}); // v24-hf9
       }).catch(function(){ window.__brandMapLoading = false; });
     }
 
