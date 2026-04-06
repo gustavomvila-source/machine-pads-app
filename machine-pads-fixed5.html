@@ -812,6 +812,20 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
     throw new Error(detail);
   }
   return await res.json();
+
+async function assignTagsToProduct(productId, tagIds, token, corsProxy) {
+  if (!productId || !tagIds || !tagIds.length) return;
+  const base = corsProxy ? corsProxy + 'https://api.tiny.com.br/public-api/v3' : 'https://api.tiny.com.br/public-api/v3';
+  try {
+    await fetch(base + '/produtos/' + productId + '/tags', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify(tagIds.map(id => ({ idTag: id }))),
+    });
+  } catch(_) {}
+}
+
+}
 // ─── TAG HELPERS (v30) ────────────────────────────────────────────────────────
 function fetchTinyTagsXHR(token, corsProxy) {
   return new Promise((resolve) => {
@@ -827,19 +841,6 @@ function fetchTinyTagsXHR(token, corsProxy) {
     xhr.onerror = () => resolve([]);
     xhr.send();
   });
-}
-async function assignTagsToProduct(productId, tagIds, token, corsProxy) {
-  if (!productId || !tagIds || !tagIds.length) return;
-  const base = corsProxy ? corsProxy + 'https://api.tiny.com.br/public-api/v3' : 'https://api.tiny.com.br/public-api/v3';
-  try {
-    await fetch(base + '/produtos/' + productId + '/tags', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-      body: JSON.stringify(tagIds.map(id => ({ idTag: id }))),
-    });
-  } catch(_) {}
-}
-
 }
 
 // ─────────────────────────────────────────────
