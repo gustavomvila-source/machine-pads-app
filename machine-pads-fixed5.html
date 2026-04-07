@@ -815,9 +815,10 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
 
 async function assignTagsToProduct(productId, tagIds, token, corsProxy) {
   if (!productId || !tagIds || !tagIds.length) return;
-  const base = corsProxy ? corsProxy + 'https://api.tiny.com.br/public-api/v3' : 'https://api.tiny.com.br/public-api/v3';
+  const _atgt = 'https://api.tiny.com.br/public-api/v3/produtos/' + productId + '/tags';
+  const _aurl = corsProxy ? corsProxy + 'url=' + encodeURIComponent(_atgt) : _atgt;
   try {
-    await fetch(base + '/produtos/' + productId + '/tags', {
+    await fetch(_aurl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
       body: JSON.stringify(tagIds.map(id => ({ idTag: id }))),
@@ -1713,7 +1714,7 @@ function ReviewStep({ products, apiKey, tinyToken, corsProxy, onDone, onBack }) 
   const [brandsLoaded, setBrandsLoaded] = React.useState(false);
   const [availableTags, setAvailableTags] = useState([]);
   const [tagsLoading, setTagsLoading] = useState(false);
-  const [selectedTagIds, setSelectedTagIds] = useState(new Set());
+  const [selectedTagNames, setSelectedTagNames] = useState([]); const [tagInput, setTagInput] = useState('');
   React.useEffect(() => {
     if (!tinyToken) return;
     setTagsLoading(true);
@@ -1792,7 +1793,7 @@ React.useEffect(() => {
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-500">{approved.length} aprovados</span>
           {approved.length > 0 && (
-            <button onClick={() => onDone(approved, [...selectedTagIds])}
+            <button onClick={() => onDone(approved, selectedTagNames, availableTags)}
               className="px-4 py-2 bg-green-600 text-white rounded-xl text-sm font-semibold hover:bg-green-700 flex items-center gap-1.5 shadow-sm">
               <Send size={14} /> Exportar {approved.length} produto(s)
             </button>
@@ -1805,30 +1806,65 @@ React.useEffect(() => {
         <div className="bg-white border border-gray-200 rounded-2xl px-4 py-3 mb-4 shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-semibold text-gray-600 flex items-center gap-1.5 uppercase tracking-wide">
-              <Tag size={13} className="shrink-0" /> Tags Tiny {tagsLoading && <span className="font-normal text-gray-400 normal-case tracking-normal ml-1">carregando…</span>}
+              <Tag size={13} className="shrink-0" /> Tags Tiny
+              {tagsLoading && <span className="font-normal text-gray-400 normal-case tracking-normal ml-1"> carregando...</span>}
             </span>
-            {selectedTagIds.size > 0 && (
+            {selectedTagNames.length > 0 && (
               <span className="text-[11px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-semibold">
-                {selectedTagIds.size} tag{selectedTagIds.size > 1 ? 's' : ''}
+                {selectedTagNames.length} tag{selectedTagNames.length > 1 ? 's' : ''}
               </span>
             )}
           </div>
-          {availableTags.length > 0 ? (
-            <div className="flex flex-wrap gap-1.5">
-              {availableTags.map(tag => {
-                const sel = selectedTagIds.has(tag.id);
-                return (
-                  <button key={tag.id}
-                    onClick={() => setSelectedTagIds(prev => { const n = new Set(prev); sel ? n.delete(tag.id) : n.add(tag.id); return n; })}
-                    className={'text-xs px-2.5 py-0.5 rounded-full border transition-all ' + (sel ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : 'bg-gray-50 text-gray-600 border-gray-300 hover:border-indigo-400 hover:text-indigo-600')}
-                    title={tag.grupo || ''}>
-                    {tag.nome}
-                  </button>
-                );
-              })}
+          {selectedTagNames.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {selectedTagNames.map((name, i) => (
+                <span key={i} className="inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full bg-indigo-600 text-white font-medium">
+                  {name}
+                  <button onClick={() => setSelectedTagNames(prev => prev.filter((_, j) => j !== i))} className="ml-0.5 hover:text-indigo-200 leading-none text-sm">&times;</button>
+                </span>
+              ))}
             </div>
-          ) : !tagsLoading && (
-            <p className="text-xs text-gray-400 italic">Sem tags cadastradas no Tiny</p>
+          )}
+          <div className="flex gap-2 mb-2">
+            <input
+              type="text"
+              value={tagInput}
+              onChange={e => setTagInput(e.target.value)}
+              onKeyDown={e => {
+                if ((e.key === 'Enter' || e.key === ',') && tagInput.trim()) {
+                  e.preventDefault();
+                  const nm = tagInput.trim().replace(/,+$/, '');
+                  if (nm && !selectedTagNames.includes(nm)) setSelectedTagNames(prev => [...prev, nm]);
+                  setTagInput('');
+                }
+              }}
+              placeholder="Digite uma tag e pressione Enter..."
+              className="flex-1 text-xs border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            />
+            {tagInput.trim() && (
+              <button
+                onClick={() => {
+                  const nm = tagInput.trim();
+                  if (nm && !selectedTagNames.includes(nm)) setSelectedTagNames(prev => [...prev, nm]);
+                  setTagInput('');
+                }}
+                className="text-xs px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-semibold">
+                +
+              </button>
+            )}
+          </div>
+          {availableTags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 items-center">
+              <span className="text-[10px] text-gray-400 mr-1">Tiny:</span>
+              {availableTags.filter(t => !selectedTagNames.includes(t.nome)).map(tag => (
+                <button key={tag.id}
+                  onClick={() => setSelectedTagNames(prev => selectedTagNames.includes(tag.nome) ? prev : [...prev, tag.nome])}
+                  className="text-xs px-2.5 py-0.5 rounded-full border border-gray-300 bg-gray-50 text-gray-600 hover:border-indigo-400 hover:text-indigo-600 transition-all"
+                  title={tag.grupo || ''}>
+                  {tag.nome}
+                </button>
+              ))}
+            </div>
           )}
         </div>
       )}
@@ -2144,7 +2180,7 @@ React.useEffect(() => {
 // ─────────────────────────────────────────────
 // SYNC STEP (API v3 primary + CSV backup)
 // ─────────────────────────────────────────────
-function SyncStep({ products, tinyToken, corsProxy, onRestart , selectedTagIds = []}) {
+function SyncStep({ products, tinyToken, corsProxy, onRestart, selectedTagNames = [], availableTags = [] }) {
   const [syncing, setSyncing]           = useState(false);
   const [stopFlag, setStopFlag]         = useState({ stop: false });
   const [syncResults, setSyncResults]   = useState([]);
@@ -2196,7 +2232,7 @@ function SyncStep({ products, tinyToken, corsProxy, onRestart , selectedTagIds =
       setCurrentName(main.enriched?.titulo_otimizado || main.produto_fornecedor || "");
       try {
         const _tr = await sendToTiny(main, tinyToken, corsProxy || "", children);
-        if (_tr && _tr.id && selectedTagIds && selectedTagIds.length) await assignTagsToProduct(_tr.id, selectedTagIds, tinyToken, corsProxy || "");
+        if (_tr && _tr.id && selectedTagNames && selectedTagNames.length) { const _tids = []; for (const _tn of selectedTagNames) { const _nm = _tn.trim(); if (!_nm) continue; const _fx = (availableTags||[]).find(t=>t.nome&&t.nome.toLowerCase()===_nm.toLowerCase()); if (_fx) { _tids.push(_fx.id); continue; } try { const _tu = 'https://api.tiny.com.br/public-api/v3/tags'; const _turl = (corsProxy||'')?corsProxy+'url='+encodeURIComponent(_tu):_tu; const _cr = await fetch(_turl,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+tinyToken},body:JSON.stringify({nome:_nm})}); const _cd = await _cr.json(); const _cid = _cd?.id??_cd?.retorno?.id??null; if (_cid) _tids.push(_cid); } catch(_e){} } if (_tids.length) await assignTagsToProduct(_tr.id, _tids, tinyToken, corsProxy || ""); }
         acc.push({ ...main, _syncOk: true });
         children.forEach(k => acc.push({ ...k, _syncOk: true }));
       } catch (e) {
@@ -2398,7 +2434,7 @@ function App() {
   const [valid, setValid] = useState([]);
   const [enriched, setEnriched] = useState([]);
   const [approved, setApproved] = useState([]);
-  const [selectedTagIds, setSelectedTagIds] = useState([]);
+  const [selectedTagNames, setSelectedTagNames] = useState([]); const [availableTags, setAvailableTags] = useState([]);
 
   const restart = () => { setStep("upload"); setRaw([]); setColumnMap({}); setValid([]); setEnriched([]); setApproved([]); };
 
@@ -2470,10 +2506,10 @@ function App() {
           <EnrichmentStep products={valid} apiKey={apiKeys.openai} rules={{...enrichmentRules, corsProxy: apiKeys.corsProxy}} onDone={e => { setEnriched(resolveParentChild(e)); setStep("review"); }} onBack={() => setStep("validation")} />
         )}
         {step === "review" && (
-          <ReviewStep products={enriched} apiKey={apiKeys.openai} tinyToken={apiKeys.tiny} corsProxy={apiKeys.corsProxy} onDone={(a,t) => { setApproved(a); setSelectedTagIds(t||[]); setStep("sync"); }} onBack={() => setStep("enrichment")} />
+          <ReviewStep products={enriched} apiKey={apiKeys.openai} tinyToken={apiKeys.tiny} corsProxy={apiKeys.corsProxy} onDone={(a,t,tags) => { setApproved(a); setSelectedTagNames(t||[]); setAvailableTags(tags||[]); setStep("sync"); }} onBack={() => setStep("enrichment")} />
         )}
         {step === "sync" && (
-          <SyncStep products={approved} tinyToken={apiKeys.tiny} corsProxy={apiKeys.corsProxy} onRestart={restart} selectedTagIds={selectedTagIds} />
+          <SyncStep products={approved} tinyToken={apiKeys.tiny} corsProxy={apiKeys.corsProxy} onRestart={restart} selectedTagNames={selectedTagNames} availableTags={availableTags} />
         )}
       </main>
 
