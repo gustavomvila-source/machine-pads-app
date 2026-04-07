@@ -830,7 +830,7 @@ async function assignTagsToProduct(productId, tagIds, token, corsProxy) {
 function fetchTinyTagsXHR(token, corsProxy) {
   return new Promise((resolve) => {
         const targetUrl = 'https://api.tiny.com.br/public-api/v3/tags?limit=200';
-    const url = corsProxy ? corsProxy + encodeURIComponent(targetUrl) : targetUrl;
+    const url = corsProxy ? corsProxy + 'url=' + encodeURIComponent(targetUrl) : targetUrl;
     const xhr = new XMLHttpRequest();
     xhr.open('GET', url, true);
     xhr.setRequestHeader('Authorization', 'Bearer ' + token);
