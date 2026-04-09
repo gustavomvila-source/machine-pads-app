@@ -2234,12 +2234,21 @@ function SyncStep({ products, tinyToken, corsProxy, onRestart, selectedTagNames 
         const _tr = await sendToTiny(main, tinyToken, corsProxy || "", children);
         if (_tr && _tr.id && selectedTagNames && selectedTagNames.length) { const _tb = selectedTagNames.filter(function(n){return n&&n.trim();}).map(function(n){var _nm=n.trim();var _at=(availableTags||[]).find(function(t){return t.nome&&t.nome.toLowerCase()===_nm.toLowerCase();});return _at?{idTag:_at.id}:null;}).filter(Boolean);if (_tb.length) { const _atu='https://api.tiny.com.br/public-api/v3/produtos/'+_tr.id+'/tags'; const _aturl=(corsProxy||'')?corsProxy+encodeURIComponent(_atu):_atu; await new Promise(function(_res){var _xhr2=new XMLHttpRequest();_xhr2.open('POST',_aturl,true);_xhr2.setRequestHeader('Authorization','Bearer '+tinyToken);_xhr2.setRequestHeader('Content-Type','application/json');_xhr2.setRequestHeader('Accept','application/json');_xhr2.onload=function(){_res(_xhr2.status);};_xhr2.onerror=function(){_res(0);};_xhr2.send(JSON.stringify(_tb));});}  }
         acc.push({ ...main, _syncOk: true });
-        for (const k of children) {
-          if (k && k.id && selectedTagNames && selectedTagNames.length) {
-            const _cbt = selectedTagNames.filter(function(n){return n&&n.trim();})
-              .map(function(n){var _nm=n.trim();var _at=(availableTags||[]).find(function(t){return t.nome&&t.nome.toLowerCase()===_nm.toLowerCase();});return _at?{idTag:_at.id}:null;}).filter(Boolean);
-            if (_cbt.length) {
-              const _cbtu='https://api.tiny.com.br/public-api/v3/produtos/'+k.id+'/tags';
+        if (_tr && _tr.id && children && children.length && selectedTagNames && selectedTagNames.length) {
+          const _cbt = selectedTagNames.filter(function(n){return n&&n.trim();})
+            .map(function(n){var _nm=n.trim();var _at=(availableTags||[]).find(function(t){return t.nome&&t.nome.toLowerCase()===_nm.toLowerCase();});return _at?{idTag:_at.id}:null;}).filter(Boolean);
+          if (_cbt.length) {
+            let _varList = (_tr.variacoes||[]).filter(function(_v){return _v&&_v.id;});
+            if (!_varList.length) {
+              try {
+                const _gpUrl='https://api.tiny.com.br/public-api/v3/produtos/'+_tr.id;
+                const _gpFinal=(corsProxy||'')?corsProxy+encodeURIComponent(_gpUrl):_gpUrl;
+                const _gpRes=await fetch(_gpFinal,{headers:{'Authorization':'Bearer '+tinyToken,'Accept':'application/json'}});
+                if (_gpRes.ok) { const _gpData=await _gpRes.json(); _varList=(_gpData.variacoes||[]).filter(function(_v){return _v&&_v.id;}); }
+              } catch(_gpErr){}
+            }
+            for (const _v of _varList) {
+              const _cbtu='https://api.tiny.com.br/public-api/v3/produtos/'+_v.id+'/tags';
               const _cbturl=(corsProxy||'')?corsProxy+encodeURIComponent(_cbtu):_cbtu;
               await new Promise(function(_res3){
                 var _xhr3=new XMLHttpRequest();
@@ -2253,6 +2262,8 @@ function SyncStep({ products, tinyToken, corsProxy, onRestart, selectedTagNames 
               });
             }
           }
+        }
+        for (const k of children) {
           acc.push({ ...k, _syncOk: true });
         }
       } catch (e) {
