@@ -2263,36 +2263,40 @@ function SyncStep({ products, tinyToken, corsProxy, onRestart, selectedTagNames 
             }
           }
         }
-        // Peso bruto/líquido nas variações via PUT /produtos/{childId} (mesmo padrão do pai)
+        // Peso bruto/líquido nas variações via PUT /produtos/{parentId}/variacoes/{varId}
         if (_tr && _tr.id && children && children.length) {
           let _pvList=(_tr.variacoes||[]).filter(function(_v){return _v&&_v.id;});
           if (!_pvList.length) {
             try {
               const _puUrl='https://api.tiny.com.br/public-api/v3/produtos/'+_tr.id;
               const _puFinal=(corsProxy||'')?corsProxy+encodeURIComponent(_puUrl):_puUrl;
-              const _puRes=await fetch(_puFinal,{headers:{'Authorization':'Bearer '+tinyToken,'Accept':'application/json'}});
-              if(_puRes.ok){const _puData=await _puRes.json();_pvList=(_puData.variacoes||[]).filter(function(_v){return _v&&_v.id;});}
+              await new Promise(function(_rp){
+                var _xhrp=new XMLHttpRequest();
+                _xhrp.open('GET',_puFinal,true);
+                _xhrp.setRequestHeader('Authorization','Bearer '+tinyToken);
+                _xhrp.onload=function(){try{var _d=JSON.parse(_xhrp.responseText);_pvList=(_d.variacoes||[]).filter(function(_v){return _v&&_v.id;});}catch(_e){}_rp();};
+                _xhrp.onerror=function(){_rp();};
+                _xhrp.send();
+              });
             } catch(_puErr){}
           }
           for(let _pi=0;_pi<_pvList.length;_pi++){
             const _pv=_pvList[_pi];
             if(!_pv||!_pv.id) continue;
             const _pk=children.find(function(c){var _cs=(c.enriched&&c.enriched.sku_interno)?c.enriched.sku_interno:c.codigo_fornecedor;return _cs&&_cs===_pv.sku;})||children[_pi]||children[0];
-            if(!_pk) continue;
-            const _pw=parseNumber(_pk.peso)||parseNumber(product.peso)||0;
+            const _pw=parseNumber(_pk&&_pk.peso)||parseNumber(product.peso)||0;
             if(!(_pw>0)) continue;
-            // Atualiza o produto filho diretamente (mesmo endpoint/padrão usado no pai)
-            const _pvUrl='https://api.tiny.com.br/public-api/v3/produtos/'+_pv.id;
+            // Usa PUT /produtos/{parentId}/variacoes/{varId} com dimensoes (correto para SKUs filhos)
+            const _pvUrl='https://api.tiny.com.br/public-api/v3/produtos/'+_tr.id+'/variacoes/'+_pv.id;
             const _pvFinal=(corsProxy||'')?corsProxy+encodeURIComponent(_pvUrl):_pvUrl;
             await new Promise(function(_res4){
               var _xhr4=new XMLHttpRequest();
               _xhr4.open('PUT',_pvFinal,true);
               _xhr4.setRequestHeader('Authorization','Bearer '+tinyToken);
               _xhr4.setRequestHeader('Content-Type','application/json');
-              _xhr4.setRequestHeader('Accept','application/json');
               _xhr4.onload=function(){_res4(_xhr4.status);};
               _xhr4.onerror=function(){_res4(0);};
-              _xhr4.send(JSON.stringify({sku:_pv.sku||'',descricao:_pv.descricao||_pv.sku||'',pesoBruto:_pw,pesoLiquido:_pw}));
+              _xhr4.send(JSON.stringify({sku:_pv.sku||'',dimensoes:{pesoBruto:_pw,pesoLiquido:_pw}}));
             });
           }
         }
