@@ -735,8 +735,10 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
         sku:    k.enriched?.sku_interno || k.codigo_fornecedor || "",
         precos: { preco: parseNumber(k.preco_venda) ?? 0 },
         grade,
-        pesoBruto:   parseNumber(k.pesoBruto) || parseNumber(k.peso) || parseNumber(product.peso) || 0,
-        pesoLiquido: parseNumber(k.pesoLiquido) || parseNumber(k.peso) || parseNumber(product.peso) || 0,
+        dimensoes: {
+          pesoBruto:   parseNumber(k.pesoBruto) || parseNumber(k.peso) || parseNumber(product.peso) || 0,
+          pesoLiquido: parseNumber(k.pesoLiquido) || parseNumber(k.peso) || parseNumber(product.peso) || 0,
+        },
       };
       const gtin = String(k.ean || "").replace(/\D/g, "");
       if (gtin) varItem.gtin = gtin;
