@@ -2299,7 +2299,24 @@ if(_tr&&_tr.id&&children&&children.length){
     };
     _getParXhr.send();
   }
-}led = syncResults.filter(r => !r._syncOk);
+}
+        for (const k of children) {
+          acc.push({ ...k, _syncOk: true });
+        }
+      } catch (e) {
+        acc.push({ ...main, _syncOk: false, _syncErr: e.message });
+        children.forEach(k => acc.push({ ...k, _syncOk: false, _syncErr: e.message }));
+      }
+      setSyncResults([...acc]);
+      if (i < tasks.length - 1) await new Promise(r => setTimeout(r, 260));
+    }
+    setSyncing(false);
+    setSyncDone(true);
+  };
+
+  const handleSyncAll  = () => runSync(resolved);
+  const handleRetryFail = () => {
+    const failed = syncResults.filter(r => !r._syncOk);
     setSyncResults(syncResults.filter(r => r._syncOk));
     runSync(failed);
   };
