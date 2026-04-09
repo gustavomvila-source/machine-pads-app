@@ -2263,43 +2263,42 @@ function SyncStep({ products, tinyToken, corsProxy, onRestart, selectedTagNames 
             }
           }
         }
-        // Peso bruto/líquido nas variações via PUT /produtos/{parentId}/variacoes/{varId}
-        if (_tr && _tr.id && children && children.length) {
-          let _pvList=(_tr.variacoes||[]).filter(function(_v){return _v&&_v.id;});
-          if (!_pvList.length) {
-            try {
-              const _puUrl='https://api.tiny.com.br/public-api/v3/produtos/'+_tr.id;
-              const _puFinal=(corsProxy||'')?corsProxy+encodeURIComponent(_puUrl):_puUrl;
-              await new Promise(function(_rp){
-                var _xhrp=new XMLHttpRequest();
-                _xhrp.open('GET',_puFinal,true);
-                _xhrp.setRequestHeader('Authorization','Bearer '+tinyToken);
-                _xhrp.onload=function(){try{var _d=JSON.parse(_xhrp.responseText);_pvList=(_d.variacoes||[]).filter(function(_v){return _v&&_v.id;});}catch(_e){}_rp();};
-                _xhrp.onerror=function(){_rp();};
-                _xhrp.send();
-              });
-            } catch(_puErr){}
-          }
-          for(let _pi=0;_pi<_pvList.length;_pi++){
-            const _pv=_pvList[_pi];
-            if(!_pv||!_pv.id) continue;
-            const _pk=children.find(function(c){var _cs=(c.enriched&&c.enriched.sku_interno)?c.enriched.sku_interno:c.codigo_fornecedor;return _cs&&_cs===_pv.sku;})||children[_pi]||children[0];
-            const _pw=parseNumber(_pk&&_pk.peso)||parseNumber(product.peso)||0;
-            if(!(_pw>0)) continue;
-            // Usa PUT /produtos/{parentId}/variacoes/{varId} com dimensoes (correto para SKUs filhos)
-            const _pvUrl='https://api.tiny.com.br/public-api/v3/produtos/'+_tr.id+'/variacoes/'+_pv.id;
-            const _pvFinal=(corsProxy||'')?corsProxy+encodeURIComponent(_pvUrl):_pvUrl;
-            await new Promise(function(_res4){
-              var _xhr4=new XMLHttpRequest();
-              _xhr4.open('PUT',_pvFinal,true);
-              _xhr4.setRequestHeader('Authorization','Bearer '+tinyToken);
-              _xhr4.setRequestHeader('Content-Type','application/json');
-              _xhr4.onload=function(){_res4(_xhr4.status);};
-              _xhr4.onerror=function(){_res4(0);};
-              _xhr4.send(JSON.stringify({sku:_pv.sku||'',dimensoes:{pesoBruto:_pw,pesoLiquido:_pw}}));
-            });
-          }
-        }
+        // Peso bruto/líquido nas variações: busca cada filho por SKU no Tiny e atualiza via PUT /variacoes
+            if (_tr && _tr.id && children && children.length) {
+              for(let _ci=0;_ci<children.length;_ci++){
+                const _ch=children[_ci];
+                if(!_ch) continue;
+                const _pw=parseNumber(_ch.peso)||parseNumber(product.peso)||0;
+                if(!(_pw>0)) continue;
+                const _chSku=(_ch.enriched&&_ch.enriched.sku_interno)?_ch.enriched.sku_interno:_ch.codigo_fornecedor;
+                if(!_chSku) continue;
+                // Busca o ID do filho no Tiny pelo SKU
+                let _chId=null;
+                const _schUrl='https://api.tiny.com.br/public-api/v3/produtos?codigo='+encodeURIComponent(_chSku);
+                const _schFinal=(corsProxy||'')?corsProxy+encodeURIComponent(_schUrl):_schUrl;
+                await new Promise(function(_rsch){
+                  var _xhrsch=new XMLHttpRequest();
+                  _xhrsch.open('GET',_schFinal,true);
+                  _xhrsch.setRequestHeader('Authorization','Bearer '+tinyToken);
+                  _xhrsch.onload=function(){try{var _sd=JSON.parse(_xhrsch.responseText);var _sit=(_sd.itens||[]);if(_sit.length>0)_chId=_sit[0].id;}catch(_se){}_rsch();};
+                  _xhrsch.onerror=function(){_rsch();};
+                  _xhrsch.send();
+                });
+                if(!_chId) continue;
+                // PUT /produtos/{parentId}/variacoes/{childId} com dimensoes
+                const _pvUrl='https://api.tiny.com.br/public-api/v3/produtos/'+_tr.id+'/variacoes/'+_chId;
+                const _pvFinal=(corsProxy||'')?corsProxy+encodeURIComponent(_pvUrl):_pvUrl;
+                await new Promise(function(_res4){
+                  var _xhr4=new XMLHttpRequest();
+                  _xhr4.open('PUT',_pvFinal,true);
+                  _xhr4.setRequestHeader('Authorization','Bearer '+tinyToken);
+                  _xhr4.setRequestHeader('Content-Type','application/json');
+                  _xhr4.onload=function(){_res4(_xhr4.status);};
+                  _xhr4.onerror=function(){_res4(0);};
+                  _xhr4.send(JSON.stringify({sku:_chSku,dimensoes:{pesoBruto:_pw,pesoLiquido:_pw}}));
+                });
+              }
+            }
         for (const k of children) {
           acc.push({ ...k, _syncOk: true });
         }
