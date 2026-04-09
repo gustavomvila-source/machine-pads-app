@@ -2263,7 +2263,7 @@ function SyncStep({ products, tinyToken, corsProxy, onRestart, selectedTagNames 
             }
           }
         }
-        // Peso bruto/líquido nas variações via PUT /produtos/{parentId}/variacoes/{varId}
+        // Peso bruto/líquido nas variações via PUT /produtos/{childId} (mesmo padrão do pai)
         if (_tr && _tr.id && children && children.length) {
           let _pvList=(_tr.variacoes||[]).filter(function(_v){return _v&&_v.id;});
           if (!_pvList.length) {
@@ -2276,12 +2276,13 @@ function SyncStep({ products, tinyToken, corsProxy, onRestart, selectedTagNames 
           }
           for(let _pi=0;_pi<_pvList.length;_pi++){
             const _pv=_pvList[_pi];
-            if(!_pv||!_pv.id||!_pv.sku) continue;
-            const _pk=children.find(function(c){var _csku=(c.enriched&&c.enriched.sku_interno)?c.enriched.sku_interno:c.codigo_fornecedor;return _csku&&_csku===_pv.sku;})||children[_pi]||children[0];
+            if(!_pv||!_pv.id) continue;
+            const _pk=children.find(function(c){var _cs=(c.enriched&&c.enriched.sku_interno)?c.enriched.sku_interno:c.codigo_fornecedor;return _cs&&_cs===_pv.sku;})||children[_pi]||children[0];
             if(!_pk) continue;
             const _pw=parseNumber(_pk.peso)||parseNumber(product.peso)||0;
             if(!(_pw>0)) continue;
-            const _pvUrl='https://api.tiny.com.br/public-api/v3/produtos/'+_tr.id+'/variacoes/'+_pv.id;
+            // Atualiza o produto filho diretamente (mesmo endpoint/padrão usado no pai)
+            const _pvUrl='https://api.tiny.com.br/public-api/v3/produtos/'+_pv.id;
             const _pvFinal=(corsProxy||'')?corsProxy+encodeURIComponent(_pvUrl):_pvUrl;
             await new Promise(function(_res4){
               var _xhr4=new XMLHttpRequest();
@@ -2291,7 +2292,7 @@ function SyncStep({ products, tinyToken, corsProxy, onRestart, selectedTagNames 
               _xhr4.setRequestHeader('Accept','application/json');
               _xhr4.onload=function(){_res4(_xhr4.status);};
               _xhr4.onerror=function(){_res4(0);};
-              _xhr4.send(JSON.stringify({sku:_pv.sku,dimensoes:{pesoBruto:_pw,pesoLiquido:_pw}}));
+              _xhr4.send(JSON.stringify({sku:_pv.sku||'',descricao:_pv.descricao||_pv.sku||'',pesoBruto:_pw,pesoLiquido:_pw}));
             });
           }
         }
