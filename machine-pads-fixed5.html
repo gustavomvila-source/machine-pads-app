@@ -413,7 +413,7 @@ async function enrichProductWithAI(product, apiKey, rules = {}, onPhase) {
     const searchPrompt = `Produto: "${product.produto_fornecedor}" | Marca: "${product.marca || "—"}" | NCM: ${product.ncm}
 
 TAREFA 1 — CEST:
-Consulte o Convênio ICMS 142/2018 (tabela CEST) e verifique se o NCM ${product.ncm} está listado. Se encontrar o código CEST em uma fonte oficial (confaz.hacienda.gov.br, legislação.gov.br ou texto do próprio Convênio), retorne claramente "CEST: XX.XXX.XX". Se não encontrar o NCM na tabela ou não tiver certeza, retorne exatamente "CEST: NÃO ENCONTRADO" — não invente um código.
+Pesquise o código CEST para o NCM ${product.ncm} conforme o Convênio ICMS 142/2018. O código CEST tem formato XX.XXX.XX (ex: 21.069.00). Busque em qualquer fonte confiável: confaz.hacienda.gov.br, legisweb.com.br, portaltributario.com.br, sites de consultoria fiscal ou tabelas CEST disponíveis na web. Se encontrar o código CEST para este NCM, retorne claramente "CEST: XX.XXX.XX" com o código. Se este NCM genuinamente não constar no Convênio ICMS 142/2018, retorne "CEST: NÃO ENCONTRADO".
 
 TAREFA 2 — ESPECIFICAÇÕES TÉCNICAS:
 Busque a ficha técnica completa deste produto: potência (W), tensão (V/bivolt), velocidade (RPM), capacidade, dimensões (mm), peso (kg), disco/acessório incluído, classe de proteção (IP), certificações (INMETRO, CE, UL), aplicações recomendadas, tipo de motor, características de segurança.
