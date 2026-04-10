@@ -554,19 +554,34 @@ Observações: ${product.observacoes || "—"}
 ${product.link_benchmark ? `Referência mercado: ${product.link_benchmark}` : ""}`;
 
   let res2;
-  try {
-    res2 = await fetch(`${apiBase}/v1/chat/completions`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
-      body: JSON.stringify({
-        model: aiModel,
-        messages: [{ role: "user", content: prompt }],
-        response_format: { type: "json_object" },
-        temperature: 0.7,
-      }),
-    });
-  } catch (netErr) {
-    throw new Error(`❌ Erro de rede: não foi possível conectar à OpenAI. Causas comuns: firewall corporativo, extensão do navegador bloqueando a requisição, ou VPN. Configure um Proxy CORS nas Configurações para contornar. (${netErr.message})`);
+  for (let _att = 0; _att < 3; _att++) {
+    if (_att > 0) {
+      onPhase?.(`⏳ Timeout, tentando novamente (${_att + 1}/3)...`);
+      await new Promise(r => setTimeout(r, 4000));
+    }
+    let _netErr = null;
+    try {
+      res2 = await fetch(`${apiBase}/v1/chat/completions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+        body: JSON.stringify({
+          model: aiModel,
+          messages: [{ role: "user", content: prompt }],
+          response_format: { type: "json_object" },
+          temperature: 0.7,
+        }),
+      });
+    } catch (netErr) { _netErr = netErr; }
+    if (_netErr) {
+      if (_att < 2) continue;
+      throw new Error(`❌ Erro de rede: não foi possível conectar à OpenAI. Causas comuns: firewall corporativo, extensão do navegador bloqueando a requisição, ou VPN. Configure um Proxy CORS nas Configurações para contornar. (${_netErr.message})`);
+    }
+    if (res2.ok) break;
+    const _eb = await res2.clone().json().catch(() => ({}));
+    const _retry = [408, 500, 502, 503, 504].includes(res2.status) ||
+      (_eb?.error?.message || '').toLowerCase().includes('timeout');
+    if (_retry && _att < 2) continue;
+    break;
   }
   if (!res2.ok) {
     const err = await res2.json().catch(() => ({}));
