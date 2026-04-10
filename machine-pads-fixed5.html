@@ -440,9 +440,10 @@ Retorne as três seções claramente separadas.`;
     // web research failed — proceed with data-only enrichment
   }
   const cestFromWeb = (webContext.match(/\b\d{2}\.\d{3}\.\d{2}\b/) || [])[0] || "";
+  console.log('[CEST debug] len=' + webContext.length + ' found=' + cestFromWeb);
   const cestInstruction = cestFromWeb
-    ? "Use exatamente este c\u00f3digo CEST confirmado pela pesquisa web: " + cestFromWeb + ". Retorne exatamente esse valor."
-    : "A pesquisa web n\u00e3o encontrou um c\u00f3digo CEST v\u00e1lido para o NCM " + product.ncm + ". Retorne \"\".";
+    ? '"' + cestFromWeb + '"'
+    : 'C\u00f3digo CEST (Conv\u00eanio ICMS 142/2018) para NCM ' + product.ncm + '. Use seu conhecimento da tabela CEST. Se o NCM estiver na tabela, retorne o c\u00f3digo no formato XX.XXX.XX. Se n\u00e3o estiver ou n\u00e3o tiver certeza, retorne "".';
 
 
   // ── STEP 2: Structured generation (JSON mode) ───────────────────────────
