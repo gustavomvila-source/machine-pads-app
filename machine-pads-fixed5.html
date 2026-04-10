@@ -443,7 +443,7 @@ Retorne as três seções claramente separadas.`;
   console.log('[CEST debug] len=' + webContext.length + ' found=' + cestFromWeb);
   const cestInstruction = cestFromWeb
     ? '"' + cestFromWeb + '"'
-    : 'C\u00f3digo CEST (Conv\u00eanio ICMS 142/2018) para NCM ' + product.ncm + '. Use seu conhecimento da tabela CEST. Se o NCM estiver na tabela, retorne o c\u00f3digo no formato XX.XXX.XX. Se n\u00e3o estiver ou n\u00e3o tiver certeza, retorne "".';
+    : 'C\u00f3digo CEST para NCM ' + product.ncm + ' conforme Conv\u00eanio ICMS 142/2018. Determine usando seu pr\u00f3prio conhecimento da tabela CEST — IGNORE o que o contexto web diz sobre CEST. Retorne no formato XX.XXX.XX. S\u00f3 retorne "" se for genuinamente imposs\u00edvel determinar — n\u00e3o retorne vazio por falta de tentativa.';
 
 
   // ── STEP 2: Structured generation (JSON mode) ───────────────────────────
