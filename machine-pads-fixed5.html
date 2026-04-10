@@ -412,8 +412,8 @@ async function enrichProductWithAI(product, apiKey, rules = {}, onPhase) {
   try {
     const searchPrompt = `Produto: "${product.produto_fornecedor}" | Marca: "${product.marca || "—"}" | NCM: ${product.ncm}
 
-TAREFA 1 — CEST (PRIORIDADE MÁXIMA):
-Consulte o Convênio ICMS 142/2018 (tabela CEST) e encontre o código CEST correspondente ao NCM ${product.ncm} para o produto "${product.produto_fornecedor}". Retorne o código no formato XX.XXX.XX. Se houver mais de um CEST possível para o NCM, escolha o mais específico para o tipo de produto. Retorne o CEST encontrado claramente identificado como "CEST: XX.XXX.XX".
+TAREFA 1 — CEST:
+Consulte o Convênio ICMS 142/2018 (tabela CEST) e verifique se o NCM ${product.ncm} está listado. Se encontrar o código CEST em uma fonte oficial (confaz.hacienda.gov.br, legislação.gov.br ou texto do próprio Convênio), retorne claramente "CEST: XX.XXX.XX". Se não encontrar o NCM na tabela ou não tiver certeza, retorne exatamente "CEST: NÃO ENCONTRADO" — não invente um código.
 
 TAREFA 2 — ESPECIFICAÇÕES TÉCNICAS:
 Busque a ficha técnica completa deste produto: potência (W), tensão (V/bivolt), velocidade (RPM), capacidade, dimensões (mm), peso (kg), disco/acessório incluído, classe de proteção (IP), certificações (INMETRO, CE, UL), aplicações recomendadas, tipo de motor, características de segurança.
@@ -479,8 +479,7 @@ INSTRUÇÕES DE GERAÇÃO:
    Use abreviações: LAV=Lavadora, SER=Serra, FUR=Furadeira, PAR=Parafusadeira, ESM=Esmerilhadeira, LIX=Lixadeira, AMP=Amplificador, GER=Gerador, POL=Poliadeira, etc.
    Para tipo K (variante), inclua a variação ao final (ex: -127V, -220V, -BIVOLT).
 
-2. "cest": Código CEST para NCM ${product.ncm} conforme Convênio ICMS 142/2018 (Anexo II do Convênio ICMS 92/2015 e atualizações). Formato obrigatório: "XX.XXX.XX".
-   IMPORTANTE: Se o contexto da pesquisa web trouxer o CEST, use-o. Se não trouxer, determine o CEST com base no NCM e no tipo de produto usando seu conhecimento da tabela CEST. Retorne "" APENAS se for genuinamente impossível determinar — não retorne vazio por falta de tentativa.
+2. "cest": Código CEST no formato "XX.XXX.XX". PREENCHA somente se a pesquisa web trouxer explicitamente um código CEST confirmado para o NCM ${product.ncm}. Se a pesquisa web não trouxer um CEST claro e explícito no formato XX.XXX.XX, retorne "" — não tente adivinhar.
 
 3. "descricao_complementar": Tagline de venda do produto — 1 a 2 frases curtas e comerciais (máx 160 chars) que resumem o diferencial principal e o benefício para o comprador. Tom persuasivo, direto, sem clichês genéricos.
    Exemplo: "Parafusadeira profissional 20V com torque de 45Nm e bateria de longa duração — ideal para marcenaria, construção e manutenção."
