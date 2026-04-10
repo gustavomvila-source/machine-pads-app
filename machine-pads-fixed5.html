@@ -439,6 +439,11 @@ Retorne as três seções claramente separadas.`;
   } catch (_) {
     // web research failed — proceed with data-only enrichment
   }
+  const cestFromWeb = (webContext.match(/\b\d{2}\.\d{3}\.\d{2}\b/) || [])[0] || "";
+  const cestInstruction = cestFromWeb
+    ? "Use exatamente este c\u00f3digo CEST confirmado pela pesquisa web: " + cestFromWeb + ". Retorne exatamente esse valor."
+    : "A pesquisa web n\u00e3o encontrou um c\u00f3digo CEST v\u00e1lido para o NCM " + product.ncm + ". Retorne \"\".";
+
 
   // ── STEP 2: Structured generation (JSON mode) ───────────────────────────
   onPhase?.("Gerando conteúdo...");
@@ -479,7 +484,7 @@ INSTRUÇÕES DE GERAÇÃO:
    Use abreviações: LAV=Lavadora, SER=Serra, FUR=Furadeira, PAR=Parafusadeira, ESM=Esmerilhadeira, LIX=Lixadeira, AMP=Amplificador, GER=Gerador, POL=Poliadeira, etc.
    Para tipo K (variante), inclua a variação ao final (ex: -127V, -220V, -BIVOLT).
 
-2. "cest": Código CEST no formato "XX.XXX.XX". PREENCHA somente se a pesquisa web trouxer explicitamente um código CEST confirmado para o NCM ${product.ncm}. Se a pesquisa web não trouxer um CEST claro e explícito no formato XX.XXX.XX, retorne "" — não tente adivinhar.
+2. "cest": ${cestInstruction}
 
 3. "descricao_complementar": Tagline de venda do produto — 1 a 2 frases curtas e comerciais (máx 160 chars) que resumem o diferencial principal e o benefício para o comprador. Tom persuasivo, direto, sem clichês genéricos.
    Exemplo: "Parafusadeira profissional 20V com torque de 45Nm e bateria de longa duração — ideal para marcenaria, construção e manutenção."
