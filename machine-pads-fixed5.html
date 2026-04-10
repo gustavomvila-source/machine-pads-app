@@ -481,10 +481,15 @@ ${webContext || "(pesquisa não disponível — use seu conhecimento)"}
 
 INSTRUÇÕES DE GERAÇÃO:
 
-1. "sku_interno": SKU interno no padrão [CATEG]-[SPEC]-[MODELO]-[MARCA][-VARIAÇÃO] em MAIÚSCULAS com hífens.
+1. "sku_interno": SKU em MAIÚSCULAS com hífens, APENAS letras/números/hífens (sem @!.%'`˜=+ ou outros especiais), máx 32 caracteres.
+   Padrão: [CATEG]-[SPEC]-[MODELO]-[MARCA][-VARIAÇÃO]
    Exemplos: "LAV-1200W-LK1305-KALA-127V", "SER-1400W-SM1400-VOND-220V", "FUR-710W-HP0704-BOSH"
    Use abreviações: LAV=Lavadora, SER=Serra, FUR=Furadeira, PAR=Parafusadeira, ESM=Esmerilhadeira, LIX=Lixadeira, AMP=Amplificador, GER=Gerador, POL=Poliadeira, etc.
-   Para tipo K (variante), inclua a variação ao final (ex: -127V, -220V, -BIVOLT).
+   REGRAS POR TIPO DE PRODUTO:
+   - tipo V (variação/pai): SKU BASE sem sufixo de voltagem. Ex: "LAV-1200W-LK1305-KALA" — NUNCA inclua -127V ou -220V aqui
+   - tipo K (variante/filho): SKU BASE do pai + sufixo da variação. Ex: "LAV-1200W-LK1305-KALA-127V"
+   - tipo S (simples): SKU completo sem sufixo de voltagem
+   O código pai (tipo V) DEVE ser diferente dos filhos (tipo K).
 
 2. "cest": Código CEST obrigatório no formato XX.XXX.XX para o NCM ${product.ncm} conforme Convênio ICMS 142/2018. NUNCA retorne vazio — se não tiver o código exato para este NCM, retorne o CEST do segmento/categoria mais próxima para este tipo de produto. Use todo seu conhecimento da tabela CEST
 
@@ -576,7 +581,15 @@ ${product.link_benchmark ? `Referência mercado: ${product.link_benchmark}` : ""
   // Strip optional markdown fences (```json ... ```) that some models add
   const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
   try {
-    return JSON.parse(cleaned);
+    const result = JSON.parse(cleaned);
+    // Sanitize SKU: apenas letras, números e hífens; máx 32 chars
+    if (result.sku_interno) {
+      result.sku_interno = result.sku_interno
+        .toUpperCase()
+        .replace(/[^A-Z0-9-]/g, '')
+        .slice(0, 32);
+    }
+    return result;
   } catch {
     throw new Error(`Resposta da IA não é JSON válido. Trecho: "${cleaned.slice(0, 80)}"`);
   }
