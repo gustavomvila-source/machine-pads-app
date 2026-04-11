@@ -2748,6 +2748,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
         if (camposFixos.garantia)    payload.garantia    = camposFixos.garantia;
         if (camposFixos.tributacao) payload.tributacao = camposFixos.tributacao;
         if (camposFixos.cest) payload.cest = camposFixos.cest; // v24
+        if (camposFixos.fornecedores) payload.fornecedores = camposFixos.fornecedores;
         _native('https://corsproxy.io/?url=' + encodeURIComponent(baseUrl + v.id), {
           method: 'PUT',
           headers: { 'Authorization': token, 'Content-Type': 'application/json' },
