@@ -2893,6 +2893,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
             if (body.garantia)    camposParaVariacoes.garantia    = body.garantia;
             if (body.tributacao) camposParaVariacoes.tributacao = body.tributacao;
             if (body.cest) camposParaVariacoes.cest = body.cest; // v24
+            if (body.fornecedores) camposParaVariacoes.fornecedores = body.fornecedores;
 
             return _native(url, opts).then(function(resp) {
               resp.clone().text().then(function(t) {
