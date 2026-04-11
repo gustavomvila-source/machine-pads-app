@@ -2749,6 +2749,15 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
         if (camposFixos.tributacao) payload.tributacao = camposFixos.tributacao;
         if (camposFixos.cest) payload.cest = camposFixos.cest; // v24
         if (camposFixos.fornecedores) payload.fornecedores = camposFixos.fornecedores;
+        // PUT direto no produto filho para fornecedores (endpoint /variacoes pode não aceitar)
+        if (camposFixos.fornecedores) {
+          var _fUrl = 'https://api.tiny.com.br/public-api/v3/produtos/' + v.id;
+          _native('https://corsproxy.io/?url=' + encodeURIComponent(_fUrl), {
+            method: 'PUT',
+            headers: { 'Authorization': token, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fornecedores: camposFixos.fornecedores })
+          }).then(function(r2) { console.log('[PADS] PUT fornecedor filho ' + v.id + ': ' + r2.status); }).catch(function(e2){});
+        }
         _native('https://corsproxy.io/?url=' + encodeURIComponent(baseUrl + v.id), {
           method: 'PUT',
           headers: { 'Authorization': token, 'Content-Type': 'application/json' },
@@ -2904,7 +2913,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
                     var rd = JSON.parse(t);
                     if (rd.id && rd.variacoes && rd.variacoes.length > 0) {
                       entry.fixes.push('variacoes-put:' + rd.variacoes.length);
-                      putVaricoes(rd.id, rd.variacoes, camposParaVariacoes, token);
+                      putVariacoes(rd.id, rd.variacoes, camposParaVariacoes, token);
                     }
                   } catch(e) {}
                 }
