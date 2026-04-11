@@ -519,17 +519,15 @@ INSTRUÇÕES DE GERAÇÃO:
 
 5. "atributos": Array [{nome, valor}] com especificações técnicas do produto.
 
-6. "tags": Array de 10 a 15 palavras-chave para SEO.
+6. "titulo_seo": Título SEO (máx 70 chars). Palavra-chave principal + marca. Ex: "Serra Mármore 1400W 220V Vonder SM-1400 Disco 110mm"
 
-7. "titulo_seo": Título SEO (máx 70 chars). Palavra-chave principal + marca. Ex: "Serra Mármore 1400W 220V Vonder SM-1400 Disco 110mm"
+7. "descricao_seo": Meta description SEO (máx 160 chars) descrevendo o produto para buscadores.
 
-8. "descricao_seo": Meta description SEO (máx 160 chars) descrevendo o produto para buscadores.
+8. "palavras_chave_seo": String com 8-12 termos separados por vírgula para campo SEO.
 
-9. "palavras_chave_seo": String com 8-12 termos separados por vírgula para campo SEO.
+9. "variacoes": Se tipo_de_produto for "K" (variante filho), retorne "Atributo: valor" (ex: "Voltagem: 127V"). Para "S" ou "V", retorne "".
 
-10. "variacoes": Se tipo_de_produto for "K" (variante filho), retorne "Atributo: valor" (ex: "Voltagem: 127V"). Para "S" ou "V", retorne "".
-
-Retorne APENAS JSON válido com exatamente estas chaves: sku_interno, cest, titulo_otimizado, descricao, atributos, tags, titulo_seo, descricao_seo, palavras_chave_seo, variacoes.
+Retorne APENAS JSON válido com exatamente estas chaves: sku_interno, cest, titulo_otimizado, descricao, atributos, titulo_seo, descricao_seo, palavras_chave_seo, variacoes.
 
 DADOS DO PRODUTO:
 Nome: ${product.produto_fornecedor}
@@ -717,9 +715,6 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
     tagExtraNome:   (() => { var _cd = (product.cross_docking || '').trim(); return (_cd && _cd.toLowerCase() !== 'não') ? _cd : undefined; })(),
     // marca: API v3 exige {id, nome} com ID cadastrado no Tiny — omitir para evitar erro 400
     garantia:       garantiaNum,
-    palavrasChave:  Array.isArray(product.enriched?.tags)
-                      ? product.enriched.tags.join(", ")
-                      : (product.enriched?.tags || ""),
 
     // ── SEO ────────────────────────────────────────────────
     seo: {
@@ -2140,21 +2135,6 @@ React.useEffect(() => {
                 placeholder="termo1, termo2, termo3..."
                 className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
             </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-2 flex items-center gap-1">
-              <Tag size={12} /> Tags
-            </label>
-            <div className="flex flex-wrap gap-1.5 mb-2">
-              {(cur.enriched?.tags || []).map((tag, i) => (
-                <span key={i} className="px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">{tag}</span>
-              ))}
-            </div>
-            <input type="text" placeholder="tag1, tag2, tag3..."
-              value={(cur.enriched?.tags || []).join(", ")}
-              onChange={e => updEnr("tags", e.target.value.split(",").map(t => t.trim()).filter(Boolean))}
-              className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
           </div>
 
           {(cur.enriched?.atributos || []).length > 0 && (
