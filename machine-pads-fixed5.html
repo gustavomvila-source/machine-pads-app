@@ -2872,7 +2872,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
 
           // FIX 7: fornecedor
           if (body.fornecedorId) {
-            body.fornecedores = [{ id: Number(body.fornecedorId) }];
+            body.fornecedores = [{ id: Number(body.fornecedorId), padrao: true }];
             delete body.fornecedorId;
             entry.fixes.push('fornecedorId:' + body.fornecedores[0].id);
           }
