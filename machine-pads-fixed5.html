@@ -313,7 +313,6 @@ function buildTinyRow(p) {
     "",                                          // Link do vídeo
     p.enriched?.titulo_seo || "",                // Título SEO
     p.enriched?.descricao_seo || "",             // Descrição SEO
-    p.enriched?.palavras_chave_seo || "",        // Palavras chave SEO
     p.enriched?.sku_interno || "",               // Slug
     "0",                                         // Dias para preparação
     "não",                                       // Controlar lotes
@@ -517,17 +516,13 @@ INSTRUÇÕES DE GERAÇÃO:
 
    REQUISITOS: mínimo 400 palavras • use apenas tags HTML básicas (<h3>, <p>, <ul>, <li>, <strong>) • sem inline CSS • sem classes • inclua palavras-chave naturalmente para SEO sem forçar • conteúdo deve informar E convencer
 
-5. "atributos": Array [{nome, valor}] com especificações técnicas do produto.
+5. "titulo_seo": Título SEO (máx 70 chars). Palavra-chave principal + marca. Ex: "Serra Mármore 1400W 220V Vonder SM-1400 Disco 110mm"
 
-6. "titulo_seo": Título SEO (máx 70 chars). Palavra-chave principal + marca. Ex: "Serra Mármore 1400W 220V Vonder SM-1400 Disco 110mm"
+6. "descricao_seo": Meta description SEO (máx 160 chars) descrevendo o produto para buscadores.
 
-7. "descricao_seo": Meta description SEO (máx 160 chars) descrevendo o produto para buscadores.
+7. "variacoes": Se tipo_de_produto for "K" (variante filho), retorne "Atributo: valor" (ex: "Voltagem: 127V"). Para "S" ou "V", retorne "".
 
-8. "palavras_chave_seo": String com 8-12 termos separados por vírgula para campo SEO.
-
-9. "variacoes": Se tipo_de_produto for "K" (variante filho), retorne "Atributo: valor" (ex: "Voltagem: 127V"). Para "S" ou "V", retorne "".
-
-Retorne APENAS JSON válido com exatamente estas chaves: sku_interno, cest, titulo_otimizado, descricao, atributos, titulo_seo, descricao_seo, palavras_chave_seo, variacoes.
+Retorne APENAS JSON válido com exatamente estas chaves: sku_interno, cest, titulo_otimizado, descricao, titulo_seo, descricao_seo, variacoes.
 
 DADOS DO PRODUTO:
 Nome: ${product.produto_fornecedor}
@@ -1579,7 +1574,7 @@ function EnrichmentStep({ products, apiKey, rules, onDone, onBack }) {
                 : "Processando..."}
       </h2>
       <p className="text-gray-500 text-sm mb-6">
-        {!started ? `A IA vai gerar título, descrição, atributos e tags para ${products.length} produto(s).` : ""}
+        {!started ? `A IA vai gerar título, descrição e variações para ${products.length} produto(s).` : ""}
       </p>
 
       {!started && (
@@ -2128,28 +2123,7 @@ React.useEffect(() => {
                 className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none" />
               <p className="text-xs text-gray-400 mt-1">{(cur.enriched?.descricao_seo || "").length} / 160 caracteres</p>
             </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Palavras-chave SEO</label>
-              <input type="text" value={cur.enriched?.palavras_chave_seo || ""}
-                onChange={e => updEnr("palavras_chave_seo", e.target.value)}
-                placeholder="termo1, termo2, termo3..."
-                className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
-            </div>
           </div>
-
-          {(cur.enriched?.atributos || []).length > 0 && (
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-2">Atributos Técnicos</label>
-              <div className="bg-gray-50 rounded-xl overflow-hidden border border-gray-100">
-                {(cur.enriched.atributos || []).map((a, i) => (
-                  <div key={i} className={`flex text-sm px-4 py-2 ${i % 2 === 0 ? "bg-gray-50" : "bg-white"}`}>
-                    <span className="font-medium text-gray-600 w-1/2">{a.nome}</span>
-                    <span className="text-gray-800 w-1/2">{a.valor}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       )}
 
