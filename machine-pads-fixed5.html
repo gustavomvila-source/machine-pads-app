@@ -457,9 +457,6 @@ Retorne as três seções claramente separadas.`;
    Exemplos: "Parafusadeira/Furadeira 20V 1/2pol PFV120 Vonder" | "Serra Mármore 1400W 110mm SM1400 Vonder" | "Esmerilhadeira Angular 9pol 2200W GWS2200 Bosch"
    Regras: máx 60 chars • sem pipes "|" nem aspas no conteúdo • inclua potência/voltagem/capacidade quando relevante • inclua código de referência do modelo quando disponível • termine com a marca • use abreviações: "pol" para polegadas, "W" para watts, "V" para volts`;
 
-  const activeMPs = MARKETPLACES.filter(m => activeMarketplaces.includes(m.id));
-  const mpInstructions = activeMPs.map(m => `  - "${m.id}": ${m.rules}`).join("\n");
-
   const STYLE_LABELS = {
     tecnico: "tom técnico com foco em especificações detalhadas",
     marketplace: "linguagem otimizada para marketplace com palavras-chave estratégicas",
@@ -498,10 +495,7 @@ INSTRUÇÕES DE GERAÇÃO:
 
 4. "titulo_otimizado": ${titleInstruction}
 
-5. "titulos": Objeto com título para cada marketplace abaixo, respeitando RIGOROSAMENTE limite de chars e regras:
-${mpInstructions}
-
-6. "descricao": Descrição HTML COMPLETA do produto — será importada como "Descrição complementar" no Tiny ERP e enviada ao e-commerce/marketplace como descrição longa.
+5. "descricao": Descrição HTML COMPLETA do produto — será importada como "Descrição complementar" no Tiny ERP e enviada ao e-commerce/marketplace como descrição longa.
    ${styleText}${extraInstructions}
 
    ESTRUTURA OBRIGATÓRIA (6 blocos, nesta ordem, em HTML limpo com <h3>, <p>, <ul>, <li>, <strong>):
@@ -526,19 +520,19 @@ ${mpInstructions}
 
    REQUISITOS: mínimo 400 palavras • use apenas tags HTML básicas (<h3>, <p>, <ul>, <li>, <strong>) • sem inline CSS • sem classes • inclua palavras-chave naturalmente para SEO sem forçar • conteúdo deve informar E convencer
 
-7. "atributos": Array [{nome, valor}] com especificações técnicas do produto.
+6. "atributos": Array [{nome, valor}] com especificações técnicas do produto.
 
-8. "tags": Array de 10 a 15 palavras-chave para SEO.
+7. "tags": Array de 10 a 15 palavras-chave para SEO.
 
-9. "titulo_seo": Título SEO (máx 70 chars). Palavra-chave principal + marca. Ex: "Serra Mármore 1400W 220V Vonder SM-1400 Disco 110mm"
+8. "titulo_seo": Título SEO (máx 70 chars). Palavra-chave principal + marca. Ex: "Serra Mármore 1400W 220V Vonder SM-1400 Disco 110mm"
 
-10. "descricao_seo": Meta description SEO (máx 160 chars) descrevendo o produto para buscadores.
+9. "descricao_seo": Meta description SEO (máx 160 chars) descrevendo o produto para buscadores.
 
-11. "palavras_chave_seo": String com 8-12 termos separados por vírgula para campo SEO.
+10. "palavras_chave_seo": String com 8-12 termos separados por vírgula para campo SEO.
 
-12. "variacoes": Se tipo_de_produto for "K" (variante filho), retorne "Atributo: valor" (ex: "Voltagem: 127V"). Para "S" ou "V", retorne "".
+11. "variacoes": Se tipo_de_produto for "K" (variante filho), retorne "Atributo: valor" (ex: "Voltagem: 127V"). Para "S" ou "V", retorne "".
 
-Retorne APENAS JSON válido com exatamente estas chaves: sku_interno, cest, descricao_complementar, titulo_otimizado, titulos, descricao, atributos, tags, titulo_seo, descricao_seo, palavras_chave_seo, variacoes.
+Retorne APENAS JSON válido com exatamente estas chaves: sku_interno, cest, descricao_complementar, titulo_otimizado, descricao, atributos, tags, titulo_seo, descricao_seo, palavras_chave_seo, variacoes.
 
 DADOS DO PRODUTO:
 Nome: ${product.produto_fornecedor}
