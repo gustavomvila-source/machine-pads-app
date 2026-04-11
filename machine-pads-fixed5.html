@@ -490,12 +490,9 @@ INSTRUÇÕES DE GERAÇÃO:
 
 2. "cest": Código CEST obrigatório no formato XX.XXX.XX para o NCM ${product.ncm} conforme Convênio ICMS 142/2018. NUNCA retorne vazio — se não tiver o código exato para este NCM, retorne o CEST do segmento/categoria mais próxima para este tipo de produto. Use todo seu conhecimento da tabela CEST
 
-3. "descricao_complementar": Tagline de venda do produto — 1 a 2 frases curtas e comerciais (máx 160 chars) que resumem o diferencial principal e o benefício para o comprador. Tom persuasivo, direto, sem clichês genéricos.
-   Exemplo: "Parafusadeira profissional 20V com torque de 45Nm e bateria de longa duração — ideal para marcenaria, construção e manutenção."
+3. "titulo_otimizado": ${titleInstruction}
 
-4. "titulo_otimizado": ${titleInstruction}
-
-5. "descricao": Descrição HTML COMPLETA do produto — será importada como "Descrição complementar" no Tiny ERP e enviada ao e-commerce/marketplace como descrição longa.
+4. "descricao": Descrição HTML COMPLETA do produto — será importada como "Descrição complementar" no Tiny ERP e enviada ao e-commerce/marketplace como descrição longa.
    ${styleText}${extraInstructions}
 
    ESTRUTURA OBRIGATÓRIA (6 blocos, nesta ordem, em HTML limpo com <h3>, <p>, <ul>, <li>, <strong>):
@@ -520,19 +517,19 @@ INSTRUÇÕES DE GERAÇÃO:
 
    REQUISITOS: mínimo 400 palavras • use apenas tags HTML básicas (<h3>, <p>, <ul>, <li>, <strong>) • sem inline CSS • sem classes • inclua palavras-chave naturalmente para SEO sem forçar • conteúdo deve informar E convencer
 
-6. "atributos": Array [{nome, valor}] com especificações técnicas do produto.
+5. "atributos": Array [{nome, valor}] com especificações técnicas do produto.
 
-7. "tags": Array de 10 a 15 palavras-chave para SEO.
+6. "tags": Array de 10 a 15 palavras-chave para SEO.
 
-8. "titulo_seo": Título SEO (máx 70 chars). Palavra-chave principal + marca. Ex: "Serra Mármore 1400W 220V Vonder SM-1400 Disco 110mm"
+7. "titulo_seo": Título SEO (máx 70 chars). Palavra-chave principal + marca. Ex: "Serra Mármore 1400W 220V Vonder SM-1400 Disco 110mm"
 
-9. "descricao_seo": Meta description SEO (máx 160 chars) descrevendo o produto para buscadores.
+8. "descricao_seo": Meta description SEO (máx 160 chars) descrevendo o produto para buscadores.
 
-10. "palavras_chave_seo": String com 8-12 termos separados por vírgula para campo SEO.
+9. "palavras_chave_seo": String com 8-12 termos separados por vírgula para campo SEO.
 
-11. "variacoes": Se tipo_de_produto for "K" (variante filho), retorne "Atributo: valor" (ex: "Voltagem: 127V"). Para "S" ou "V", retorne "".
+10. "variacoes": Se tipo_de_produto for "K" (variante filho), retorne "Atributo: valor" (ex: "Voltagem: 127V"). Para "S" ou "V", retorne "".
 
-Retorne APENAS JSON válido com exatamente estas chaves: sku_interno, cest, descricao_complementar, titulo_otimizado, descricao, atributos, tags, titulo_seo, descricao_seo, palavras_chave_seo, variacoes.
+Retorne APENAS JSON válido com exatamente estas chaves: sku_interno, cest, titulo_otimizado, descricao, atributos, tags, titulo_seo, descricao_seo, palavras_chave_seo, variacoes.
 
 DADOS DO PRODUTO:
 Nome: ${product.produto_fornecedor}
@@ -2109,15 +2106,6 @@ React.useEffect(() => {
                 placeholder="Voltagem: 127V"
                 className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Tagline de Venda <span className="font-normal text-gray-400">(campo interno — máx 160 chars)</span></label>
-            <textarea value={cur.enriched?.descricao_complementar || ""}
-              onChange={e => updEnr("descricao_complementar", e.target.value)}
-              rows={2}
-              className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
-            <p className="text-xs text-gray-400 mt-1">{(cur.enriched?.descricao_complementar || "").length} / 160 caracteres</p>
           </div>
 
           <div>
