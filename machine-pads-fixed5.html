@@ -721,6 +721,7 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
 
     // ── Marketing ──────────────────────────────────────────
     marcaId:        product._marcaId || undefined,
+    fornecedorId:   product._fornecedorId || undefined,
     marcaNome:      product._marcaSearch || product.enriched?.marca || product.marca || undefined,  // v24-hf3
     tagExtraNome:   (() => { var _cd = (product.cross_docking || '').trim(); return (_cd && _cd.toLowerCase() !== 'não') ? _cd : undefined; })(),
     // marca: API v3 exige {id, nome} com ID cadastrado no Tiny — omitir para evitar erro 400
@@ -1740,7 +1741,7 @@ function EnrichmentStep({ products, apiKey, rules, onDone, onBack }) {
 // ─────────────────────────────────────────────
 function ReviewStep({ products, apiKey, tinyToken, corsProxy, onDone, onBack }) {
   const [items, setItems] = useState(() =>
-    products.map(p => ({ ...p, _approved: false, _imgPrompt: "", _generatedImage: null, _imgUrl: p.link_imagens_drive || "", _marcaId: null, _marcaSearch: p.marca || "" }))
+    products.map(p => ({ ...p, _approved: false, _imgPrompt: "", _generatedImage: null, _imgUrl: p.link_imagens_drive || "", _marcaId: null, _marcaSearch: p.marca || "", _fornecedorId: null, _fornecedorSearch: "" }))
   );
   const [idx, setIdx] = useState(0);
   const [genLoading, setGenLoading] = useState(false);
@@ -1748,6 +1749,9 @@ function ReviewStep({ products, apiKey, tinyToken, corsProxy, onDone, onBack }) 
   const [activeTab, setActiveTab] = useState("content");
   const [brandList, setBrandList] = React.useState([]);
   const [brandsLoaded, setBrandsLoaded] = React.useState(false);
+  const [fornecList, setFornecList] = React.useState([]);
+  const [fornecLoading, setFornecLoading] = React.useState(false);
+  const fornecTimerRef = React.useRef(null);
   const [availableTags, setAvailableTags] = useState([]);
   const [tagsLoading, setTagsLoading] = useState(false);
   const [selectedTagNames, setSelectedTagNames] = useState([]); const [tagInput, setTagInput] = useState('');
@@ -1784,6 +1788,26 @@ React.useEffect(() => {
     };
     xhr.onerror = function() { setBrandsLoaded(true); };
     xhr.send();
+  }, [tinyToken, corsProxy]);
+
+  const searchFornec = React.useCallback((term) => {
+    if (!tinyToken || !term) return;
+    setFornecLoading(true);
+    setFornecList([]);
+    var proxy2 = (corsProxy || 'https://corsproxy.io/?') + 'url=' + encodeURIComponent('https://api.tiny.com.br/public-api/v3/contatos?nome=' + encodeURIComponent(term) + '&limit=20');
+    var xhr2 = new XMLHttpRequest();
+    xhr2.open('GET', proxy2);
+    xhr2.setRequestHeader('Authorization', 'Bearer ' + tinyToken);
+    xhr2.onload = function() {
+      setFornecLoading(false);
+      try {
+        var d = JSON.parse(xhr2.responseText);
+        var list = (d.itens || d.data || []).map(function(fc) { return { id: fc.id, nome: fc.nome || fc.fantasia || fc.razaoSocial || '' }; });
+        setFornecList(list);
+      } catch(e) { setFornecList([]); }
+    };
+    xhr2.onerror = function() { setFornecLoading(false); setFornecList([]); };
+    xhr2.send();
   }, [tinyToken, corsProxy]);
 
   const cur = items[idx];
@@ -1940,6 +1964,42 @@ React.useEffect(() => {
                 ? <span className="text-xs text-green-600 font-medium ml-1">&#10003; {brandList.find(b => Number(b.id) === Number(cur._marcaId))?.descricao}</span>
                 : <span className="text-xs text-amber-500 font-medium ml-1">&#9888; Não mapeada</span>
               )}
+            </div>
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
+              <label className="text-xs font-semibold text-gray-600 whitespace-nowrap">Fornecedor Tiny:</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  className="text-xs border border-gray-300 rounded px-2 py-1 w-48"
+                  placeholder="Buscar fornecedor..."
+                  value={cur._fornecedorSearch || ""}
+                  onChange={e => {
+                    upd('_fornecedorSearch', e.target.value);
+                    upd('_fornecedorId', null);
+                    clearTimeout(fornecTimerRef.current);
+                    if (e.target.value.trim().length >= 2) {
+                      fornecTimerRef.current = setTimeout(() => searchFornec(e.target.value.trim()), 500);
+                    } else {
+                      setFornecList([]);
+                    }
+                  }}
+                />
+                {fornecLoading && <span className="text-xs text-gray-400 italic ml-1">Buscando...</span>}
+                {fornecList.length > 0 && !cur._fornecedorId && (
+                  <div className="absolute z-10 bg-white border border-gray-300 rounded shadow-lg mt-1 max-h-40 overflow-y-auto w-64">
+                    {fornecList.map(f => (
+                      <div key={f.id} className="px-3 py-1.5 text-xs hover:bg-blue-50 cursor-pointer"
+                        onClick={() => { upd('_fornecedorId', f.id); upd('_fornecedorSearch', f.nome); setFornecList([]); }}>
+                        {f.nome}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {cur._fornecedorId
+                ? <span className="text-xs text-green-600 font-medium ml-1">&#10003; {cur._fornecedorSearch}</span>
+                : cur._fornecedorSearch && <span className="text-xs text-amber-500 font-medium ml-1">&#9888; Não selecionado</span>
+              }
             </div>
         </div>
         {cur._ok === false && (
@@ -2809,6 +2869,13 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
                   // FIX 6 cont: fallback por nome se sem ID; limpa campos internos (v24-hf5)
                           if (!body.marca && body.marcaNome) { body.marca = { descricao: body.marcaNome }; entry.fixes.push('marca-descricao:' + body.marcaNome); }
                                   delete body.marcaNome; delete body.marcaId;  // v24-hf5: limpar campos internos
+
+          // FIX 7: fornecedor
+          if (body.fornecedorId) {
+            body.fornecedores = [{ id: Number(body.fornecedorId) }];
+            delete body.fornecedorId;
+            entry.fixes.push('fornecedorId:' + body.fornecedores[0].id);
+          }
 
           // FIX 8: tributacao.classeIPI = "999" (v24-hf4: movido para antes da serialização)
           body.tributacao = Object.assign({}, body.tributacao || {}, { classeIPI: '999' });
