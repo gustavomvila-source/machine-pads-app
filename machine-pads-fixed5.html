@@ -1741,7 +1741,7 @@ function EnrichmentStep({ products, apiKey, rules, onDone, onBack }) {
 // ─────────────────────────────────────────────
 function ReviewStep({ products, apiKey, tinyToken, corsProxy, onDone, onBack }) {
   const [items, setItems] = useState(() =>
-    products.map(p => ({ ...p, _approved: false, _imgPrompt: "", _generatedImage: null, _imgUrl: p.link_imagens_drive || "", _marcaId: null, _marcaSearch: p.marca || "", _fornecedorId: null, _fornecedorSearch: "" }))
+    products.map(p => ({ ...p, _approved: false, _imgPrompt: "", _generatedImage: null, _imgUrl: p.link_imagens_drive || "", _marcaId: null, _marcaSearch: p.marca || "", _fornecedorId: null, _fornecedorSearch: p.fornecedor || "" }))
   );
   const [idx, setIdx] = useState(0);
   const [genLoading, setGenLoading] = useState(false);
@@ -1789,6 +1789,46 @@ React.useEffect(() => {
     xhr.onerror = function() { setBrandsLoaded(true); };
     xhr.send();
   }, [tinyToken, corsProxy]);
+
+  // Auto-match fornecedor da planilha contra Tiny /contatos
+  React.useEffect(() => {
+    if (!tinyToken || !brandsLoaded) return;
+    var uniqueNames = [];
+    items.forEach(function(it) {
+      var nm = (it._fornecedorSearch || '').trim();
+      if (nm && !it._fornecedorId && uniqueNames.indexOf(nm) === -1) uniqueNames.push(nm);
+    });
+    if (uniqueNames.length === 0) return;
+    var delay = 0;
+    uniqueNames.forEach(function(nome) {
+      setTimeout(function() {
+        var proxy = (corsProxy || 'https://corsproxy.io/?') + 'url=' + encodeURIComponent('https://api.tiny.com.br/public-api/v3/contatos?nome=' + encodeURIComponent(nome) + '&limit=10');
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', proxy);
+        xhr.setRequestHeader('Authorization', 'Bearer ' + tinyToken);
+        xhr.onload = function() {
+          try {
+            var d = JSON.parse(xhr.responseText);
+            var list = (d.itens || d.data || []).map(function(fc) { return { id: fc.id, nome: fc.nome || fc.fantasia || fc.razaoSocial || '' }; });
+            var match = list.find(function(f) { return f.nome.toLowerCase().trim() === nome.toLowerCase().trim(); });
+            if (!match && list.length === 1) match = list[0];
+            if (match) {
+              setItems(function(prev) {
+                return prev.map(function(it) {
+                  if ((it._fornecedorSearch || '').trim().toLowerCase() === nome.toLowerCase().trim() && !it._fornecedorId) {
+                    return Object.assign({}, it, { _fornecedorId: match.id, _fornecedorSearch: match.nome });
+                  }
+                  return it;
+                });
+              });
+            }
+          } catch(e) {}
+        };
+        xhr.send();
+      }, delay);
+      delay += 600;
+    });
+  }, [brandsLoaded, tinyToken, corsProxy]);
 
   const searchFornec = React.useCallback((term) => {
     if (!tinyToken || !term) return;
