@@ -671,6 +671,7 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
     return isNaN(n) ? undefined : n;
   })();
 
+  console.log('[MPADS-DEBUG]', '_fornecedorId:', product._fornecedorId, 'codigo_fornecedor:', product.codigo_fornecedor, 'keys-com-fornec:', Object.keys(product).filter(k => k.includes('fornec') || k.includes('codigo')));
   const body = {
     // ── Identificação ──────────────────────────────────────
     nome:           product.enriched?.titulo_otimizado || product.produto_fornecedor,
@@ -705,9 +706,7 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
 
     // ── Marketing ──────────────────────────────────────────
     marcaId:        product._marcaId || undefined,
-    // DEBUG: diagnose codigo_fornecedor
-    console.log('[MPADS DEBUG]', JSON.stringify({ _fornecedorId: product._fornecedorId, codigo_fornecedor: product.codigo_fornecedor, _codigoKeys: Object.keys(product).filter(k => k.includes('codigo') || k.includes('fornec')) }));
-        fornecedores:        product._fornecedorId ? [{ id: Number(product._fornecedorId), padrao: true, ...(product.codigo_fornecedor ? { codigoProdutoNoFornecedor: product.codigo_fornecedor } : {}) }] : undefined,
+    fornecedores:        product._fornecedorId ? [{ id: Number(product._fornecedorId), padrao: true, ...(product.codigo_fornecedor ? { codigoProdutoNoFornecedor: product.codigo_fornecedor } : {}) }] : undefined,
     marcaNome:      product._marcaSearch || product.enriched?.marca || product.marca || undefined,  // v24-hf3
     tagExtraNome:   (() => { var _cd = (product.cross_docking || '').trim(); return (_cd && _cd.toLowerCase() !== 'não') ? _cd : undefined; })(),
     // marca: API v3 exige {id, nome} com ID cadastrado no Tiny — omitir para evitar erro 400
