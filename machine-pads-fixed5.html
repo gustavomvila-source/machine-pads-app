@@ -664,8 +664,6 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
   const tipoRaw = (product.tipo_de_produto || "S").toUpperCase();
   // API v3: V = Com Variações (filhos K vão em variacoes[]), K individual = fallback S, S = Simples
   const tipoApi = (tipoRaw === "V" && children.length > 0) ? "V" : "S"; // v24: V sem filhos → S
-  // [DIAG-2] sendToTiny: filhos K e mapa EAN
-  console.log('[MPADS-DIAG-2] sendToTiny:', JSON.stringify({ tipo: tipoRaw, tipoApi, filhos_count: children.length, filhos: children.map(c => ({ ean: c.ean, codigo_fornecedor: c.codigo_fornecedor, sku: c.enriched?.sku_interno || c.codigo_fornecedor })) }));
 
   // garantia: API v3 espera número inteiro (meses), não string
   const garantiaNum = (() => {
@@ -1286,8 +1284,6 @@ function UploadStep({ onUpload }) {
       // Filter out completely empty rows (trailing blank lines in CSV)
       const nonEmpty = normalized.filter(r => Object.values(r).some(v => String(v).trim() !== ""));
       onUpload(nonEmpty, columnMap);
-      // [DIAG-1] Leitura do CSV
-      console.log('[MPADS-DIAG-1] Linhas K parsed:', JSON.stringify(nonEmpty.filter(r => (r.tipo_de_produto||"").toUpperCase() === "K").map(r => ({ produto: r.produto_fornecedor, ean: r.ean, codigo_fornecedor: r.codigo_fornecedor, tipo: r.tipo_de_produto }))));
     } catch (err) {
       setError("Erro ao ler o arquivo. Verifique se está no formato correto.");
     }
@@ -2712,23 +2708,14 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
         if (camposFixos.garantia)    payload.garantia    = camposFixos.garantia;
         if (camposFixos.tributacao) payload.tributacao = camposFixos.tributacao;
         if (camposFixos.cest) payload.cest = camposFixos.cest; // v24
-        if (camposFixos.fornecedores) payload.fornecedores = camposFixos.fornecedores;
-        // PUT direto no produto filho para fornecedores (endpoint /variacoes pode não aceitar)
         if (camposFixos.fornecedores) {
-          // v29: codigoProdutoNoFornecedor por variação (mapa EAN/SKU dos filhos K)
+          // v30: codigoProdutoNoFornecedor por variação via mapa EAN/SKU — endpoint correto: PUT /variacoes/{id}
           var varForn = camposFixos.fornecedores.map(function(f) { return Object.assign({}, f); });
           var _vCod = null;
           if (camposFixos._eanCodMap && v.gtin) _vCod = camposFixos._eanCodMap[String(v.gtin)] || null;
           if (!_vCod && camposFixos._skuCodMap && (v.codigo || v.sku)) _vCod = camposFixos._skuCodMap[v.codigo || v.sku] || null;
           if (_vCod) varForn.forEach(function(f) { f.codigoProdutoNoFornecedor = _vCod; });
-          // [DIAG-3] putVariacoes: var fields + vCod resolvido
-          console.log('[MPADS-DIAG-3] putVar:', JSON.stringify({ var_id: v.id, v_gtin: v.gtin, v_codigo: v.codigo, v_sku: v.sku, eanMap: camposFixos._eanCodMap, skuMap: camposFixos._skuCodMap, _vCod: _vCod }));
-          var _fUrl = 'https://api.tiny.com.br/public-api/v3/produtos/' + v.id;
-          _native('https://corsproxy.io/?url=' + encodeURIComponent(_fUrl), {
-            method: 'PUT',
-            headers: { 'Authorization': token, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sku: v.codigo || v.sku, descricao: v.descricao || (v.codigo || v.sku), fornecedores: varForn })
-          }).then(function(r2) { r2.text().then(function(body) { console.log('[PADS] PUT fornecedor filho ' + v.id + ' status=' + r2.status + ' body=' + body); }); }).catch(function(e2){ console.warn('[PADS] PUT fornecedor filho erro:', e2); });
+          payload.fornecedores = varForn;
         }
         _native('https://corsproxy.io/?url=' + encodeURIComponent(baseUrl + v.id), {
           method: 'PUT',
