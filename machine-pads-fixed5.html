@@ -795,6 +795,18 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
   );
   const payload = { ...clean(body), seo: clean(body.seo), imagens: body.imagens };
   if (body.variacoes) payload.variacoes = body.variacoes;
+  // v29: mapeia EAN e SKU→codigoFornecedor dos filhos K para putVariacoes
+  if (children.length > 0) {
+    const _ecm = {}, _scm = {};
+    children.forEach(c => {
+      const ean = String(c.ean || "").replace(/\D/g, "");
+      if (ean && c.codigo_fornecedor) _ecm[ean] = c.codigo_fornecedor;
+      const sku = c.enriched?.sku_interno || c.codigo_fornecedor || "";
+      if (sku && c.codigo_fornecedor) _scm[sku] = c.codigo_fornecedor;
+    });
+    if (Object.keys(_ecm).length) payload._eanCodMap = _ecm;
+    if (Object.keys(_scm).length) payload._skuCodMap = _scm;
+  }
   body.variacoes.forEach(v => { const _eks=new Set((v.grade||[]).map(g=>g.chave)); body.grade.forEach(key=>{ if(!_eks.has(key)) (v.grade=v.grade||[]).push({chave:key,valor:'-'}); }); });
   if (!payload.imagens.length) delete payload.imagens;
   if (!Object.keys(payload.seo).length) delete payload.seo;
@@ -2699,11 +2711,17 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
         if (camposFixos.fornecedores) payload.fornecedores = camposFixos.fornecedores;
         // PUT direto no produto filho para fornecedores (endpoint /variacoes pode não aceitar)
         if (camposFixos.fornecedores) {
+          // v29: codigoProdutoNoFornecedor por variação (mapa EAN/SKU dos filhos K)
+          var varForn = camposFixos.fornecedores.map(function(f) { return Object.assign({}, f); });
+          var _vCod = null;
+          if (camposFixos._eanCodMap && v.gtin) _vCod = camposFixos._eanCodMap[String(v.gtin)] || null;
+          if (!_vCod && camposFixos._skuCodMap && (v.codigo || v.sku)) _vCod = camposFixos._skuCodMap[v.codigo || v.sku] || null;
+          if (_vCod) varForn.forEach(function(f) { f.codigoProdutoNoFornecedor = _vCod; });
           var _fUrl = 'https://api.tiny.com.br/public-api/v3/produtos/' + v.id;
           _native('https://corsproxy.io/?url=' + encodeURIComponent(_fUrl), {
             method: 'PUT',
             headers: { 'Authorization': token, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ fornecedores: camposFixos.fornecedores })
+            body: JSON.stringify({ fornecedores: varForn })
           }).then(function(r2) { console.log('[PADS] PUT fornecedor filho ' + v.id + ': ' + r2.status); }).catch(function(e2){});
         }
         _native('https://corsproxy.io/?url=' + encodeURIComponent(baseUrl + v.id), {
@@ -2853,6 +2871,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
             if (body.tributacao) camposParaVariacoes.tributacao = body.tributacao;
             if (body.cest) camposParaVariacoes.cest = body.cest; // v24
             if (body.fornecedores) camposParaVariacoes.fornecedores = body.fornecedores;
+            if (body._eanCodMap) { camposParaVariacoes._eanCodMap = body._eanCodMap; delete body._eanCodMap; } // v29
+            if (body._skuCodMap) { camposParaVariacoes._skuCodMap = body._skuCodMap; delete body._skuCodMap; } // v29
 
             return _native(url, opts).then(function(resp) {
               resp.clone().text().then(function(t) {
