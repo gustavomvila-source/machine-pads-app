@@ -705,8 +705,7 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
 
     // ── Marketing ──────────────────────────────────────────
     marcaId:        product._marcaId || undefined,
-    fornecedorId:        product._fornecedorId || undefined,
-    codigoFornecedor:    product.codigo_fornecedor || undefined,
+    fornecedores:        product._fornecedorId ? [{ id: Number(product._fornecedorId), padrao: true, ...(product.codigo_fornecedor ? { codigoProdutoNoFornecedor: product.codigo_fornecedor } : {}) }] : undefined,
     marcaNome:      product._marcaSearch || product.enriched?.marca || product.marca || undefined,  // v24-hf3
     tagExtraNome:   (() => { var _cd = (product.cross_docking || '').trim(); return (_cd && _cd.toLowerCase() !== 'não') ? _cd : undefined; })(),
     // marca: API v3 exige {id, nome} com ID cadastrado no Tiny — omitir para evitar erro 400
