@@ -2728,7 +2728,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
             method: 'PUT',
             headers: { 'Authorization': token, 'Content-Type': 'application/json' },
             body: JSON.stringify({ fornecedores: varForn })
-          }).then(function(r2) { console.log('[PADS] PUT fornecedor filho ' + v.id + ': ' + r2.status); }).catch(function(e2){});
+          }).then(function(r2) { r2.text().then(function(body) { console.log('[PADS] PUT fornecedor filho ' + v.id + ' status=' + r2.status + ' body=' + body); }); }).catch(function(e2){ console.warn('[PADS] PUT fornecedor filho erro:', e2); });
         }
         _native('https://corsproxy.io/?url=' + encodeURIComponent(baseUrl + v.id), {
           method: 'PUT',
