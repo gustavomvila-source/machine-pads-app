@@ -959,8 +959,10 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
     catch(e){}return"Não sincronizado";
   });
     function syncCats() {
-    // v32f: pgs 1+2 completas = 200 produtos = todos os 48 cats
-    if (!keys.tiny) { alert("Configure o token Tiny."); return; }
+    // v32f: pgs 1+2 completas = 200 produtos = todos os 48 cats em ~20s
+    // DIAGNOSTICO: cats concentradas nos primeiros 200 produtos (pgs 1-2)
+    // Abordagem correta: varrer TODOS os produtos dessas 2 pags sem amostragem
+    if (!keys.tiny) { alert("Configure o token Tiny nas Configurações."); return; }
     if (catSyncing) return;
     setCatSyncing(true);
     var _e=String.fromCharCode(61);
@@ -968,8 +970,9 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
     var _c={}; var _ids=[];
     var _pgs=[1,2]; var _pi=0;
     function _fetchPg(){
-      if(_pi>=_pgs.length-1){setCatSyncMsg("Processando "+_ids.length+" produtos...");_det();return;}
-      var pg=_pgs[_pi++]; setCatSyncMsg("Carregando página "+pg+"...");
+      if(_pi>=_pgs.length-1){ setCatSyncMsg("Processando "+_ids.length+" produtos..."); _det(); return; }
+      var pg=_pgs[_pi++];
+      setCatSyncMsg("Carregando página "+pg+" de "+_pgs.length+"...");
       var x=new XMLHttpRequest();
       var u=new URL("https://api.tiny.com.br/public-api/v3/produtos");
       u.searchParams.set(atob("cGFnaW5h"),pg);
@@ -977,27 +980,33 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
       u.searchParams.set(atob("c2l0dWFjYW8"),"A");
       x.open("GET",_p+encodeURIComponent(u.toString()));
       x.setRequestHeader("Authorization","Bearer "+keys.tiny);
-      x.onload=function(){try{(JSON.parse(x.responseText).itens||[]).forEach(function(o){_ids.push(o.id);});}catch(e){}setTimeout(_fetchPg,300);};
-      x.onerror=function(){setTimeout(_fetchPg,300);}; x.send();
+      x.onload=function(){ try{ (JSON.parse(x.responseText).itens||[]).forEach(function(o){ _ids.push(o.id); }); }catch(e){} setTimeout(_fetchPg,300); };
+      x.onerror=function(){ setTimeout(_fetchPg,300); }; x.send();
     }
     function _det(){
-      var bSz=5,bi=0,bts=[];
-      for(var j=0;j<_ids.length;j+=bSz)bts.push(_ids.slice(j,j+bSz));
+      var bSz=5, bi=0, bts=[];
+      for(var j=0; j<_ids.length; j+=bSz) bts.push(_ids.slice(j,j+bSz));
       (function _nb(){
-        if(bi>=bts.length-1)return _fin();
-        setCatSyncMsg("Lote "+(bi+1)+"/"+bts.length+" — "+Object.keys(_c).length+" cats");
-        var bt=bts[bi++],dn=0;
+        if(bi>=bts.length-1) return _fin();
+        setCatSyncMsg("Lote "+(bi+1)+"/"+bts.length+" — "+Object.keys(_c).length+" categorias encontradas");
+        var bt=bts[bi++], dn=0;
         bt.forEach(function(id){
           var xd=new XMLHttpRequest();
           xd.open("GET",_p+encodeURIComponent("https://api.tiny.com.br/public-api/v3/produtos/"+id));
           xd.setRequestHeader("Authorization","Bearer "+keys.tiny);
-          xd.onload=function(){try{var d=JSON.parse(xd.responseText);if(d.categoria&&d.categoria.id)_c[d.categoria.id]={id:d.categoria.id,nome:d.categoria.nome||"",caminho:d.categoria.caminhoCompleto||""};}catch(e){}dn++;if(dn===bt.length)setTimeout(_nb,500);};
-          xd.onerror=function(){dn++;if(dn===bt.length)setTimeout(_nb,500);}; xd.send();
+          xd.onload=function(){
+            try{
+              var d=JSON.parse(xd.responseText);
+              if(d.categoria&&d.categoria.id) _c[d.categoria.id]={id:d.categoria.id,nome:d.categoria.nome||"",caminho:d.categoria.caminhoCompleto||""};
+            }catch(e){}
+            dn++; if(dn===bt.length) setTimeout(_nb,500);
+          };
+          xd.onerror=function(){ dn++; if(dn===bt.length) setTimeout(_nb,500); }; xd.send();
         });
       })();
     }
     function _fin(){
-      var list=Object.values(_c).sort(function(a,b){return(a.caminho||"").localeCompare(b.caminho||"");});
+      var list=Object.values(_c).sort(function(a,b){ return (a.caminho||"").localeCompare(b.caminho||""); });
       localStorage.setItem("mpads_catCache",JSON.stringify({ts:Date.now(),items:list}));
       setCatSyncMsg(list.length+" categorias salvas · "+new Date().toLocaleDateString("pt-BR"));
       setCatSyncing(false);
