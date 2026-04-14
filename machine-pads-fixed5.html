@@ -237,7 +237,7 @@ function resolveParentChild(products) {
     if (!children.length) return p;
     const varMap = {};
     children.forEach(c => {
-      (c.enriched?.variacoes || "").split(";").forEach(part => {
+      (c.variacao || c.enriched?.variacoes || "").split(";").forEach(part => {
         const [name, val] = part.split(":").map(s => s.trim());
         if (name && val) {
           if (!varMap[name]) varMap[name] = [];
@@ -729,7 +729,7 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
   if (tipoApi === "V" && children.length > 0) {
     body.variacoes = children.map(k => {
       const grade = [];
-      const varStr = k.enriched?.variacoes || "";
+      const varStr = k.variacao || k.enriched?.variacoes || ""; // v35
       if (varStr) {
         varStr.split(";").forEach(part => {
           const sep = part.indexOf(":");
@@ -2278,8 +2278,8 @@ React.useEffect(() => {
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1.5">Variações <span className="font-normal text-gray-400">(tipo K)</span></label>
-              <input type="text" value={cur.enriched?.variacoes || ""}
-                onChange={e => updEnr("variacoes", e.target.value)}
+              <input type="text" value={cur.variacao || cur.enriched?.variacoes || ""}
+                onChange={e => { upd("variacao", e.target.value); updEnr("variacoes", e.target.value); }}
                 placeholder="Voltagem: 127V"
                 className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             </div>
