@@ -1799,7 +1799,7 @@ React.useEffect(() => {
     });
   }, [brandsLoaded, tinyToken, corsProxy]);
 
-  // v31c: cache de categorias — sequencial com throttle para evitar rate limit
+  // v31c: cache de categorias sequencial com throttle 300ms
   React.useEffect(() => {
     if (!tinyToken) { setCatCacheLoaded(true); return; }
     var _eq = String.fromCharCode(61);
@@ -1836,10 +1836,7 @@ React.useEffect(() => {
           xd.open("GET", _pfx + encodeURIComponent("https://api.tiny.com.br/public-api/v3/produtos/" + ids[idx]));
           xd.setRequestHeader("Authorization", "Bearer " + tinyToken);
           xd.onload = function() {
-            try {
-              var d = JSON.parse(xd.responseText);
-              if (d.categoria && d.categoria.id) _cm[d.categoria.id] = { id: d.categoria.id, nome: d.categoria.nome || "", caminho: d.categoria.caminhoCompleto || "" };
-            } catch(e) {}
+            try { var d = JSON.parse(xd.responseText); if (d.categoria && d.categoria.id) _cm[d.categoria.id] = { id: d.categoria.id, nome: d.categoria.nome || "", caminho: d.categoria.caminhoCompleto || "" }; } catch(e) {}
             idx++; setTimeout(next, 300);
           };
           xd.onerror = function() { idx++; setTimeout(next, 300); };
