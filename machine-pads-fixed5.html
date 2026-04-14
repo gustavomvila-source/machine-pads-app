@@ -961,14 +961,21 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
     function syncCats() {
     if (!keys.tiny) { alert("Configure o token Tiny."); return; }
     if (catSyncing) return;
-    setCatSyncing(true); setCatSyncMsg("Buscando páginas...");
+    setCatSyncing(true);
     var _e=String.fromCharCode(61);
     var _p=(keys.corsProxy||"https://corsproxy.io/?")+"ur"+"l"+_e;
     var _c={}; var _ids=[];
-    // Busca pág 1 + páginas ímpares 3-35 em paralelo = cobertura total
-    var _allPgs=[1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35];
-    var _pd=0;
-    _allPgs.forEach(function(pg){
+    var _pgs=[1,5,10,15,20,25,30]; var _pi=0;
+    // Fase 1: buscar páginas sequencialmente com 400ms entre cada
+    function _fetchPg(){
+      if(_pi>=_pgs.length-1){
+        // Todas as páginas carregadas — iniciar detalhes
+        setCatSyncMsg("Buscando detalhes de "+_ids.length+" produtos...");
+        _fetchDetail();
+        return;
+      }
+      var pg=_pgs[_pi++];
+      setCatSyncMsg("Página "+pg+"...");
       var x=new XMLHttpRequest();
       var u=new URL("https://api.tiny.com.br/public-api/v3/produtos");
       u.searchParams.set(atob("cGFnaW5h"),pg);
@@ -977,26 +984,30 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
       x.open("GET",_p+encodeURIComponent(u.toString()));
       x.setRequestHeader("Authorization","Bearer "+keys.tiny);
       x.onload=function(){
-        try{(JSON.parse(x.responseText).itens||[]).filter(function(_,i){return i%20===0;}).forEach(function(o){_ids.push(o.id);});}catch(e){}
-        if(++_pd===_allPgs.length){setCatSyncMsg("Detalhes de "+_ids.length+" produtos...");_det();}
+        try{
+          // Pegar 1 produto a cada 10 = 10 por página
+          (JSON.parse(x.responseText).itens||[]).filter(function(_,i){return i%10===0;}).forEach(function(o){_ids.push(o.id);});
+        }catch(e){}
+        setTimeout(_fetchPg,400);
       };
-      x.onerror=function(){if(++_pd===_allPgs.length)_det();}; x.send();
-    });
-    function _det(){
-      var bSz=5,bi=0,bts=[];
-      for(var j=0;j<_ids.length;j+=bSz)bts.push(_ids.slice(j,j+bSz));
-      (function _nb(){
-        if(bi>=bts.length-1)return _fin();
-        setCatSyncMsg("Lote "+(bi+1)+"/"+bts.length+" ("+Object.keys(_c).length+" cats)");
-        var bt=bts[bi++],dn=0;
-        bt.forEach(function(id){
-          var xd=new XMLHttpRequest();
-          xd.open("GET",_p+encodeURIComponent("https://api.tiny.com.br/public-api/v3/produtos/"+id));
-          xd.setRequestHeader("Authorization","Bearer "+keys.tiny);
-          xd.onload=function(){try{var d=JSON.parse(xd.responseText);if(d.categoria&&d.categoria.id)_c[d.categoria.id]={id:d.categoria.id,nome:d.categoria.nome||"",caminho:d.categoria.caminhoCompleto||""};}catch(e){}if(++dn===bt.length)setTimeout(_nb,600);};
-          xd.onerror=function(){if(++dn===bt.length)setTimeout(_nb,600);}; xd.send();
-        });
-      })();
+      x.onerror=function(){setTimeout(_fetchPg,400);}; x.send();
+    }
+    // Fase 2: detalhes um por vez com 700ms entre cada
+    var _di=0;
+    function _fetchDetail(){
+      if(_di>=_ids.length-1){_fin();return;}
+      setCatSyncMsg("Produto "+(_di+1)+"/"+_ids.length+" · "+Object.keys(_c).length+" cats");
+      var xd=new XMLHttpRequest();
+      xd.open("GET",_p+encodeURIComponent("https://api.tiny.com.br/public-api/v3/produtos/"+_ids[_di]));
+      xd.setRequestHeader("Authorization","Bearer "+keys.tiny);
+      xd.onload=function(){
+        try{
+          var d=JSON.parse(xd.responseText);
+          if(d.categoria&&d.categoria.id)_c[d.categoria.id]={id:d.categoria.id,nome:d.categoria.nome||"",caminho:d.categoria.caminhoCompleto||""};
+        }catch(e){}
+        _di++; setTimeout(_fetchDetail,700);
+      };
+      xd.onerror=function(){_di++;setTimeout(_fetchDetail,700);}; xd.send();
     }
     function _fin(){
       var list=Object.values(_c).sort(function(a,b){return(a.caminho||"").localeCompare(b.caminho||"");});
@@ -1005,6 +1016,7 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
       setCatSyncing(false);
       window.dispatchEvent(new CustomEvent("mpads-cat-synced",{detail:list}));
     }
+    _fetchPg();
   }
   const titleRef = useRef(null);
   const togglePwd = (k) => setShowPwd(p => ({ ...p, [k]: !p[k] }));
