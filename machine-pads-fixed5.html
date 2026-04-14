@@ -1799,7 +1799,7 @@ React.useEffect(() => {
     });
   }, [brandsLoaded, tinyToken, corsProxy]);
 
-  // v31c: cache de categorias sequencial com throttle 300ms
+  // v31c: cache sequencial com throttle 300ms
   React.useEffect(() => {
     if (!tinyToken) { setCatCacheLoaded(true); return; }
     var _eq = String.fromCharCode(61);
@@ -1821,24 +1821,13 @@ React.useEffect(() => {
           if (idx >= ids.length) {
             var list = Object.values(_cm).sort(function(a,b){ return (a.caminho||"").localeCompare(b.caminho||""); });
             setCatCache(list); setCatCacheLoaded(true);
-            setItems(function(prev) {
-              return prev.map(function(item) {
-                if (item._categoriaId) return item;
-                var sug = (item.categoria_sugerida || "").toLowerCase().trim();
-                if (!sug) return item;
-                var m = list.find(function(c){ return (c.nome||"").toLowerCase() === sug || (c.caminho||"").toLowerCase().includes(sug); });
-                return m ? Object.assign({}, item, { _categoriaId: m.id, _catSearch: m.nome }) : item;
-              });
-            });
+            setItems(function(prev) { return prev.map(function(item) { if (item._categoriaId) return item; var sug = (item.categoria_sugerida || "").toLowerCase().trim(); if (!sug) return item; var m = list.find(function(c){ return (c.nome||"").toLowerCase() === sug || (c.caminho||"").toLowerCase().includes(sug); }); return m ? Object.assign({}, item, { _categoriaId: m.id, _catSearch: m.nome }) : item; }); });
             return;
           }
           var xd = new XMLHttpRequest();
           xd.open("GET", _pfx + encodeURIComponent("https://api.tiny.com.br/public-api/v3/produtos/" + ids[idx]));
           xd.setRequestHeader("Authorization", "Bearer " + tinyToken);
-          xd.onload = function() {
-            try { var d = JSON.parse(xd.responseText); if (d.categoria && d.categoria.id) _cm[d.categoria.id] = { id: d.categoria.id, nome: d.categoria.nome || "", caminho: d.categoria.caminhoCompleto || "" }; } catch(e) {}
-            idx++; setTimeout(next, 300);
-          };
+          xd.onload = function() { try { var d = JSON.parse(xd.responseText); if (d.categoria && d.categoria.id) _cm[d.categoria.id] = { id: d.categoria.id, nome: d.categoria.nome || "", caminho: d.categoria.caminhoCompleto || "" }; } catch(e) {} idx++; setTimeout(next, 300); };
           xd.onerror = function() { idx++; setTimeout(next, 300); };
           xd.send();
         }
@@ -1848,7 +1837,8 @@ React.useEffect(() => {
     x0.onerror = function() { setCatCacheLoaded(true); };
     x0.send();
   }, [tinyToken, corsProxy]);
-  const searchFornec = React.useCallback((term) => {
+
+    const searchFornec = React.useCallback((term) => {
     if (!tinyToken || !term) return;
     setFornecLoading(true);
     setFornecList([]);
