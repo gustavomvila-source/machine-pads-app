@@ -953,6 +953,12 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
   const [localRules, setLocalRules] = useState({ ...rules });
   const [tab, setTab] = useState("apis");
   const [showPwd, setShowPwd] = useState({});
+  const [catSyncing, setCatSyncing] = React.useState(false);
+  const [catSyncMsg, setCatSyncMsg] = React.useState(function(){
+    try{var _v=localStorage.getItem("mpads_catCache");if(_v){var _d=JSON.parse(_v);return(_d.items||[]).length+" categorias · "+new Date(_d.ts).toLocaleDateString("pt-BR");}}
+    catch(e){}return"Não sincronizado";
+  });
+    function syncCats(){window.dispatchEvent(new Event("mpads-do-sync"));}
   const titleRef = useRef(null);
   const togglePwd = (k) => setShowPwd(p => ({ ...p, [k]: !p[k] }));
 
@@ -1060,6 +1066,7 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
                   placeholder="https://corsproxy.io/?" className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                 <p className="text-xs text-gray-400 mt-1">Prefixo do proxy CORS — usado para OpenAI e Tiny (ambas bloqueiam chamadas diretas do navegador). Cole apenas o prefixo, ex: <code className="bg-gray-100 px-1 rounded">https://corsproxy.io/?</code></p>
               </div>
+              <div className="border border-gray-200 rounded-xl p-3 mb-3"><div className="flex items-center justify-between"><div><p className="text-sm font-semibold text-gray-700">Categorias Tiny</p><p className="text-xs text-gray-400 mt-0.5">{catSyncMsg}</p></div><button type="button" onClick={syncCats} disabled={catSyncing} className={"px-3 py-1.5 rounded-lg text-xs font-semibold "+(catSyncing?"bg-gray-100 text-gray-400":"bg-indigo-600 text-white hover:bg-indigo-700")}>{catSyncing?"⏳ Sincronizando...":"🔄 Atualizar"}</button></div><p className="text-xs text-gray-400 mt-1">Busca categorias no Tiny e salva no browser. Clique ao cadastrar novas.</p></div>
               <div className="p-3 bg-blue-50 rounded-xl text-xs text-blue-700 space-y-2">
                 <p>🔒 As chaves são salvas no seu navegador (localStorage) e não são enviadas a nenhum servidor além das APIs correspondentes.</p>
                 <button type="button" onClick={() => { if(window.confirm("Apagar todas as configurações salvas?")) { localStorage.removeItem('mpads_keys'); localStorage.removeItem('mpads_rules'); setKey("openai",""); setKey("tiny",""); setKey("corsProxy",""); setKey("tinyClientId",""); setKey("tinyClientSecret",""); setKey("tinyRefresh",""); setKey("tinyExpiry",0); } }}
@@ -1719,8 +1726,8 @@ function ReviewStep({ products, apiKey, tinyToken, corsProxy, onDone, onBack }) 
   const [fornecList, setFornecList] = React.useState([]);
   const [fornecLoading, setFornecLoading] = React.useState(false);
   const fornecTimerRef = React.useRef(null);
-  const [catCache, setCatCache] = React.useState([]); // v31
-  const [catCacheLoaded, setCatCacheLoaded] = React.useState(false); // v31
+  const [catCache, setCatCache] = React.useState(function(){try{var _v=localStorage.getItem("mpads_catCache");return _v?(JSON.parse(_v).items||[]):[];}catch(e){return[];}}); // v32
+  const [catCacheLoaded, setCatCacheLoaded] = React.useState(!!localStorage.getItem("mpads_catCache")); // v32
   const [availableTags, setAvailableTags] = useState([]);
   const [tagsLoading, setTagsLoading] = useState(false);
   const [selectedTagNames, setSelectedTagNames] = useState([]); const [tagInput, setTagInput] = useState('');
@@ -1799,44 +1806,48 @@ React.useEffect(() => {
     });
   }, [brandsLoaded, tinyToken, corsProxy]);
 
-  // v31c: cache sequencial com throttle 300ms
-  React.useEffect(() => {
-    if (!tinyToken) { setCatCacheLoaded(true); return; }
-    var _eq = String.fromCharCode(61);
-    var _pfx = (corsProxy || "https://corsproxy.io/?") + "ur" + "l" + _eq;
-    var _cm = {};
-    var x0 = new XMLHttpRequest();
-    var u0 = new URL("https://api.tiny.com.br/public-api/v3/produtos");
-    u0.searchParams.set(atob("cGFnaW5h"), 1);
-    u0.searchParams.set(atob("bGltaXRl"), 100);
-    u0.searchParams.set(atob("c2l0dWFjYW8"), "A");
-    x0.open("GET", _pfx + encodeURIComponent(u0.toString()));
-    x0.setRequestHeader("Authorization", "Bearer " + tinyToken);
-    x0.onload = function() {
-      try {
-        var items = JSON.parse(x0.responseText).itens || [];
-        var ids = items.filter(function(_, i){ return i % 5 === 0; }).map(function(p){ return p.id; });
-        var idx = 0;
-        function next() {
-          if (idx >= ids.length) {
-            var list = Object.values(_cm).sort(function(a,b){ return (a.caminho||"").localeCompare(b.caminho||""); });
-            setCatCache(list); setCatCacheLoaded(true);
-            setItems(function(prev) { return prev.map(function(item) { if (item._categoriaId) return item; var sug = (item.categoria_sugerida || "").toLowerCase().trim(); if (!sug) return item; var m = list.find(function(c){ return (c.nome||"").toLowerCase() === sug || (c.caminho||"").toLowerCase().includes(sug); }); return m ? Object.assign({}, item, { _categoriaId: m.id, _catSearch: m.nome }) : item; }); });
-            return;
-          }
-          var xd = new XMLHttpRequest();
-          xd.open("GET", _pfx + encodeURIComponent("https://api.tiny.com.br/public-api/v3/produtos/" + ids[idx]));
-          xd.setRequestHeader("Authorization", "Bearer " + tinyToken);
-          xd.onload = function() { try { var d = JSON.parse(xd.responseText); if (d.categoria && d.categoria.id) _cm[d.categoria.id] = { id: d.categoria.id, nome: d.categoria.nome || "", caminho: d.categoria.caminhoCompleto || "" }; } catch(e) {} idx++; setTimeout(next, 300); };
-          xd.onerror = function() { idx++; setTimeout(next, 300); };
-          xd.send();
-        }
-        next();
-      } catch(e) { setCatCacheLoaded(true); }
-    };
-    x0.onerror = function() { setCatCacheLoaded(true); };
-    x0.send();
-  }, [tinyToken, corsProxy]);
+  // v32: escuta evento de sync das Configurações
+  React.useEffect(function(){
+    function _doSync() {
+      if (!tinyToken) return;
+      var _eq=String.fromCharCode(61);
+      var _pfx=(corsProxy || "https://corsproxy.io/?") + "ur" + "l" + _eq;
+      var _cm={}; var _ids=[]; var _pg=1;
+      function _fp() {
+        var x=new XMLHttpRequest();
+        var u=new URL("https://api.tiny.com.br/public-api/v3/produtos");
+        u.searchParams.set(atob("cGFnaW5h"),_pg);
+        u.searchParams.set(atob("bGltaXRl"),100);
+        u.searchParams.set(atob("c2l0dWFjYW8"),"A");
+        x.open("GET",_pfx+encodeURIComponent(u.toString()));
+        x.setRequestHeader("Authorization","Bearer "+tinyToken);
+        x.onload=function(){try{var items=JSON.parse(x.responseText).itens||[];if(items.length===0||_pg>50){_det();return;}items.filter(function(_,i){return i%10===0;}).forEach(function(p){_ids.push(p.id);});_pg++;setTimeout(_fp,200);}catch(e){_det();}};
+        x.onerror=function(){_det();};x.send();
+      }
+      function _det(){
+        var i=0;
+        function _nx(){if(i>_ids.length-1){_fin();return;}var xd=new XMLHttpRequest();xd.open("GET",_pfx+encodeURIComponent("https://api.tiny.com.br/public-api/v3/produtos/"+_ids[i]));xd.setRequestHeader("Authorization","Bearer "+tinyToken);xd.onload=function(){try{var d=JSON.parse(xd.responseText);if(d.categoria&&d.categoria.id)_cm[d.categoria.id]={id:d.categoria.id,nome:d.categoria.nome||"",caminho:d.categoria.caminhoCompleto||""};}catch(e){}i++;setTimeout(_nx,300);};xd.onerror=function(){i++;setTimeout(_nx,300);};xd.send();}
+        _nx();
+      }
+      function _fin(){
+        var list=Object.values(_cm).sort(function(a,b){return(a.caminho||"").localeCompare(b.caminho||"");});
+        localStorage.setItem("mpads_catCache",JSON.stringify({ts:Date.now(),items:list}));
+        setCatCache(list);setCatCacheLoaded(true);
+        window.dispatchEvent(new CustomEvent("mpads-cat-synced",{detail:list}));
+      }
+      _fp();
+    }
+    window.addEventListener("mpads-do-sync",_doSync);
+    return function(){window.removeEventListener("mpads-do-sync",_doSync);};
+  },[tinyToken,corsProxy]);
+
+  React.useEffect(function(){
+    function _h(e){setCatCache(e.detail||[]);setCatCacheLoaded(true);}
+    window.addEventListener("mpads-cat-synced",_h);
+    return function(){window.removeEventListener("mpads-cat-synced",_h);};
+  },[]);
+
+  
 
     const searchFornec = React.useCallback((term) => {
     if (!tinyToken || !term) return;
