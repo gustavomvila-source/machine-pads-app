@@ -964,12 +964,11 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
     setCatSyncing(true);
     var _e=String.fromCharCode(61);
     var _p=(keys.corsProxy||"https://corsproxy.io/?")+"ur"+"l"+_e;
-    var _c={}; var _ids=[];
-    var _pgs=[1,5,10,15,20,25,30]; var _pi=0;
+    var _c={}; var _ids=[];    var _pgs=[1,5,10,15,20,25,30]; var _pi=0;
     function _fetchPg(){
       if(_pi>=_pgs.length-1){setCatSyncMsg("Detalhes de "+_ids.length+"...");_fetchDetail();return;}
       var pg=_pgs[_pi++];
-      setCatSyncMsg("Pag "+pg+" de "+_pgs[_pgs.length-1]+"...");
+      setCatSyncMsg("Pg "+pg+"...");
       var x=new XMLHttpRequest();
       var u=new URL("https://api.tiny.com.br/public-api/v3/produtos");
       u.searchParams.set(atob("cGFnaW5h"),pg);
@@ -977,23 +976,17 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
       u.searchParams.set(atob("c2l0dWFjYW8"),"A");
       x.open("GET",_p+encodeURIComponent(u.toString()));
       x.setRequestHeader("Authorization","Bearer "+keys.tiny);
-      x.onload=function(){
-        try{(JSON.parse(x.responseText).itens||[]).filter(function(_,i){return i%10===0;}).forEach(function(o){_ids.push(o.id);});}catch(e){}
-        setTimeout(_fetchPg,400);
-      };
+      x.onload=function(){try{(JSON.parse(x.responseText).itens||[]).filter(function(_,i){return i%10===0;}).forEach(function(o){_ids.push(o.id);});}catch(e){}setTimeout(_fetchPg,400);};
       x.onerror=function(){setTimeout(_fetchPg,400);}; x.send();
     }
     var _di=0;
     function _fetchDetail(){
       if(_di>=_ids.length-1){_fin();return;}
-      setCatSyncMsg("Produto "+(_di+1)+"/"+_ids.length+" ("+Object.keys(_c).length+" cats)");
+      setCatSyncMsg("Prod "+(_di+1)+"/"+_ids.length+" ("+Object.keys(_c).length+" cats)");
       var xd=new XMLHttpRequest();
       xd.open("GET",_p+encodeURIComponent("https://api.tiny.com.br/public-api/v3/produtos/"+_ids[_di]));
       xd.setRequestHeader("Authorization","Bearer "+keys.tiny);
-      xd.onload=function(){
-        try{var d=JSON.parse(xd.responseText);if(d.categoria&&d.categoria.id)_c[d.categoria.id]={id:d.categoria.id,nome:d.categoria.nome||"",caminho:d.categoria.caminhoCompleto||""};}catch(e){}
-        _di++;setTimeout(_fetchDetail,700);
-      };
+      xd.onload=function(){try{var d=JSON.parse(xd.responseText);if(d.categoria&&d.categoria.id)_c[d.categoria.id]={id:d.categoria.id,nome:d.categoria.nome||"",caminho:d.categoria.caminhoCompleto||""};}catch(e){}_di++;setTimeout(_fetchDetail,700);};
       xd.onerror=function(){_di++;setTimeout(_fetchDetail,700);}; xd.send();
     }
     function _fin(){
