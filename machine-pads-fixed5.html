@@ -959,45 +959,48 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
     catch(e){}return"Não sincronizado";
   });
     function syncCats() {
-    if (!keys.tiny) { alert("Configure o token Tiny nas Configurações."); return; }
+    if (!keys.tiny) { alert("Configure o token Tiny."); return; }
     if (catSyncing) return;
-    setCatSyncing(true); setCatSyncMsg("Buscando páginas...");
-    var _eq=String.fromCharCode(61);
-    var _pfx=(keys.corsProxy || "https://corsproxy.io/?") + "ur" + "l" + _eq;
-    var _cm={}; var _ids=[];
+    setCatSyncing(true); setCatSyncMsg("Buscando 5 páginas...");
+    var _e=String.fromCharCode(61);
+    var _p=(keys.corsProxy||"https://corsproxy.io/?")+"ur"+"l"+_e;
+    var _c={}; var _i=[];
     var _pgs=[1,2,3,4,5]; var _pd=0;
-    _pgs.forEach(function(pg) {
+    _pgs.forEach(function(pg){
       var x=new XMLHttpRequest();
       var u=new URL("https://api.tiny.com.br/public-api/v3/produtos");
       u.searchParams.set(atob("cGFnaW5h"),pg);
       u.searchParams.set(atob("bGltaXRl"),100);
       u.searchParams.set(atob("c2l0dWFjYW8"),"A");
-      x.open("GET",_pfx+encodeURIComponent(u.toString()));
+      x.open("GET",_p+encodeURIComponent(u.toString()));
       x.setRequestHeader("Authorization","Bearer "+keys.tiny);
-      x.onload=function(){try{var its=JSON.parse(x.responseText).itens||[];its.filter(function(_,i){return i%5===0;}).forEach(function(p){_ids.push(p.id);});}catch(e){}_pd++;if(_pd===_pgs.length){setCatSyncMsg("Detalhes de "+_ids.length+"...");_det();}};
-      x.onerror=function(){_pd++;if(_pd===_pgs.length)_det();}; x.send();
+      x.onload=function(){
+        try{(JSON.parse(x.responseText).itens||[]).filter(function(_,i){return i%5===0;}).forEach(function(o){_i.push(o.id);});}catch(e){}
+        if(++_pd===_pgs.length){setCatSyncMsg("Buscando "+_i.length+" detalhes...");_d();}
+      };
+      x.onerror=function(){if(++_pd===_pgs.length)_d();}; x.send();
     });
-    function _det(){
-      var bSz=5; var bi=0;
-      var bts=[];
-      for(var j=0;j<_ids.length;j+=bSz)bts.push(_ids.slice(j,j+bSz));
-      function _nb(){
-        if(bi>=bts.length-1){_fin();return;}
-        var bt=bts[bi++];
-        setCatSyncMsg("Lote "+bi+"/"+bts.length+" ("+Object.keys(_cm).length+" cats)");
-        var dn=0;
+    function _d(){
+      var bs=5,bi=0,bts=[];
+      for(var j=0;j<_i.length;j+=bs)bts.push(_i.slice(j,j+bs));
+      (function _nb(){
+        if(bi>=bts.length-1){return _f();}
+        setCatSyncMsg("Lote "+(bi+1)+"/"+bts.length+" ("+Object.keys(_c).length+" cats)");
+        var bt=bts[bi++],dn=0;
         bt.forEach(function(id){
           var xd=new XMLHttpRequest();
-          xd.open("GET",_pfx+encodeURIComponent("https://api.tiny.com.br/public-api/v3/produtos/"+id));
+          xd.open("GET",_p+encodeURIComponent("https://api.tiny.com.br/public-api/v3/produtos/"+id));
           xd.setRequestHeader("Authorization","Bearer "+keys.tiny);
-          xd.onload=function(){try{var d=JSON.parse(xd.responseText);if(d.categoria&&d.categoria.id)_cm[d.categoria.id]={id:d.categoria.id,nome:d.categoria.nome||"",caminho:d.categoria.caminhoCompleto||""};}catch(e){}dn++;if(dn===bt.length)setTimeout(_nb,500);};
-          xd.onerror=function(){dn++;if(dn===bt.length)setTimeout(_nb,500);}; xd.send();
+          xd.onload=function(){
+            try{var d=JSON.parse(xd.responseText);if(d.categoria&&d.categoria.id)_c[d.categoria.id]={id:d.categoria.id,nome:d.categoria.nome||"",caminho:d.categoria.caminhoCompleto||""};}catch(e){}
+            if(++dn===bt.length)setTimeout(_nb,500);
+          };
+          xd.onerror=function(){if(++dn===bt.length)setTimeout(_nb,500);}; xd.send();
         });
-      }
-      _nb();
+      })();
     }
-    function _fin(){
-      var list=Object.values(_cm).sort(function(a,b){return(a.caminho||"").localeCompare(b.caminho||"");});
+    function _f(){
+      var list=Object.values(_c).sort(function(a,b){return(a.caminho||"").localeCompare(b.caminho||"");});
       localStorage.setItem("mpads_catCache",JSON.stringify({ts:Date.now(),items:list}));
       setCatSyncMsg(list.length+" categorias · "+new Date().toLocaleDateString("pt-BR"));
       setCatSyncing(false);
