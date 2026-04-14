@@ -764,7 +764,7 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
     });
     // v24-hf: grade obrigatório no sendToTiny (não depender só do interceptor)
     const _gk = {};
-    body.variacoes.forEach(v => { if (v.grade) v.grade.forEach(g => { _gk[g.chave] = true; }); });
+    (body.variacoes || []).forEach(v => { if (v.grade) v.grade.forEach(g => { _gk[g.chave] = true; }); });
     body.grade = Object.keys(_gk);
     if (!body.grade.length) body.grade = ['Variação'];
   }
@@ -809,7 +809,7 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
     if (Object.keys(_ecm).length) payload._eanCodMap = _ecm;
     if (Object.keys(_scm).length) payload._skuCodMap = _scm;
   }
-  body.variacoes.forEach(v => { const _eks=new Set((v.grade||[]).map(g=>g.chave)); body.grade.forEach(key=>{ if(!_eks.has(key)) (v.grade=v.grade||[]).push({chave:key,valor:'-'}); }); });
+  (body.variacoes || []).forEach(v => { const _eks=new Set((v.grade||[]).map(g=>g.chave)); body.grade.forEach(key=>{ if(!_eks.has(key)) (v.grade=v.grade||[]).push({chave:key,valor:'-'}); }); });
   if (!payload.imagens.length) delete payload.imagens;
   if (!Object.keys(payload.seo).length) delete payload.seo;
   delete payload.tagExtraNome; // não enviar ao Tiny — usado só internamente
@@ -2944,7 +2944,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
           // FIX 1: grade[] no pai para tipo V
           if (body.tipo === 'V' && body.variacoes && !body.grade) {
             var gkeys = {};
-            body.variacoes.forEach(function(v){ if(v.grade) v.grade.forEach(function(g){ gkeys[g.chave]=true; }); });
+            (body.variacoes || []).forEach(function(v){ if(v.grade) v.grade.forEach(function(g){ gkeys[g.chave]=true; }); });
             body.grade = Object.keys(gkeys);
             entry.fixes.push('grade');
           }
