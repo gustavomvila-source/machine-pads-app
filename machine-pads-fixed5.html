@@ -966,16 +966,10 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
     var _p=(keys.corsProxy||"https://corsproxy.io/?")+"ur"+"l"+_e;
     var _c={}; var _ids=[];
     var _pgs=[1,5,10,15,20,25,30]; var _pi=0;
-    // Fase 1: buscar páginas sequencialmente com 400ms entre cada
     function _fetchPg(){
-      if(_pi>=_pgs.length-1){
-        // Todas as páginas carregadas — iniciar detalhes
-        setCatSyncMsg("Buscando detalhes de "+_ids.length+" produtos...");
-        _fetchDetail();
-        return;
-      }
+      if(_pi>=_pgs.length-1){setCatSyncMsg("Detalhes de "+_ids.length+"...");_fetchDetail();return;}
       var pg=_pgs[_pi++];
-      setCatSyncMsg("Página "+pg+"...");
+      setCatSyncMsg("Pag "+pg+" de "+_pgs[_pgs.length-1]+"...");
       var x=new XMLHttpRequest();
       var u=new URL("https://api.tiny.com.br/public-api/v3/produtos");
       u.searchParams.set(atob("cGFnaW5h"),pg);
@@ -984,28 +978,21 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
       x.open("GET",_p+encodeURIComponent(u.toString()));
       x.setRequestHeader("Authorization","Bearer "+keys.tiny);
       x.onload=function(){
-        try{
-          // Pegar 1 produto a cada 10 = 10 por página
-          (JSON.parse(x.responseText).itens||[]).filter(function(_,i){return i%10===0;}).forEach(function(o){_ids.push(o.id);});
-        }catch(e){}
+        try{(JSON.parse(x.responseText).itens||[]).filter(function(_,i){return i%10===0;}).forEach(function(o){_ids.push(o.id);});}catch(e){}
         setTimeout(_fetchPg,400);
       };
       x.onerror=function(){setTimeout(_fetchPg,400);}; x.send();
     }
-    // Fase 2: detalhes um por vez com 700ms entre cada
     var _di=0;
     function _fetchDetail(){
       if(_di>=_ids.length-1){_fin();return;}
-      setCatSyncMsg("Produto "+(_di+1)+"/"+_ids.length+" · "+Object.keys(_c).length+" cats");
+      setCatSyncMsg("Produto "+(_di+1)+"/"+_ids.length+" ("+Object.keys(_c).length+" cats)");
       var xd=new XMLHttpRequest();
       xd.open("GET",_p+encodeURIComponent("https://api.tiny.com.br/public-api/v3/produtos/"+_ids[_di]));
       xd.setRequestHeader("Authorization","Bearer "+keys.tiny);
       xd.onload=function(){
-        try{
-          var d=JSON.parse(xd.responseText);
-          if(d.categoria&&d.categoria.id)_c[d.categoria.id]={id:d.categoria.id,nome:d.categoria.nome||"",caminho:d.categoria.caminhoCompleto||""};
-        }catch(e){}
-        _di++; setTimeout(_fetchDetail,700);
+        try{var d=JSON.parse(xd.responseText);if(d.categoria&&d.categoria.id)_c[d.categoria.id]={id:d.categoria.id,nome:d.categoria.nome||"",caminho:d.categoria.caminhoCompleto||""};}catch(e){}
+        _di++;setTimeout(_fetchDetail,700);
       };
       xd.onerror=function(){_di++;setTimeout(_fetchDetail,700);}; xd.send();
     }
