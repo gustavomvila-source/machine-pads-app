@@ -1799,61 +1799,57 @@ React.useEffect(() => {
     });
   }, [brandsLoaded, tinyToken, corsProxy]);
 
-  // v31: cache de categorias em background (uma única instância)
+  // v31c: cache de categorias — sequencial com throttle para evitar rate limit
   React.useEffect(() => {
     if (!tinyToken) { setCatCacheLoaded(true); return; }
     var _eq = String.fromCharCode(61);
     var _pfx = (corsProxy || "https://corsproxy.io/?") + "ur" + "l" + _eq;
     var _cm = {};
-    function _fp(pg, cb) {
-      var x = new XMLHttpRequest();
-      var u = new URL("https://api.tiny.com.br/public-api/v3/produtos");
-      u.searchParams.set(atob("cGFnaW5h"), pg);
-      u.searchParams.set(atob("bGltaXRl"), 100);
-      u.searchParams.set(atob("c2l0dWFjYW8"), "A");
-      x.open("GET", _pfx + encodeURIComponent(u.toString()));
-      x.setRequestHeader("Authorization", "Bearer " + tinyToken);
-      x.onload = function() { try { cb(JSON.parse(x.responseText).itens || []); } catch(e) { cb([]); } };
-      x.onerror = function() { cb([]); }; x.send();
-    }
-    function _fd(id, cb) {
-      var x = new XMLHttpRequest();
-      x.open("GET", _pfx + encodeURIComponent("https://api.tiny.com.br/public-api/v3/produtos/" + id));
-      x.setRequestHeader("Authorization", "Bearer " + tinyToken);
-      x.onload = function() {
-        try {
-          var d = JSON.parse(x.responseText);
-          if (d.categoria && d.categoria.id) {
-            _cm[d.categoria.id] = { id: d.categoria.id, nome: d.categoria.nome || "", caminho: d.categoria.caminhoCompleto || "" };
+    var x0 = new XMLHttpRequest();
+    var u0 = new URL("https://api.tiny.com.br/public-api/v3/produtos");
+    u0.searchParams.set(atob("cGFnaW5h"), 1);
+    u0.searchParams.set(atob("bGltaXRl"), 100);
+    u0.searchParams.set(atob("c2l0dWFjYW8"), "A");
+    x0.open("GET", _pfx + encodeURIComponent(u0.toString()));
+    x0.setRequestHeader("Authorization", "Bearer " + tinyToken);
+    x0.onload = function() {
+      try {
+        var items = JSON.parse(x0.responseText).itens || [];
+        var ids = items.filter(function(_, i){ return i % 5 === 0; }).map(function(p){ return p.id; });
+        var idx = 0;
+        function next() {
+          if (idx >= ids.length) {
+            var list = Object.values(_cm).sort(function(a,b){ return (a.caminho||"").localeCompare(b.caminho||""); });
+            setCatCache(list); setCatCacheLoaded(true);
+            setItems(function(prev) {
+              return prev.map(function(item) {
+                if (item._categoriaId) return item;
+                var sug = (item.categoria_sugerida || "").toLowerCase().trim();
+                if (!sug) return item;
+                var m = list.find(function(c){ return (c.nome||"").toLowerCase() === sug || (c.caminho||"").toLowerCase().includes(sug); });
+                return m ? Object.assign({}, item, { _categoriaId: m.id, _catSearch: m.nome }) : item;
+              });
+            });
+            return;
           }
-        } catch(e) {} cb();
-      };
-      x.onerror = cb; x.send();
-    }
-    function _fin() {
-      var list = Object.values(_cm).sort(function(a,b){ return (a.caminho||"").localeCompare(b.caminho||""); });
-      setCatCache(list); setCatCacheLoaded(true);
-      setItems(function(prev) {
-        return prev.map(function(item) {
-          if (item._categoriaId) return item;
-          var sug = (item.categoria_sugerida || "").toLowerCase().trim();
-          if (!sug) return item;
-          var m = list.find(function(c) { return (c.nome||"").toLowerCase() === sug || (c.caminho||"").toLowerCase().includes(sug); });
-          return m ? Object.assign({}, item, { _categoriaId: m.id, _catSearch: m.nome }) : item;
-        });
-      });
-    }
-    var _pgs = [1,5,10,15,20]; var _pd = 0;
-    _pgs.forEach(function(pg) {
-      _fp(pg, function(pgItems) {
-        var smp = pgItems.filter(function(_, i) { return i % 5 === 0; });
-        if (!smp.length) { _pd++; if (_pd === _pgs.length) _fin(); return; }
-        var dn = 0;
-        smp.forEach(function(pr) {
-          _fd(pr.id, function() { dn++; if (dn === smp.length) { _pd++; if (_pd === _pgs.length) _fin(); } });
-        });
-      });
-    });
+          var xd = new XMLHttpRequest();
+          xd.open("GET", _pfx + encodeURIComponent("https://api.tiny.com.br/public-api/v3/produtos/" + ids[idx]));
+          xd.setRequestHeader("Authorization", "Bearer " + tinyToken);
+          xd.onload = function() {
+            try {
+              var d = JSON.parse(xd.responseText);
+              if (d.categoria && d.categoria.id) _cm[d.categoria.id] = { id: d.categoria.id, nome: d.categoria.nome || "", caminho: d.categoria.caminhoCompleto || "" };
+            } catch(e) {}
+            idx++; setTimeout(next, 300);
+          };
+          xd.onerror = function() { idx++; setTimeout(next, 300); };
+          xd.send();
+        }
+        next();
+      } catch(e) { setCatCacheLoaded(true); }
+    };
+    x0.onerror = function() { setCatCacheLoaded(true); };
+    x0.send();
   }, [tinyToken, corsProxy]);
   const searchFornec = React.useCallback((term) => {
     if (!tinyToken || !term) return;
