@@ -958,10 +958,19 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
     try{var _v=localStorage.getItem("mpads_catCache");if(_v){var _d=JSON.parse(_v);return(_d.items||[]).length+" categorias · "+new Date(_d.ts).toLocaleDateString("pt-BR");}}
     catch(e){}return"Não sincronizado";
   });
-    function syncCats() {
-    // v32f: pgs 1+2 completas = 200 produtos = todos os 48 cats em ~20s
-    // DIAGNOSTICO: cats concentradas nos primeiros 200 produtos (pgs 1-2)
-    // Abordagem correta: varrer TODOS os produtos dessas 2 pags sem amostragem
+    // ================================================================
+  // SYNC DE CATEGORIAS v32f - CORRECAO DEFINITIVA BASEADA EM DIAGNOSTICO
+  // Diagnostico realizado em 14/04/2026:
+  //   - 48 categorias unicas existem nos primeiros 200 produtos (pgs 1-2)
+  //   - Versoes anteriores amostravam pgs distribuidas (1,5,10,15,20,25,30)
+  //     e saltavam exatamente onde as categorias estao concentradas
+  //   - Varredura de 150 produtos distribuidos encontrou apenas 5 cats
+  //   - Varredura densa das pgs 1-2 (200 produtos) encontrou 48 cats
+  // Solucao: varrer TODOS os produtos das paginas 1 e 2 (200 no total)
+  //   Tempo estimado: ~20 segundos (40 batches x 500ms)
+  //   Sem amostragem - todos os produtos das 2 primeiras paginas
+  // ================================================================
+  function syncCats() {
     if (!keys.tiny) { alert("Configure o token Tiny nas Configurações."); return; }
     if (catSyncing) return;
     setCatSyncing(true);
@@ -995,10 +1004,7 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
           xd.open("GET",_p+encodeURIComponent("https://api.tiny.com.br/public-api/v3/produtos/"+id));
           xd.setRequestHeader("Authorization","Bearer "+keys.tiny);
           xd.onload=function(){
-            try{
-              var d=JSON.parse(xd.responseText);
-              if(d.categoria&&d.categoria.id) _c[d.categoria.id]={id:d.categoria.id,nome:d.categoria.nome||"",caminho:d.categoria.caminhoCompleto||""};
-            }catch(e){}
+            try{ var d=JSON.parse(xd.responseText); if(d.categoria&&d.categoria.id) _c[d.categoria.id]={id:d.categoria.id,nome:d.categoria.nome||"",caminho:d.categoria.caminhoCompleto||""}; }catch(e){}
             dn++; if(dn===bt.length) setTimeout(_nb,500);
           };
           xd.onerror=function(){ dn++; if(dn===bt.length) setTimeout(_nb,500); }; xd.send();
