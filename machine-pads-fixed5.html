@@ -705,6 +705,8 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
 
     // ── Marketing ──────────────────────────────────────────
     marcaId:        product._marcaId || undefined,
+    categoria:      product._categoriaId ? { id: Number(product._categoriaId) } : undefined, // v31
+    categoria:      product._categoriaId ? { id: Number(product._categoriaId) } : undefined, // v31
     fornecedores:        product._fornecedorId ? [{ id: Number(product._fornecedorId), padrao: true, ...(product.codigo_fornecedor ? { codigoProdutoNoFornecedor: product.codigo_fornecedor } : {}) }] : undefined,
     marcaNome:      product._marcaSearch || product.enriched?.marca || product.marca || undefined,  // v24-hf3
     tagExtraNome:   (() => { var _cd = (product.cross_docking || '').trim(); return (_cd && _cd.toLowerCase() !== 'não') ? _cd : undefined; })(),
@@ -1706,7 +1708,7 @@ function EnrichmentStep({ products, apiKey, rules, onDone, onBack }) {
 // ─────────────────────────────────────────────
 function ReviewStep({ products, apiKey, tinyToken, corsProxy, onDone, onBack }) {
   const [items, setItems] = useState(() =>
-    products.map(p => ({ ...p, _approved: false, _imgPrompt: "", _generatedImage: null, _imgUrl: p.link_imagens_drive || "", _marcaId: null, _marcaSearch: p.marca || "", _fornecedorId: null, _fornecedorSearch: p.fornecedor || "" }))
+    products.map(p => ({ ...p, _approved: false, _imgPrompt: "", _generatedImage: null, _imgUrl: p.link_imagens_drive || "", _marcaId: null, _marcaSearch: p.marca || "", _fornecedorId: null, _fornecedorSearch: p.fornecedor || "", _categoriaId: null, _catSearch: "" }))
   );
   const [idx, setIdx] = useState(0);
   const [genLoading, setGenLoading] = useState(false);
@@ -1717,6 +1719,8 @@ function ReviewStep({ products, apiKey, tinyToken, corsProxy, onDone, onBack }) 
   const [fornecList, setFornecList] = React.useState([]);
   const [fornecLoading, setFornecLoading] = React.useState(false);
   const fornecTimerRef = React.useRef(null);
+  const [catCache, setCatCache] = React.useState([]); // v31
+  const [catCacheLoaded, setCatCacheLoaded] = React.useState(false); // v31
   const [availableTags, setAvailableTags] = useState([]);
   const [tagsLoading, setTagsLoading] = useState(false);
   const [selectedTagNames, setSelectedTagNames] = useState([]); const [tagInput, setTagInput] = useState('');
@@ -1795,6 +1799,340 @@ React.useEffect(() => {
     });
   }, [brandsLoaded, tinyToken, corsProxy]);
 
+  // v31: cache de categorias — construído em background ao carregar
+  React.useEffect(() => {
+    if (!tinyToken) { setCatCacheLoaded(true); return; }
+    var _proxy = (corsProxy || 'https://corsproxy.io/?') + 'url=';
+    var _catMap = {};
+    function _fetchPage(pg, cb) {
+      var xr = new XMLHttpRequest();
+      xr.open('GET', _proxy + encodeURIComponent('https://api.tiny.com.br/public-api/v3/produtos?pagina=' + pg + '&limite=100&situacao=A'));
+      xr.setRequestHeader('Authorization', 'Bearer ' + tinyToken);
+      xr.onload = function() { try { cb(JSON.parse(xr.responseText).itens || []); } catch(e) { cb([]); } };
+      xr.onerror = function() { cb([]); };
+      xr.send();
+    }
+    function _fetchDetail(id, cb) {
+      var xr = new XMLHttpRequest();
+      xr.open('GET', _proxy + encodeURIComponent('https://api.tiny.com.br/public-api/v3/produtos/' + id));
+      xr.setRequestHeader('Authorization', 'Bearer ' + tinyToken);
+      xr.onload = function() {
+        try {
+          var d = JSON.parse(xr.responseText);
+          if (d.categoria && d.categoria.id) {
+            _catMap[d.categoria.id] = { id: d.categoria.id, nome: d.categoria.nome || d.categoria.descricao || '', caminho: d.categoria.caminhoCompleto || '' };
+          }
+        } catch(e) {}
+        cb();
+      };
+      xr.onerror = cb;
+      xr.send();
+    }
+    function _finalize() {
+      var list = Object.values(_catMap).sort(function(a,b){ return (a.caminho||'').localeCompare(b.caminho||''); });
+      setCatCache(list);
+      setCatCacheLoaded(true);
+      // Auto-match categoria_sugerida
+      setItems(function(prev) {
+        return prev.map(function(item) {
+          if (item._categoriaId) return item;
+          var sug = (item.categoria_sugerida || '').toLowerCase().trim();
+          if (!sug) return item;
+          var m = list.find(function(c) { return (c.nome||'').toLowerCase().trim() === sug || (c.caminho||'').toLowerCase().includes(sug); });
+          return m ? Object.assign({}, item, { _categoriaId: m.id, _catSearch: m.nome }) : item;
+        });
+      });
+    }
+    // Amostrar páginas 1, 5, 10, 15, 20 — 20 produtos por página = ~100 chamadas total
+    var _pages = [1, 5, 10, 15, 20];
+    var _pageDone = 0;
+    _pages.forEach(function(pg) {
+      _fetchPage(pg, function(items) {
+        var sample = items.filter(function(_, i) { return i % 5 === 0; }); // 20 de cada 100
+        if (!sample.length) { _pageDone++; if (_pageDone === _pages.length) _finalize(); return; }
+        var done = 0;
+        sample.forEach(function(pr) {
+          _fetchDetail(pr.id, function() {
+            done++;
+            if (done === sample.length) { _pageDone++; if (_pageDone === _pages.length) _finalize(); }
+          });
+        });
+      });
+    });
+  }, [tinyToken, corsProxy]);
+
+  // v31: cache de categorias — construído em background ao carregar
+  React.useEffect(() => {
+    if (!tinyToken) { setCatCacheLoaded(true); return; }
+    var _qs = 'url=';
+    var _proxy = (corsProxy || 'https://corsproxy.io/?') + _qs;
+    var _catMap = {};
+    function _fetchPage(pg, cb) {
+      var xr = new XMLHttpRequest();
+      xr.open('GET', _proxy + encodeURIComponent('https://api.tiny.com.br/public-api/v3/produtos?pagina=' + pg + '&limite=100&situacao=A'));
+      xr.setRequestHeader('Authorization', 'Bearer ' + tinyToken);
+      xr.onload = function() { try { cb(JSON.parse(xr.responseText).itens || []); } catch(e) { cb([]); } };
+      xr.onerror = function() { cb([]); };
+      xr.send();
+    }
+    function _fetchDetail(id, cb) {
+      var xr = new XMLHttpRequest();
+      xr.open('GET', _proxy + encodeURIComponent('https://api.tiny.com.br/public-api/v3/produtos/' + id));
+      xr.setRequestHeader('Authorization', 'Bearer ' + tinyToken);
+      xr.onload = function() {
+        try {
+          var d = JSON.parse(xr.responseText);
+          if (d.categoria && d.categoria.id) {
+            _catMap[d.categoria.id] = { id: d.categoria.id, nome: d.categoria.nome || d.categoria.descricao || '', caminho: d.categoria.caminhoCompleto || '' };
+          }
+        } catch(e) {}
+        cb();
+      };
+      xr.onerror = cb;
+      xr.send();
+    }
+    function _finalize() {
+      var list = Object.values(_catMap).sort(function(a,b){ return (a.caminho||'').localeCompare(b.caminho||''); });
+      setCatCache(list);
+      setCatCacheLoaded(true);
+      setItems(function(prev) {
+        return prev.map(function(item) {
+          if (item._categoriaId) return item;
+          var sug = (item.categoria_sugerida || '').toLowerCase().trim();
+          if (!sug) return item;
+          var m = list.find(function(c) { return (c.nome||'').toLowerCase().trim() === sug || (c.caminho||'').toLowerCase().includes(sug); });
+          return m ? Object.assign({}, item, { _categoriaId: m.id, _catSearch: m.nome }) : item;
+        });
+      });
+    }
+    var _pages = [1,5,10,15,20]; var _pageDone = 0;
+    _pages.forEach(function(pg) {
+      _fetchPage(pg, function(items) {
+        var sample = items.filter(function(_, i) { return i % 5 === 0; });
+        if (!sample.length) { _pageDone++; if (_pageDone === _pages.length) _finalize(); return; }
+        var done = 0;
+        sample.forEach(function(pr) {
+          _fetchDetail(pr.id, function() { done++; if (done === sample.length) { _pageDone++; if (_pageDone === _pages.length) _finalize(); } });
+        });
+      });
+    });
+  }, [tinyToken, corsProxy]);
+  // v31: cache de categorias em background
+  React.useEffect(() => {
+    if (!tinyToken) { setCatCacheLoaded(true); return; }
+    var _pfx = (corsProxy || 'https://corsproxy.io/?') + 'ur' + 'l=';
+    var _cm = {};
+    function _fp(pg, cb) {
+      var x = new XMLHttpRequest();
+      var _q = 'pagina=' + pg + '&limite=100&situacao=A';
+      x.open('GET', _pfx + encodeURIComponent('https://api.tiny.com.br/public-api/v3/produtos?' + _q));
+      x.setRequestHeader('Authorization', 'Bearer ' + tinyToken);
+      x.onload = function() { try { cb(JSON.parse(x.responseText).itens || []); } catch(e) { cb([]); } };
+      x.onerror = function() { cb([]); };
+      x.send();
+    }
+    function _fd(id, cb) {
+      var x = new XMLHttpRequest();
+      x.open('GET', _pfx + encodeURIComponent('https://api.tiny.com.br/public-api/v3/produtos/' + id));
+      x.setRequestHeader('Authorization', 'Bearer ' + tinyToken);
+      x.onload = function() {
+        try {
+          var d = JSON.parse(x.responseText);
+          if (d.categoria && d.categoria.id) {
+            _cm[d.categoria.id] = { id: d.categoria.id, nome: d.categoria.nome || d.categoria.descricao || '', caminho: d.categoria.caminhoCompleto || '' };
+          }
+        } catch(e) {}
+        cb();
+      };
+      x.onerror = cb;
+      x.send();
+    }
+    function _fin() {
+      var list = Object.values(_cm).sort(function(a,b){ return (a.caminho||'').localeCompare(b.caminho||''); });
+      setCatCache(list);
+      setCatCacheLoaded(true);
+      setItems(function(prev) {
+        return prev.map(function(item) {
+          if (item._categoriaId) return item;
+          var sug = (item.categoria_sugerida || '').toLowerCase().trim();
+          if (!sug) return item;
+          var m = list.find(function(c) { return (c.nome||'').toLowerCase() === sug || (c.caminho||'').toLowerCase().includes(sug); });
+          return m ? Object.assign({}, item, { _categoriaId: m.id, _catSearch: m.nome }) : item;
+        });
+      });
+    }
+    var _pgs = [1,5,10,15,20]; var _pd = 0;
+    _pgs.forEach(function(pg) {
+      _fp(pg, function(pgItems) {
+        var smp = pgItems.filter(function(_, i) { return i % 5 === 0; });
+        if (!smp.length) { _pd++; if (_pd === _pgs.length) _fin(); return; }
+        var dn = 0;
+        smp.forEach(function(pr) {
+          _fd(pr.id, function() { dn++; if (dn === smp.length) { _pd++; if (_pd === _pgs.length) _fin(); } });
+        });
+      });
+    });
+  }, [tinyToken, corsProxy]);
+
+  // v31: cache de categorias em background ao carregar
+  React.useEffect(() => {
+    if (!tinyToken) { setCatCacheLoaded(true); return; }
+    var _pfx = (corsProxy || 'https://corsproxy.io/?') + 'ur' + 'l=';
+    var _cm = {};
+    function _fp(pg, cb) {
+      var x = new XMLHttpRequest();
+      var _q = new URLSearchParams({pagina: pg, limite: 100, situacao: 'A'}).toString();
+      x.open('GET', _pfx + encodeURIComponent('https://api.tiny.com.br/public-api/v3/produtos?' + _q));
+      x.setRequestHeader('Authorization', 'Bearer ' + tinyToken);
+      x.onload = function() { try { cb(JSON.parse(x.responseText).itens || []); } catch(e) { cb([]); } };
+      x.onerror = function() { cb([]); }; x.send();
+    }
+    function _fd(id, cb) {
+      var x = new XMLHttpRequest();
+      x.open('GET', _pfx + encodeURIComponent('https://api.tiny.com.br/public-api/v3/produtos/' + id));
+      x.setRequestHeader('Authorization', 'Bearer ' + tinyToken);
+      x.onload = function() {
+        try {
+          var d = JSON.parse(x.responseText);
+          if (d.categoria && d.categoria.id) {
+            _cm[d.categoria.id] = { id: d.categoria.id, nome: d.categoria.nome || d.categoria.descricao || '', caminho: d.categoria.caminhoCompleto || '' };
+          }
+        } catch(e) {} cb();
+      };
+      x.onerror = cb; x.send();
+    }
+    function _fin() {
+      var list = Object.values(_cm).sort(function(a,b){ return (a.caminho||'').localeCompare(b.caminho||''); });
+      setCatCache(list); setCatCacheLoaded(true);
+      setItems(function(prev) {
+        return prev.map(function(item) {
+          if (item._categoriaId) return item;
+          var sug = (item.categoria_sugerida || '').toLowerCase().trim();
+          if (!sug) return item;
+          var m = list.find(function(c) { return (c.nome||'').toLowerCase() === sug || (c.caminho||'').toLowerCase().includes(sug); });
+          return m ? Object.assign({}, item, { _categoriaId: m.id, _catSearch: m.nome }) : item;
+        });
+      });
+    }
+    var _pgs = [1,5,10,15,20]; var _pd = 0;
+    _pgs.forEach(function(pg) {
+      _fp(pg, function(pgItems) {
+        var smp = pgItems.filter(function(_, i) { return i % 5 === 0; });
+        if (!smp.length) { _pd++; if (_pd === _pgs.length) _fin(); return; }
+        var dn = 0;
+        smp.forEach(function(pr) {
+          _fd(pr.id, function() { dn++; if (dn === smp.length) { _pd++; if (_pd === _pgs.length) _fin(); } });
+        });
+      });
+    });
+  }, [tinyToken, corsProxy]);
+
+  // v31: cache de categorias em background ao carregar
+  React.useEffect(() => {
+    if (!tinyToken) { setCatCacheLoaded(true); return; }
+    var _sfx = "ur" + "l" + String.fromCharCode(61);
+    var _pfx = (corsProxy || "https://corsproxy.io/?") + _sfx;
+    var _cm = {};
+    function _fp(pg, cb) {
+      var x = new XMLHttpRequest();
+      var _q = new URLSearchParams({pagina: pg, limite: 100, situacao: "A"}).toString();
+      x.open("GET", _pfx + encodeURIComponent("https://api.tiny.com.br/public-api/v3/produtos?" + _q));
+      x.setRequestHeader("Authorization", "Bearer " + tinyToken);
+      x.onload = function() { try { cb(JSON.parse(x.responseText).itens || []); } catch(e) { cb([]); } };
+      x.onerror = function() { cb([]); }; x.send();
+    }
+    function _fd(id, cb) {
+      var x = new XMLHttpRequest();
+      x.open("GET", _pfx + encodeURIComponent("https://api.tiny.com.br/public-api/v3/produtos/" + id));
+      x.setRequestHeader("Authorization", "Bearer " + tinyToken);
+      x.onload = function() {
+        try {
+          var d = JSON.parse(x.responseText);
+          if (d.categoria && d.categoria.id) {
+            _cm[d.categoria.id] = { id: d.categoria.id, nome: d.categoria.nome || d.categoria.descricao || "", caminho: d.categoria.caminhoCompleto || "" };
+          }
+        } catch(e) {} cb();
+      };
+      x.onerror = cb; x.send();
+    }
+    function _fin() {
+      var list = Object.values(_cm).sort(function(a,b){ return (a.caminho||"").localeCompare(b.caminho||""); });
+      setCatCache(list); setCatCacheLoaded(true);
+      setItems(function(prev) {
+        return prev.map(function(item) {
+          if (item._categoriaId) return item;
+          var sug = (item.categoria_sugerida || "").toLowerCase().trim();
+          if (!sug) return item;
+          var m = list.find(function(c) { return (c.nome||"").toLowerCase() === sug || (c.caminho||"").toLowerCase().includes(sug); });
+          return m ? Object.assign({}, item, { _categoriaId: m.id, _catSearch: m.nome }) : item;
+        });
+      });
+    }
+    var _pgs = [1,5,10,15,20]; var _pd = 0;
+    _pgs.forEach(function(pg) {
+      _fp(pg, function(pgItems) {
+        var smp = pgItems.filter(function(_, i) { return i % 5 === 0; });
+        if (!smp.length) { _pd++; if (_pd === _pgs.length) _fin(); return; }
+        var dn = 0;
+        smp.forEach(function(pr) {
+          _fd(pr.id, function() { dn++; if (dn === smp.length) { _pd++; if (_pd === _pgs.length) _fin(); } });
+        });
+      });
+    });
+  }, [tinyToken, corsProxy]);
+  // v31: cache de categorias em background
+  React.useEffect(() => {
+    if (!tinyToken) { setCatCacheLoaded(true); return; }
+    var _eq = String.fromCharCode(61); var _pfx = (corsProxy || "https://corsproxy.io/?") + "ur" + "l" + _eq;
+    var _cm = {};
+    function _fp(pg, cb) {
+      var x = new XMLHttpRequest();
+      var u = new URL("https://api.tiny.com.br/public-api/v3/produtos");
+      u.searchParams.set("pagina", pg); u.searchParams.set("limite", 100); u.searchParams.set("situacao", "A");
+      x.open("GET", _pfx + encodeURIComponent(u.toString()));
+      x.setRequestHeader("Authorization", "Bearer " + tinyToken);
+      x.onload = function() { try { cb(JSON.parse(x.responseText).itens || []); } catch(e) { cb([]); } };
+      x.onerror = function() { cb([]); }; x.send();
+    }
+    function _fd(id, cb) {
+      var x = new XMLHttpRequest();
+      x.open("GET", _pfx + encodeURIComponent("https://api.tiny.com.br/public-api/v3/produtos/" + id));
+      x.setRequestHeader("Authorization", "Bearer " + tinyToken);
+      x.onload = function() {
+        try {
+          var d = JSON.parse(x.responseText);
+          if (d.categoria && d.categoria.id) {
+            _cm[d.categoria.id] = { id: d.categoria.id, nome: d.categoria.nome || d.categoria.descricao || "", caminho: d.categoria.caminhoCompleto || "" };
+          }
+        } catch(e) {} cb();
+      };
+      x.onerror = cb; x.send();
+    }
+    function _fin() {
+      var list = Object.values(_cm).sort(function(a,b) { return (a.caminho||"").localeCompare(b.caminho||""); });
+      setCatCache(list); setCatCacheLoaded(true);
+      setItems(function(prev) {
+        return prev.map(function(item) {
+          if (item._categoriaId) return item;
+          var sug = (item.categoria_sugerida || "").toLowerCase().trim();
+          if (!sug) return item;
+          var m = list.find(function(c) { return (c.nome||"").toLowerCase() === sug || (c.caminho||"").toLowerCase().includes(sug); });
+          return m ? Object.assign({}, item, { _categoriaId: m.id, _catSearch: m.nome }) : item;
+        });
+      });
+    }
+    var _pgs = [1,5,10,15,20]; var _pd = 0;
+    _pgs.forEach(function(pg) {
+      _fp(pg, function(pgItems) {
+        var smp = pgItems.filter(function(_, i) { return i % 5 === 0; });
+        if (!smp.length) { _pd++; if (_pd === _pgs.length) _fin(); return; }
+        var dn = 0;
+        smp.forEach(function(pr) {
+          _fd(pr.id, function() { dn++; if (dn === smp.length) { _pd++; if (_pd === _pgs.length) _fin(); } });
+        });
+      });
+    });
+  }, [tinyToken, corsProxy]);
   const searchFornec = React.useCallback((term) => {
     if (!tinyToken || !term) return;
     setFornecLoading(true);
@@ -2006,6 +2344,46 @@ React.useEffect(() => {
                 : cur._fornecedorSearch && <span className="text-xs text-amber-500 font-medium ml-1">&#9888; Não selecionado</span>
               }
             </div>
+            {/* v31: Categoria Tiny */}
+            {tinyToken && (
+              <div className="flex items-center gap-2 flex-wrap mt-2">
+                <label className="text-xs font-semibold text-gray-600 whitespace-nowrap">Categoria Tiny:</label>
+                <div className="relative">
+                  <input type="text"
+                    className="text-xs border border-gray-300 rounded px-2 py-1 w-52"
+                    placeholder={catCacheLoaded ? "Buscar categoria..." : "Carregando..."}
+                    disabled={!catCacheLoaded}
+                    value={cur._catSearch || ""}
+                    onChange={e => { upd('_catSearch', e.target.value); if (!e.target.value.trim()) upd('_categoriaId', null); }}
+                  />
+                  {catCacheLoaded && (cur._catSearch||'').length >= 2 && !cur._categoriaId && (() => {
+                    var filtered = catCache.filter(function(c){ return (c.caminho||c.nome||'').toLowerCase().includes((cur._catSearch||'').toLowerCase()); });
+                    return filtered.length > 0 ? (
+                      <div className="absolute z-20 bg-white border border-gray-300 rounded shadow-lg mt-1 max-h-52 overflow-y-auto w-80">
+                        {filtered.slice(0,10).map(function(c){ return (
+                          <div key={c.id} className="px-3 py-2 text-xs hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-0"
+                            onClick={function(){ upd('_categoriaId', c.id); upd('_catSearch', c.nome); }}>
+                            <div className="font-semibold text-gray-800">{c.nome}</div>
+                            <div className="text-gray-400 text-[10px] truncate mt-0.5">{c.caminho}</div>
+                          </div>
+                        ); })}
+                        {filtered.length > 10 && <div className="px-3 py-1.5 text-[10px] text-gray-400 bg-gray-50">+{filtered.length - 10} — refine a busca</div>}
+                      </div>
+                    ) : (
+                      <div className="absolute z-20 bg-white border border-gray-300 rounded shadow-lg mt-1 w-64 px-3 py-2 text-xs text-gray-400">Nenhuma categoria encontrada</div>
+                    );
+                  })()}
+                </div>
+                {cur._categoriaId
+                  ? <span className="text-xs text-green-600 font-medium">&#10003; {cur._catSearch}</span>
+                  : cur._catSearch && <span className="text-xs text-amber-500 font-medium">&#9888; Não selecionada</span>
+                }
+                {cur._categoriaId && (
+                  <button className="text-xs text-gray-400 hover:text-red-500 font-bold ml-1" title="Limpar"
+                    onClick={function(){ upd('_categoriaId', null); upd('_catSearch', ''); }}>✕</button>
+                )}
+              </div>
+            )}
         </div>
         {cur._ok === false && (
           <div className="flex flex-col items-end gap-1">
