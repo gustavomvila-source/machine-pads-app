@@ -206,14 +206,14 @@ function resolveParentChild(products) {
   // Step 1: set _codigoPai on each K product
   let resolved = products.map(p => {
     if ((p.tipo_de_produto || "S").toUpperCase() !== "K") return p;
-    const kSku = (p.enriched?.sku_interno || "").toUpperCase();
+    const kSku = (p.sku_interno || p.enriched?.sku_interno || "").toUpperCase();
     const kName = (p.produto_fornecedor || "").toLowerCase()
       .replace(/\s*[-–]\s*(110v|220v|127v|220|110|127|bivolt)\s*$/i, "").trim();
 
     let parent = null;
     // Match by SKU prefix
     for (const v of vProds) {
-      const vSku = (v.enriched?.sku_interno || "").toUpperCase();
+      const vSku = (v.sku_interno || v.enriched?.sku_interno || "").toUpperCase();
       if (vSku && kSku.startsWith(vSku + "-")) { parent = v; break; }
     }
     // Fallback: match by product name similarity
@@ -226,7 +226,7 @@ function resolveParentChild(products) {
         }
       }
     }
-    return { ...p, _codigoPai: parent !== null ? (parent.enriched?.sku_interno || parent.codigo_fornecedor || "") : null }; // v24
+    return { ...p, _codigoPai: parent !== null ? (parent.sku_interno || parent.enriched?.sku_interno || parent.codigo_fornecedor || "") : null }; // v24
   });
 
   // Step 2: update V products' variacoes based on their K children
@@ -674,7 +674,7 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
   const body = {
     // ── Identificação ──────────────────────────────────────
     nome:           product.enriched?.titulo_otimizado || product.produto_fornecedor,
-    sku:            product.enriched?.sku_interno || product.codigo_fornecedor || "",
+    sku:            product.sku_interno || product.enriched?.sku_interno || product.codigo_fornecedor || "", // v33: planilha > IA
     ean:            String(product.ean || ""),
     situacao:       "A",
     tipo:           tipoApi,
@@ -717,7 +717,7 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
     seo: {
       titulo:    product.enriched?.titulo_seo || "",
       descricao: product.enriched?.descricao_seo || "",
-      slug:      (product.enriched?.sku_interno || product.produto_fornecedor || "")
+      slug:      (product.sku_interno || product.enriched?.sku_interno || product.produto_fornecedor || "")
                    .toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]/g, ""),
     },
 
@@ -750,7 +750,7 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
                                                                               grade.push({ chave: 'Variação', valor: suffix || k.codigo_fornecedor || String(children.indexOf(k) + 1) });
                                                                                       }
       const varItem = {
-        sku:    k.enriched?.sku_interno || k.codigo_fornecedor || "",
+        sku:    k.sku_interno || k.enriched?.sku_interno || k.codigo_fornecedor || "", // v33
         precos: { preco: parseNumber(k.preco_venda) ?? 0 },
         grade,
         dimensoes: {
@@ -803,7 +803,7 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
     children.forEach(c => {
       const ean = String(c.ean || "").replace(/\D/g, "");
       if (ean && c.codigo_fornecedor) _ecm[ean] = c.codigo_fornecedor;
-      const sku = c.enriched?.sku_interno || c.codigo_fornecedor || "";
+      const sku = c.sku_interno || c.enriched?.sku_interno || c.codigo_fornecedor || "";
       if (sku && c.codigo_fornecedor) _scm[sku] = c.codigo_fornecedor;
     });
     if (Object.keys(_ecm).length) payload._eanCodMap = _ecm;
@@ -2436,7 +2436,7 @@ function SyncStep({ products, tinyToken, corsProxy, onRestart, selectedTagNames 
     const vSkuSet = new Set(
       items
         .filter(p => (p.tipo_de_produto || "S").toUpperCase() === "V")
-        .map(p => p.enriched?.sku_interno || p.codigo_fornecedor || "")
+        .map(p => p.sku_interno || p.enriched?.sku_interno || p.codigo_fornecedor || "")
         .filter(Boolean)
     );
 
@@ -2446,7 +2446,7 @@ function SyncStep({ products, tinyToken, corsProxy, onRestart, selectedTagNames 
       // K com pai V: será incluído nas variacoes[] do pai — pular chamada individual
       if (tipo === "K" && p._codigoPai !== null && vSkuSet.has(p._codigoPai)) continue; // v24
       if (tipo === "V") {
-        const pSku = p.enriched?.sku_interno || p.codigo_fornecedor || "";
+        const pSku = p.sku_interno || p.enriched?.sku_interno || p.codigo_fornecedor || "";
         const kChildren = items.filter(k =>
           (k.tipo_de_produto || "S").toUpperCase() === "K" && k._codigoPai === pSku
         );
