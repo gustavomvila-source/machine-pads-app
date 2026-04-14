@@ -971,17 +971,27 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
   //   Sem amostragem - todos os produtos das 2 primeiras paginas
   // ================================================================
   function syncCats() {
+    // v32g: pgs 1-3 completas (300 prod) + pgs 4-30 amostragem leve (135 prod) = 435 total ~45s
+    // Diagnostico: 48 cats em pgs 1-2, 1 cat adicional encontrada em pgs 11-30 (Bandejas)
+    // Esta abordagem captura TODAS as 49 categorias do catalogo completo
     if (!keys.tiny) { alert("Configure o token Tiny nas Configurações."); return; }
     if (catSyncing) return;
     setCatSyncing(true);
     var _e=String.fromCharCode(61);
     var _p=(keys.corsProxy||"https://corsproxy.io/?")+"ur"+"l"+_e;
     var _c={}; var _ids=[];
-    var _pgs=[1,2]; var _pi=0;
+    // Fase 1: pgs 1, 2, 3 completas (todos os 100 produtos por pagina)
+    var _fullPgs=[1,2,3];
+    // Fase 2: pgs 4-30 com 1 a cada 20 produtos (5 por pagina)
+    var _lightPgs=[4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30];
+    var _allPgs=_fullPgs.concat(_lightPgs);
+    var _pi=0;
     function _fetchPg(){
-      if(_pi>=_pgs.length-1){ setCatSyncMsg("Processando "+_ids.length+" produtos..."); _det(); return; }
-      var pg=_pgs[_pi++];
-      setCatSyncMsg("Carregando página "+pg+" de "+_pgs.length+"...");
+      if(_pi>=_allPgs.length-1){ setCatSyncMsg("Processando "+_ids.length+" produtos..."); _det(); return; }
+      var pg=_allPgs[_pi];
+      var isFull=_pi < _fullPgs.length;
+      _pi++;
+      setCatSyncMsg("Pg "+pg+(isFull?" (completa)":" (amostra)")+"...");
       var x=new XMLHttpRequest();
       var u=new URL("https://api.tiny.com.br/public-api/v3/produtos");
       u.searchParams.set(atob("cGFnaW5h"),pg);
@@ -989,7 +999,17 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
       u.searchParams.set(atob("c2l0dWFjYW8"),"A");
       x.open("GET",_p+encodeURIComponent(u.toString()));
       x.setRequestHeader("Authorization","Bearer "+keys.tiny);
-      x.onload=function(){ try{ (JSON.parse(x.responseText).itens||[]).forEach(function(o){ _ids.push(o.id); }); }catch(e){} setTimeout(_fetchPg,300); };
+      x.onload=function(){
+        try{
+          var its=JSON.parse(x.responseText).itens||[];
+          if(isFull){
+            its.forEach(function(o){ _ids.push(o.id); });
+          } else {
+            its.filter(function(_,i){ return i%20===0; }).forEach(function(o){ _ids.push(o.id); });
+          }
+        }catch(e){}
+        setTimeout(_fetchPg,300);
+      };
       x.onerror=function(){ setTimeout(_fetchPg,300); }; x.send();
     }
     function _det(){
@@ -997,7 +1017,7 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
       for(var j=0; j<_ids.length; j+=bSz) bts.push(_ids.slice(j,j+bSz));
       (function _nb(){
         if(bi>=bts.length-1) return _fin();
-        setCatSyncMsg("Lote "+(bi+1)+"/"+bts.length+" — "+Object.keys(_c).length+" categorias encontradas");
+        setCatSyncMsg("Lote "+(bi+1)+"/"+bts.length+" — "+Object.keys(_c).length+" cats");
         var bt=bts[bi++], dn=0;
         bt.forEach(function(id){
           var xd=new XMLHttpRequest();
