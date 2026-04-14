@@ -1,1 +1,3037 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Machine PADS &#8211; Cadastro Massivo</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Process polyfill (must be first, before any module loading) -->
+  <script>window.process = window.process || { env: { NODE_ENV:prouction' } };</script>
+  <!-- React 18 -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <!-- Lucide React (load before Babel/SheetJS to avoid module global pollution) -->
+  <script>window.react = window.React;</script>
+<script src="https://unpkg.com/lucide-react@0.263.1/dist/umd/lucide-react.js"></script>
+  <!-- SheetJS -->
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <!-- Babel standalone (JSX in browser) -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    #root { min-height: 100vh; }
 
+    /* ── Machine PADS — Paleta da Empresa ── */
+    /* Azul escuro #4870B5 → substitui indigo */
+    .bg-indigo-600                   { background-color: #4870B5 !important; }
+    .bg-indigo-700                   { background-color: #3a5a9e !important; }
+    .bg-indigo-500                   { background-color: #5880c0 !important; }
+    .bg-indigo-100                   { background-color: #dce8f5 !important; }
+    .bg-indigo-50                    { background-color: #eef3fb !important; }
+    .hover\:bg-indigo-700:hover      { background-color: #3a5a9e !important; }
+    .hover\:bg-indigo-100:hover      { background-color: #dce8f5 !important; }
+    .text-indigo-700                 { color: #3a5a9e !important; }
+    .text-indigo-600                 { color: #4870B5 !important; }
+    .text-indigo-500                 { color: #5880c0 !important; }
+    .text-indigo-400                 { color: #7a9fd0 !important; }
+    .border-indigo-600               { border-color: #4870B5 !important; }
+    .border-indigo-500               { border-color: #4870B5 !important; }
+    .border-indigo-400               { border-color: #6a8fc5 !important; }
+    .border-indigo-200               { border-color: #b5cfe9 !important; }
+    .border-indigo-100               { border-color: #dce8f5 !important; }
+    .hover\:border-indigo-400:hover  { border-color: #6a8fc5 !important; }
+    .focus\:ring-indigo-500:focus    { --tw-ring-color: rgba(72,112,181,0.5) !important; }
+    .shadow-indigo-200               { --tw-shadow-color: rgba(72,112,181,0.25) !important; }
+    /* Gradientes: #4870B5 → #00C9FF (azul claro) */
+    .from-indigo-500, .from-indigo-600 {
+      --tw-gradient-from: #4870B5 !important;
+      --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(72,112,181,0)) !important;
+    }
+    .to-purple-500, .to-purple-600   { --tw-gradient-to: #00C9FF !important; }
+    /* Fundo geral → #FFFEE1 (branco da empresa) */
+    .bg-slate-50                     { background-color: #FFFEE1 !important; }
+    /* Texto principal → #232323 (preto da empresa) */
+    .text-gray-900                   { color: #232323 !important; }
+    /* Caixas de info azul → tint do #00C9FF */
+    .bg-blue-50                      { background-color: rgba(0,201,255,0.08) !important; }
+    .text-blue-700                   { color: #007aa3 !important; }
+    .text-blue-500                   { color: #00b3e0 !important; }
+    /* Cards / seções internas — azul-frio leve para contrastar com fundo #FFFEE1 */
+    .bg-gray-50                      { background-color: #F0F4FA !important; }
+    /* Header — fundo azul escuro, texto branco */
+    header { background-color: #4870B5 !important; border-color: #3a5a9e !important; }
+    header h1 { color: #ffffff !important; }
+    header p  { color: rgba(220,232,245,0.9) !important; }
+    header button { color: #ffffff !important; }
+    header button:hover { background-color: rgba(255,255,255,0.12) !important; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel" data-presets="react">
+const { useState, useCallback, useRef, Fragment } = React;
+const { Upload, CheckCircle, XCircle, AlertCircle, ChevronRight, ChevronLeft, Settings, Loader, Send, Tag, FileText, Package, Zap, Eye, Edit2, RefreshCw, Home } = LucideReact;
+const ImageIcon = LucideReact.Image;
+
+
+// ─────────────────────────────────────────────
+// CONSTANTS
+// ─────────────────────────────────────────────
+const REQUIRED_FIELDS = ["ean", "ncm", "peso", "altura", "largura", "comprimento"];
+const FIELD_LABELS = {
+  ean: "EAN", ncm: "NCM", preco_venda: "Preço de venda",
+  peso: "Peso", altura: "Altura", largura: "Largura", comprimento: "Comprimento",
+};
+const STEPS = ["upload", "validation", "enrichment", "review", "sync"];
+
+// ─────────────────────────────────────────────
+// MARKETPLACE CONFIG
+// ─────────────────────────────────────────────
+const MARKETPLACES = [
+  {
+    id: "mercadolivre", label: "Mercado Livre", icon: "🛒", limit: 60,
+    rules: "Máx 60 chars. Formato: Marca + Produto + Spec principal + Voltagem. Sem adjetivos (melhor, incrível). Sem pontuação final. Sem repetição de palavras. Tudo em português claro.",
+  },
+  {
+    id: "shopee", label: "Shopee", icon: "🛍️", limit: 120,
+    rules: "Máx 120 chars. Comece com a palavra-chave principal (produto). Inclua modelo, specs e marca. Pode usar hífen como separador. Linguagem direta e objetiva.",
+  },
+  {
+    id: "amazon", label: "Amazon", icon: "📦", limit: 200,
+    rules: "Máx 200 chars. Formato: Marca + Produto + Modelo + Specs detalhadas. Use vírgula ou travessão como separadores. Não use CAPS excessivo. Sem preços ou promoções. Português formal.",
+  },
+  {
+    id: "magalu", label: "Magalu", icon: "🏪", limit: 120,
+    rules: "Máx 120 chars. Linguagem acessível e descritiva. Inclua marca e principais características. Público amplo, não apenas técnico.",
+  },
+  {
+    id: "tiktok", label: "TikTok Shop", icon: "🎵", limit: 100,
+    rules: "Máx 100 chars. Destaque o benefício principal primeiro. Tom mais informal e envolvente. Mencione o diferencial do produto. Evite jargão técnico excessivo.",
+  },
+  {
+    id: "madeiramadeira", label: "Madeira Madeira", icon: "🪵", limit: 120,
+    rules: "Máx 120 chars. Tom técnico e detalhado. Inclua material, acabamento ou especificação construtiva quando relevante. Marca + produto + specs completas.",
+  },
+];
+
+// ─────────────────────────────────────────────
+// COLUMN RESOLUTION
+// Maps various real-world column name variations → canonical internal names
+// ─────────────────────────────────────────────
+const COLUMN_ALIASES = {
+  // NCM: "NCM Classificação Fiscal", "NCM", "ncm_fiscal" etc → "ncm"
+  ncm: "ncm",
+  // Preço: "Preço de Venda", "Preco_venda", "Preço Venda" etc → "preco_venda"
+  preco_de_venda: "preco_venda",
+  preco_venda: "preco_venda",
+  valor_venda: "preco_venda",
+  preco: "preco_venda",
+  // Dimensões com sufixo de unidade
+  peso_kg: "peso",
+  peso: "peso",
+  altura_cm: "altura",
+  altura: "altura",
+  largura_cm: "largura",
+  largura: "largura",
+  comprimento_cm: "comprimento",
+  comprimento: "comprimento",
+  // Garantia com sufixo
+  garantia_meses: "garantia",
+  garantia: "garantia",
+  // Unidade (coluna Q tem tab no nome real)
+  unidade_preco_venda: "unidade",
+  unidade: "unidade",
+  // Tipo de produto
+  tipo_de_produto: "tipo_de_produto",
+  tipo_produto: "tipo_de_produto",
+};
+
+function resolveColumnName(raw) {
+  // 1. Normalize the key
+  const nk = String(raw)
+    .toLowerCase()
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_|_$/g, "");
+  // 2. Direct match
+  if (COLUMN_ALIASES[nk]) return COLUMN_ALIASES[nk];
+  // 3. Prefix match (e.g. "ncm_classificacao_fiscal" starts with "ncm")
+  for (const [alias, canonical] of Object.entries(COLUMN_ALIASES)) {
+    if (nk.startsWith(alias + "_") || nk === alias) return canonical;
+  }
+  return nk;
+}
+
+// ─────────────────────────────────────────────
+// UTILITIES
+// ─────────────────────────────────────────────
+function normalizeKey(key) {
+  return String(key)
+    .toLowerCase()
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_|_$/g, "");
+}
+
+// Cleans values that Excel stores as floats (e.g. EAN: 7893946001234.0 → "7893946001234")
+function cleanNumericString(val) {
+  if (val === null || val === undefined || val === "") return "";
+  const s = String(val).trim();
+  if (/^\d+\.0+$/.test(s)) return String(Math.round(parseFloat(s)));
+  return s;
+}
+
+// ─────────────────────────────────────────────
+// TINY FIELD MAPPING
+// ─────────────────────────────────────────────
+function mapOrigem(origem) {
+  const o = (origem || "").toLowerCase().trim();
+  if (o.includes("import") || o.includes("estrang"))
+    return "2 - Estrangeira - Adquirida no mercado interno, exceto a indicada no código 7";
+  return "0 - Nacional, exceto as indicadas nos códigos 3 a 5";
+}
+
+function mapGarantia(val) {
+  if (!val) return "";
+  const num = String(val).replace(/\D/g, "");
+  return num ? `${num} meses` : String(val);
+}
+
+// After all products are enriched, resolve V→K parent/child relationships
+function resolveParentChild(products) {
+  const vProds = products.filter(p => (p.tipo_de_produto || "S").toUpperCase() === "V");
+
+  // Step 1: set _codigoPai on each K product
+  let resolved = products.map(p => {
+    if ((p.tipo_de_produto || "S").toUpperCase() !== "K") return p;
+    const kSku = (p.enriched?.sku_interno || "").toUpperCase();
+    const kName = (p.produto_fornecedor || "").toLowerCase()
+      .replace(/\s*[-–]\s*(110v|220v|127v|220|110|127|bivolt)\s*$/i, "").trim();
+
+    let parent = null;
+    // Match by SKU prefix
+    for (const v of vProds) {
+      const vSku = (v.enriched?.sku_interno || "").toUpperCase();
+      if (vSku && kSku.startsWith(vSku + "-")) { parent = v; break; }
+    }
+    // Fallback: match by product name similarity
+    if (!parent) {
+      for (const v of vProds) {
+        const vName = (v.produto_fornecedor || "").toLowerCase()
+          .replace(/\s*[-–]\s*(110v|220v|127v|220|110|127|bivolt)\s*$/i, "").trim();
+        if (vName.length > 5 && kName.includes(vName.substring(0, Math.min(vName.length, 25)))) {
+          parent = v; break;
+        }
+      }
+    }
+    return { ...p, _codigoPai: parent !== null ? (parent.enriched?.sku_interno || parent.codigo_fornecedor || "") : null }; // v24
+  });
+
+  // Step 2: update V products' variacoes based on their K children
+  resolved = resolved.map(p => {
+    if ((p.tipo_de_produto || "S").toUpperCase() !== "V") return p;
+    const vSku = p.enriched?.sku_interno || "";
+    const children = resolved.filter(c => c._codigoPai === vSku);
+    if (!children.length) return p;
+    const varMap = {};
+    children.forEach(c => {
+      (c.enriched?.variacoes || "").split(";").forEach(part => {
+        const [name, val] = part.split(":").map(s => s.trim());
+        if (name && val) {
+          if (!varMap[name]) varMap[name] = [];
+          if (!varMap[name].includes(val)) varMap[name].push(val);
+        }
+      });
+    });
+    const variacoes = Object.entries(varMap).map(([n, vs]) => `${n}: ${vs.join(",")}`).join(";");
+    return { ...p, enriched: { ...p.enriched, variacoes } };
+  });
+
+  return resolved;
+}
+
+const TINY_HEADERS = [
+  "ID","Código (SKU)","Descrição","Unidade","Classificação fiscal","Origem","Preço",
+  "Valor IPI fixo","Observações","Situação","Estoque","Preço de custo","Cód do Fornecedor",
+  "Fornecedor","Localização","Estoque máximo","Estoque mínimo","Peso líquido (Kg)",
+  "Peso bruto (Kg)","GTIN/EAN","GTIN/EAN tributável","Descrição complementar","CEST",
+  "Código de Enquadramento IPI","Formato embalagem","Largura embalagem","Altura embalagem",
+  "Comprimento embalagem","Diâmetro embalagem","Tipo do produto","URL imagem 1","URL imagem 2",
+  "URL imagem 3","URL imagem 4","URL imagem 5","URL imagem 6","Categoria","Código do pai",
+  "Variações","Marca","Garantia","Sob encomenda","Preço promocional","URL imagem externa 1",
+  "URL imagem externa 2","URL imagem externa 3","URL imagem externa 4","URL imagem externa 5",
+  "URL imagem externa 6","Link do vídeo","Título SEO","Descrição SEO","Palavras chave SEO",
+  "Slug","Dias para preparação","Controlar lotes","Unidade por caixa","URL imagem externa 7",
+  "URL imagem externa 8","URL imagem externa 9","URL imagem externa 10","Markup",
+  "Permitir inclusão nas vendas","EX TIPI",
+];
+
+function buildTinyRow(p) {
+  const img = p.generatedImage || "";
+  return [
+    "",                                          // ID
+    p.enriched?.sku_interno || "",               // Código (SKU)
+    p.enriched?.titulo_otimizado || p.produto_fornecedor || "", // Descrição (título mestre → Tiny)
+    "UN",                                        // Unidade
+    p.ncm || "",                                 // Classificação fiscal
+    mapOrigem(p.origem),                         // Origem
+    (p.preco_venda || "").replace(".", ","),      // Preço
+    "",                                          // Valor IPI fixo
+    "",                                          // Observações
+    "Ativo",                                     // Situação
+    "",                                          // Estoque
+    "",                                          // Preço de custo
+    p.codigo_fornecedor || "",                   // Cód do Fornecedor
+    p.fornecedor || "",                          // Fornecedor
+    "",                                          // Localização
+    "",                                          // Estoque máximo
+    "",                                          // Estoque mínimo
+    (p.peso || "").toString().replace(".", ","), // Peso líquido
+    (p.peso || "").toString().replace(".", ","), // Peso bruto
+    p.ean || "",                                 // GTIN/EAN
+    "",                                          // GTIN/EAN tributável
+    p.enriched?.descricao || "",                 // Descrição complementar (HTML rica → Tiny)
+    p.enriched?.cest || "",                      // CEST
+    "999",                                       // Código de Enquadramento IPI
+    "Pacote / Caixa",                            // Formato embalagem
+    (p.largura || "").toString().replace(".", ","),    // Largura
+    (p.altura || "").toString().replace(".", ","),     // Altura
+    (p.comprimento || "").toString().replace(".", ","),// Comprimento
+    "0",                                         // Diâmetro
+    (p.tipo_de_produto || "S").toUpperCase(),    // Tipo do produto
+    img, "", "", "", "", "",                      // URLs imagem 1-6
+    p.categoria_sugerida || "",                  // Categoria
+    p._codigoPai || "",                          // Código do pai
+    p.enriched?.variacoes || "",                 // Variações
+    p.marca || "",                               // Marca
+    mapGarantia(p.garantia),                     // Garantia
+    "não",                                       // Sob encomenda
+    "",                                          // Preço promocional
+    "", "", "", "", "", "",                       // URL imagem externa 1-6
+    "",                                          // Link do vídeo
+    p.enriched?.titulo_seo || "",                // Título SEO
+    p.enriched?.descricao_seo || "",             // Descrição SEO
+    p.enriched?.sku_interno || "",               // Slug
+    "0",                                         // Dias para preparação
+    "não",                                       // Controlar lotes
+    "",                                          // Unidade por caixa
+    "", "", "", "",                              // URL imagem externa 7-10
+    "",                                          // Markup
+    "sim",                                       // Permitir inclusão nas vendas
+    "",                                          // EX TIPI
+  ];
+}
+
+function buildTinyCSV(products) {
+  const escape = (val) => {
+    const s = String(val ?? "");
+    return (s.includes(",") || s.includes("\n") || s.includes('"'))
+      ? `"${s.replace(/"/g, '""')}"`
+      : s;
+  };
+  const rows = [TINY_HEADERS, ...products.map(buildTinyRow)];
+  return rows.map(r => r.map(escape).join(",")).join("\n");
+}
+
+function downloadCSV(content, filename) {
+  const bom = "﻿"; // UTF-8 BOM for Excel compatibility
+  const blob = new Blob([bom + content], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function parseNumber(val) {
+  if (val === null || val === undefined || val === "") return null;
+  let s = String(val).trim();
+  if (!s) return null;
+  // Strip currency symbols, spaces and Excel error strings (#VALUE!, etc.)
+  if (s.startsWith("#")) return null;
+  s = s.replace(/[R$\s]/g, "");
+  if (!s) return null;
+  // Brazilian format "1.234,56" → has both period (thousands) and comma (decimal)
+  if (s.includes(",") && s.includes(".")) {
+    s = s.replace(/\./g, "").replace(",", ".");        // "1.234,56" → "1234.56"
+  } else if (s.includes(",") && !s.includes(".")) {
+    s = s.replace(",", ".");                            // "1234,56"  → "1234.56"
+  }
+  // Remove any remaining non-numeric characters except period and minus
+  s = s.replace(/[^0-9.\-]/g, "");
+  const n = parseFloat(s);
+  return isNaN(n) ? null : n;
+}
+
+function isValidEAN(val) {
+  const s = String(val).replace(/\D/g, "");
+  return s.length === 8 || s.length === 13;
+}
+
+function isValidNCM(val) {
+  const s = String(val).replace(/\D/g, "");
+  return s.length === 8;
+}
+
+function isValidPrice(val) {
+  return parseNumber(val) !== null;
+}
+
+function validateProduct(p) {
+  const errors = [];
+  const tipo = (p.tipo_de_produto || "S").toUpperCase();
+  const isV = tipo === "V";
+
+  for (const f of REQUIRED_FIELDS) {
+    // EAN é opcional para produtos do tipo V (produto pai com variações)
+    if (f === "ean" && isV) continue;
+    if (!p[f] && p[f] !== 0) errors.push({ field: f, msg: `${FIELD_LABELS[f]} é obrigatório` });
+  }
+  if (p.ean && !isValidEAN(p.ean)) errors.push({ field: "ean", msg: `EAN deve ter 8 ou 13 dígitos numéricos (recebido: "${p.ean}")` });
+  if (p.ncm && !isValidNCM(p.ncm)) errors.push({ field: "ncm", msg: `NCM deve ter 8 dígitos numéricos (recebido: "${p.ncm}")` });
+  if (p.preco_venda && !isValidPrice(p.preco_venda)) errors.push({ field: "preco_venda", msg: `Preço deve ser um número válido (recebido: "${p.preco_venda}")` });
+  return errors;
+}
+
+// ─────────────────────────────────────────────
+// API FUNCTIONS
+// ─────────────────────────────────────────────
+async function enrichProductWithAI(product, apiKey, rules = {}, onPhase) {
+  const {
+    titleTemplate = "", descriptionStyles = [], additionalInstructions = "",
+    aiModel = "gpt-4o",
+    corsProxy = "",
+  } = rules;
+  const apiBase = corsProxy ? `${corsProxy}https://api.openai.com` : "https://api.openai.com";
+
+  // ── STEP 1: Web research + CEST lookup ──────────────────────────────────
+  onPhase?.("Pesquisando na web...");
+  let webContext = "";
+  try {
+    const searchPrompt = `Produto: "${product.produto_fornecedor}" | Marca: "${product.marca || "—"}" | NCM: ${product.ncm}
+
+TAREFA 1 — CEST:
+Pesquise o código CEST para o NCM ${product.ncm} no Convênio ICMS 142/2018. Faça uma busca detalhada:
+1. Pesquise "NCM ${product.ncm} CEST" e "${product.ncm} substituição tributária ICMS"
+2. Consulte legisweb.com.br, portaltributario.com.br, sites de consultoria fiscal e tabelas CEST do CONFAZ
+3. Se encontrar o CEST exato para este NCM, retorne "CEST: XX.XXX.XX"
+4. Se não encontrar o exato, identifique o segmento do produto na tabela CEST e retorne o código do segmento mais próximo: "CEST: XX.XXX.XX"
+5. NUNCA retorne "NÃO ENCONTRADO" — sempre forneça o melhor código CEST possível para este tipo de produto/NCM
+
+TAREFA 2 — ESPECIFICAÇÕES TÉCNICAS:
+Busque a ficha técnica completa deste produto: potência (W), tensão (V/bivolt), velocidade (RPM), capacidade, dimensões (mm), peso (kg), disco/acessório incluído, classe de proteção (IP), certificações (INMETRO, CE, UL), aplicações recomendadas, tipo de motor, características de segurança.
+
+TAREFA 3 — SEO E MERCADO:
+Identifique as 10 principais palavras-chave que consumidores brasileiros usam para buscar este produto no Mercado Livre, Amazon BR e Shopee. Inclua variações com voltagem, aplicação e marca.
+
+Retorne as três seções claramente separadas.`;
+    const res1 = await fetch(`${apiBase}/v1/chat/completions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model: "gpt-4o-search-preview",
+        // Note: gpt-4o-search-preview does NOT support temperature — omit it
+        messages: [{ role: "user", content: searchPrompt }],
+      }),
+    });
+    if (res1.ok) {
+      const d1 = await res1.json();
+      webContext = d1.choices[0]?.message?.content || "";
+    }
+    // If not ok, silently fall through to step 2 with empty webContext
+  } catch (_) {
+    // web research failed — proceed with data-only enrichment
+  }
+  const cestFromWeb = (webContext.match(/\b\d{2}\.\d{3}\.\d{2}\b/) || [])[0] || "";
+
+
+  // ── STEP 2: Structured generation (JSON mode) ───────────────────────────
+  onPhase?.("Gerando conteúdo...");
+
+  const titleInstruction = titleTemplate
+    ? `Siga EXATAMENTE este padrão: "${titleTemplate}". Substitua cada variável ({Marca}, {Produto}, {Potência}, {Tensão}, etc.) pelo valor extraído dos dados. Omita variáveis que não se aplicam. Máx 60 chars.`
+    : `Crie o título-mestre do produto (campo "Descrição" no Tiny ERP, base para anúncios em marketplaces).
+   ESTRUTURA: [Tipo do produto] [Especificação principal] [Modelo/Referência] [Marca]
+   Exemplos: "Parafusadeira/Furadeira 20V 1/2pol PFV120 Vonder" | "Serra Mármore 1400W 110mm SM1400 Vonder" | "Esmerilhadeira Angular 9pol 2200W GWS2200 Bosch"
+   Regras: máx 60 chars • sem pipes "|" nem aspas no conteúdo • inclua potência/voltagem/capacidade quando relevante • inclua código de referência do modelo quando disponível • termine com a marca • use abreviações: "pol" para polegadas, "W" para watts, "V" para volts`;
+
+  const STYLE_LABELS = {
+    tecnico: "tom técnico com foco em especificações detalhadas",
+    marketplace: "linguagem otimizada para marketplace com palavras-chave estratégicas",
+    beneficios: "destaque os benefícios práticos para o usuário final",
+    garantia: "sempre mencione a garantia do produto",
+    origem: "sempre mencione a origem (importado/nacional)",
+  };
+  const styleText = descriptionStyles.length
+    ? `Estilo: ${descriptionStyles.map(s => STYLE_LABELS[s] || s).join("; ")}.`
+    : "Descrição clara, completa e profissional.";
+  const extraInstructions = additionalInstructions.trim()
+    ? `\nInstruções adicionais: ${additionalInstructions.trim()}` : "";
+
+  const prompt = `Você é especialista em cadastro de produtos para e-commerce brasileiro.
+Com base nos dados abaixo, gere em PORTUGUÊS DO BRASIL todos os campos para o Tiny ERP.
+
+CONTEXTO DA PESQUISA WEB:
+${webContext || "(pesquisa não disponível — use seu conhecimento)"}
+
+INSTRUÇÕES DE GERAÇÃO:
+
+1. "sku_interno": SKU em MAIÚSCULAS com hífens, APENAS letras/números/hífens (sem @!.%'˜=+ ou outros especiais), máx 32 caracteres.
+   Padrão: [CATEG]-[SPEC]-[MODELO]-[MARCA][-VARIAÇÃO]
+   Exemplos: "LAV-1200W-LK1305-KALA-127V", "SER-1400W-SM1400-VOND-220V", "FUR-710W-HP0704-BOSH"
+   Use abreviações: LAV=Lavadora, SER=Serra, FUR=Furadeira, PAR=Parafusadeira, ESM=Esmerilhadeira, LIX=Lixadeira, AMP=Amplificador, GER=Gerador, POL=Poliadeira, etc.
+   REGRAS POR TIPO DE PRODUTO:
+   - tipo V (variação/pai): SKU BASE sem sufixo de voltagem. Ex: "LAV-1200W-LK1305-KALA" — NUNCA inclua -127V ou -220V aqui
+   - tipo K (variante/filho): SKU BASE do pai + sufixo da variação. Ex: "LAV-1200W-LK1305-KALA-127V"
+   - tipo S (simples): SKU completo sem sufixo de voltagem
+   O código pai (tipo V) DEVE ser diferente dos filhos (tipo K).
+
+2. "cest": Código CEST obrigatório no formato XX.XXX.XX para o NCM ${product.ncm} conforme Convênio ICMS 142/2018. NUNCA retorne vazio — se não tiver o código exato para este NCM, retorne o CEST do segmento/categoria mais próxima para este tipo de produto. Use todo seu conhecimento da tabela CEST
+
+3. "titulo_otimizado": ${titleInstruction}
+
+4. "descricao": Descrição HTML COMPLETA do produto — será importada como "Descrição complementar" no Tiny ERP e enviada ao e-commerce/marketplace como descrição longa.
+   ${styleText}${extraInstructions}
+
+   ESTRUTURA OBRIGATÓRIA (6 blocos, nesta ordem, em HTML limpo com <h3>, <p>, <ul>, <li>, <strong>):
+
+   BLOCO 1 — <h3>Sobre o Produto</h3>
+   Parágrafo de abertura comercial (4-6 linhas): o que é o produto, para que serve, para quem é indicado. Tom profissional e persuasivo. Contextualize o valor para o comprador — não apenas "é uma furadeira", mas "é a ferramenta ideal para quem precisa de X com performance Y".
+
+   BLOCO 2 — <h3>Principais Aplicações</h3>
+   Lista <ul> com 5-7 aplicações práticas e casos de uso reais, específicos ao produto.
+
+   BLOCO 3 — <h3>Diferenciais e Benefícios</h3>
+   Lista <ul> com 4-6 diferenciais competitivos: durabilidade, ergonomia, tecnologia, segurança, rendimento, facilidade de uso, economia de energia, certificações. Seja específico — não use "alta qualidade" genérico.
+
+   BLOCO 4 — <h3>Especificações Técnicas</h3>
+   Lista <ul> completa com TODOS os atributos técnicos relevantes: potência (W), tensão (V), velocidade (RPM), torque, capacidade, disco/bit incluído, dimensões, peso, nível de ruído, classe de proteção IP, certificações (INMETRO, CE, UL). Use <strong>Nome do atributo:</strong> Valor.
+
+   BLOCO 5 — <h3>Conteúdo da Embalagem</h3>
+   Lista <ul> com os itens inclusos na embalagem (infira com base no tipo de produto se não especificado).
+
+   BLOCO 6 — Parágrafo de fechamento com CTA (2-3 linhas):
+   Reforce o benefício principal, crie urgência ou confiança (garantia, suporte, qualidade), e termine com um call-to-action de compra. Ex: "Invista em performance e durabilidade. Adquira agora a [Produto] [Marca] e tenha à disposição a ferramenta que profissionais confiam."
+
+   REQUISITOS: mínimo 400 palavras • use apenas tags HTML básicas (<h3>, <p>, <ul>, <li>, <strong>) • sem inline CSS • sem classes • inclua palavras-chave naturalmente para SEO sem forçar • conteúdo deve informar E convencer
+
+5. "titulo_seo": Título SEO (máx 70 chars). Palavra-chave principal + marca. Ex: "Serra Mármore 1400W 220V Vonder SM-1400 Disco 110mm"
+
+6. "descricao_seo": Meta description SEO (máx 160 chars) descrevendo o produto para buscadores.
+
+7. "variacoes": Se tipo_de_produto for "K" (variante filho), retorne "Atributo: valor" (ex: "Voltagem: 127V"). Para "S" ou "V", retorne "".
+
+Retorne APENAS JSON válido com exatamente estas chaves: sku_interno, cest, titulo_otimizado, descricao, titulo_seo, descricao_seo, variacoes.
+
+DADOS DO PRODUTO:
+Nome: ${product.produto_fornecedor}
+Marca: ${product.marca || "—"}
+Categoria: ${product.categoria_sugerida || "—"}
+NCM: ${product.ncm}
+Origem: ${product.origem || "—"}
+Tipo: ${product.tipo_de_produto || "S"}
+Peso: ${product.peso}kg | Dimensões: ${product.altura}×${product.largura}×${product.comprimento}cm
+Preço: R$ ${product.preco_venda}
+Garantia: ${product.garantia || "—"} meses
+Observações: ${product.observacoes || "—"}
+${product.link_benchmark ? `Referência mercado: ${product.link_benchmark}` : ""}`;
+
+  let res2;
+  for (let _att = 0; _att < 3; _att++) {
+    if (_att > 0) {
+      onPhase?.(`⏳ Timeout, tentando novamente (${_att + 1}/3)...`);
+      await new Promise(r => setTimeout(r, 4000));
+    }
+    let _netErr = null;
+    try {
+      res2 = await fetch(`${apiBase}/v1/chat/completions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+        body: JSON.stringify({
+          model: aiModel,
+          messages: [{ role: "user", content: prompt }],
+          response_format: { type: "json_object" },
+          temperature: 0.7,
+        }),
+      });
+    } catch (netErr) { _netErr = netErr; }
+    if (_netErr) {
+      if (_att < 2) continue;
+      throw new Error(`❌ Erro de rede: não foi possível conectar à OpenAI. Causas comuns: firewall corporativo, extensão do navegador bloqueando a requisição, ou VPN. Configure um Proxy CORS nas Configurações para contornar. (${_netErr.message})`);
+    }
+    if (res2.ok) break;
+    const _eb = await res2.clone().json().catch(() => ({}));
+    const _retry = [408, 500, 502, 503, 504].includes(res2.status) ||
+      (_eb?.error?.message || '').toLowerCase().includes('timeout');
+    if (_retry && _att < 2) continue;
+    break;
+  }
+  if (!res2.ok) {
+    const err = await res2.json().catch(() => ({}));
+    let msg = err?.error?.message || `OpenAI HTTP ${res2.status}`;
+    if (res2.status === 429) msg = "⚠️ Limite de uso atingido. Adicione créditos em platform.openai.com/settings/billing";
+    if (res2.status === 401) msg = "🔑 Chave de API inválida ou expirada. Verifique nas Configurações.";
+    if (res2.status === 403) msg = "🚫 Acesso negado. Chave sem permissão para este modelo.";
+    throw new Error(msg);
+  }
+  const data2 = await res2.json();
+  const raw = data2.choices[0]?.message?.content || "{}";
+  // Strip optional markdown fences (```json ... ```) that some models add
+  const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
+  try {
+    const result = JSON.parse(cleaned);
+    // Sanitize SKU: apenas letras, números e hífens; máx 32 chars
+    if (result.sku_interno) {
+      result.sku_interno = result.sku_interno
+        .toUpperCase()
+        .replace(/[^A-Z0-9-]/g, '')
+        .slice(0, 32);
+    }
+    return result;
+  } catch {
+    throw new Error(`Resposta da IA não é JSON válido. Trecho: "${cleaned.slice(0, 80)}"`);
+  }
+}
+
+// ─── OAuth2 PKCE helpers (Tiny ERP) ─────────────────────────────────────────
+async function generatePKCE() {
+  const arr = new Uint8Array(32);
+  crypto.getRandomValues(arr);
+  const verifier = btoa(String.fromCharCode(...arr)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier));
+  const challenge = btoa(String.fromCharCode(...new Uint8Array(digest))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+  return { verifier, challenge };
+}
+
+function initiateTinyOAuth(clientId, corsProxy) {
+  generatePKCE().then(({ verifier, challenge }) => {
+    sessionStorage.setItem('pkce_verifier', verifier);
+    sessionStorage.setItem('oauth_client_id', clientId);
+    const redirectUri = window.location.href.split('?')[0].split('#')[0];
+    const url = `https://accounts.tiny.com.br/realms/tiny/protocol/openid-connect/auth?` +
+      `client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&` +
+      `scope=openid&response_type=code&code_challenge=${challenge}&code_challenge_method=S256`;
+    window.location.href = url;
+  });
+}
+
+async function exchangeTinyCode(code, clientId, clientSecret, corsProxy) {
+  const redirectUri = window.location.href.split('?')[0].split('#')[0];
+  const verifier = sessionStorage.getItem('pkce_verifier') || '';
+  const base = corsProxy ? `${corsProxy}https://accounts.tiny.com.br` : 'https://accounts.tiny.com.br';
+  const resp = await fetch(`${base}/realms/tiny/protocol/openid-connect/token`, {
+    method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ grant_type: 'authorization_code', client_id: clientId,
+      client_secret: clientSecret, redirect_uri: redirectUri, code, code_verifier: verifier })
+  });
+  if (!resp.ok) { const t = await resp.text(); throw new Error(`${resp.status}: ${t}`); }
+  return resp.json();
+}
+
+async function refreshTinyTokenFn(refreshToken, clientId, clientSecret, corsProxy) {
+  const base = corsProxy ? `${corsProxy}https://accounts.tiny.com.br` : 'https://accounts.tiny.com.br';
+  const resp = await fetch(`${base}/realms/tiny/protocol/openid-connect/token`, {
+    method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ grant_type: 'refresh_token', client_id: clientId,
+      client_secret: clientSecret, refresh_token: refreshToken })
+  });
+  if (!resp.ok) throw new Error(`Refresh failed: ${resp.status}`);
+  return resp.json();
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function generateProductImage(productName, enrichedDesc, customPrompt, apiKey) {
+  const fullPrompt = `Fotografia lifestyle profissional de alta qualidade, iluminação cinematográfica natural, fundo desfocado bokeh. Produto: ${productName}. ${customPrompt}. Estilo: anúncio comercial premium para e-commerce brasileiro. Ultra realista, 4K.`;
+  const res = await fetch(`${rules?.corsProxy ? `${rules.corsProxy}https://api.openai.com` : "https://api.openai.com"}/v1/images/generations`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+    body: JSON.stringify({ model: "dall-e-3", prompt: fullPrompt, n: 1, size: "1024x1024", quality: "hd" }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message || `OpenAI Image ${res.status}`);
+  }
+  const data = await res.json();
+  return data.data[0].url;
+}
+
+async function sendToTiny(product, token, corsProxy = "", children = []) {
+  const tinyBase = corsProxy
+    ? `${corsProxy}https://api.tiny.com.br/public-api/v3`
+    : "https://api.tiny.com.br/public-api/v3";
+
+  const tipoRaw = (product.tipo_de_produto || "S").toUpperCase();
+  // API v3: V = Com Variações (filhos K vão em variacoes[]), K individual = fallback S, S = Simples
+  const tipoApi = (tipoRaw === "V" && children.length > 0) ? "V" : "S"; // v24: V sem filhos → S
+
+  // garantia: API v3 espera número inteiro (meses), não string
+  const garantiaNum = (() => {
+    const n = parseInt(String(product.garantia || "").replace(/\D/g, ""), 10);
+    return isNaN(n) ? undefined : n;
+  })();
+
+  const body = {
+    // ── Identificação ──────────────────────────────────────
+    nome:           product.enriched?.titulo_otimizado || product.produto_fornecedor,
+    sku:            product.enriched?.sku_interno || product.codigo_fornecedor || "",
+    ean:            String(product.ean || ""),
+    situacao:       "A",
+    tipo:           tipoApi,
+
+    // ── Preços ─────────────────────────────────────────────
+    preco:          parseNumber(product.preco_venda) ?? 0,
+    precoCusto:     parseNumber(product.preco_custo) ?? undefined,
+
+    // ── Classificação fiscal ───────────────────────────────
+    unidadeMedida:  product.unidade || "UN",
+    ncm:            String(product.ncm || "").replace(/\D/g, ""),
+    tributacao: (() => { const t = { classeIPI: "999" }; const c = product.enriched?.cest || product.cest || ""; if (c) t.cest = String(c); return t; })(),
+    codigoEspecificadorSubstituicaoTributaria: (() => { const c = product.enriched?.cest || product.cest || ""; return c || null; })(),  // v27  // v24-hf4
+    origem:         (product.origem || "").toLowerCase().includes("import") ? "2" : "0",
+
+    // ── Descrições ─────────────────────────────────────────
+    // "descricao" = título mestre (campo "Descrição" no Tiny, base de marketplaces)
+    descricao:               product.enriched?.titulo_otimizado || product.produto_fornecedor,
+    // "descricaoComplementar" = HTML rico (campo "Descrição complementar" no Tiny)
+    descricaoComplementar:   product.enriched?.descricao || "",
+
+    // ── Logística ──────────────────────────────────────────
+    peso:           parseNumber(product.peso) ?? 0,
+    pesoBruto:      parseNumber(product.peso) ?? 0,
+    largura:        parseNumber(product.largura) ?? 0,
+    altura:         parseNumber(product.altura) ?? 0,
+    comprimento:    parseNumber(product.comprimento) ?? 0,
+
+    // ── Marketing ──────────────────────────────────────────
+    marcaId:        product._marcaId || undefined,
+    categoria:      product._categoriaId ? { id: Number(product._categoriaId) } : undefined, // v31
+    categoria:      product._categoriaId ? { id: Number(product._categoriaId) } : undefined, // v31
+    fornecedores:        product._fornecedorId ? [{ id: Number(product._fornecedorId), padrao: true, ...(product.codigo_fornecedor ? { codigoProdutoNoFornecedor: product.codigo_fornecedor } : {}) }] : undefined,
+    marcaNome:      product._marcaSearch || product.enriched?.marca || product.marca || undefined,  // v24-hf3
+    tagExtraNome:   (() => { var _cd = (product.cross_docking || '').trim(); return (_cd && _cd.toLowerCase() !== 'não') ? _cd : undefined; })(),
+    // marca: API v3 exige {id, nome} com ID cadastrado no Tiny — omitir para evitar erro 400
+    garantia:       garantiaNum,
+
+    // ── SEO ────────────────────────────────────────────────
+    seo: {
+      titulo:    product.enriched?.titulo_seo || "",
+      descricao: product.enriched?.descricao_seo || "",
+      slug:      (product.enriched?.sku_interno || product.produto_fornecedor || "")
+                   .toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]/g, ""),
+    },
+
+    // ── Imagens ────────────────────────────────────────────
+    imagens: product.generatedImage ? [{ url: product.generatedImage }] : [],
+  };
+
+  // Para produtos V: incluir variações dos filhos K no payload
+  if (tipoApi === "V" && children.length > 0) {
+    body.variacoes = children.map(k => {
+      const grade = [];
+      const varStr = k.enriched?.variacoes || "";
+      if (varStr) {
+        varStr.split(";").forEach(part => {
+          const sep = part.indexOf(":");
+          if (sep > 0) {
+            const chave = part.substring(0, sep).trim();
+            const valor = part.substring(sep + 1).trim();
+            if (chave && valor) grade.push({ chave, valor });
+          }
+        });
+      }
+      // Fallback: se grade vazia, extrai variação do nome filho vs. pai
+              if (!grade.length) {
+                        const pNome = (product.produto_fornecedor || '').trim();
+                                  const kNome = (k.produto_fornecedor || '').trim();
+                                            const suffix = (kNome.toLowerCase().startsWith(pNome.toLowerCase()))
+                                                        ? kNome.substring(pNome.length).replace(/^[\s\-–]+/, '').trim()
+                                                                    : kNome;
+                                                                              grade.push({ chave: 'Variação', valor: suffix || k.codigo_fornecedor || String(children.indexOf(k) + 1) });
+                                                                                      }
+      const varItem = {
+        sku:    k.enriched?.sku_interno || k.codigo_fornecedor || "",
+        precos: { preco: parseNumber(k.preco_venda) ?? 0 },
+        grade,
+        dimensoes: {
+          pesoBruto:   parseNumber(k.pesoBruto) || parseNumber(k.peso) || parseNumber(product.peso) || 0,
+          pesoLiquido: parseNumber(k.pesoLiquido) || parseNumber(k.peso) || parseNumber(product.peso) || 0,
+        },
+      };
+      const gtin = String(k.ean || "").replace(/\D/g, "");
+      if (gtin) varItem.gtin = gtin;
+      return varItem;
+    });
+    // v24-hf: grade obrigatório no sendToTiny (não depender só do interceptor)
+    const _gk = {};
+    body.variacoes.forEach(v => { if (v.grade) v.grade.forEach(g => { _gk[g.chave] = true; }); });
+    body.grade = Object.keys(_gk);
+    if (!body.grade.length) body.grade = ['Variação'];
+  }
+
+  // v24: herdar logistica/CEST de filho K quando produto pai V não tem dados
+  if (tipoApi === "V" && children.length > 0) {
+    if (!body.peso) {
+      for (const refK of children) {
+        const kPeso = parseNumber(refK.peso);
+        if (kPeso > 0) {
+          body.peso        = kPeso;
+          body.pesoBruto   = parseNumber(refK.pesoBruto) || kPeso;
+          body.largura     = parseNumber(refK.largura)   || 0;
+          body.altura      = parseNumber(refK.altura)    || 0;
+          body.comprimento = parseNumber(refK.comprimento) || 0;
+          break;
+        }
+      }
+    }
+    if (!body.codigoEspecificadorSubstituicaoTributaria) { // v27 // v24-hf4
+      for (const refK of children) {
+          const _kc = refK.enriched?.cest || refK.cest; if (_kc) { if (!body.tributacao?.cest) { body.tributacao.cest = String(_kc); break; } } // v28 } // v24-hf4
+      }
+    }
+  }
+
+  // Remove campos vazios/null para não poluir o payload
+  const clean = (obj) => Object.fromEntries(
+    Object.entries(obj).filter(([, v]) => v !== "" && v !== null && v !== undefined)
+  );
+  const payload = { ...clean(body), seo: clean(body.seo), imagens: body.imagens };
+  if (body.variacoes) payload.variacoes = body.variacoes;
+  // v29: mapeia EAN e SKU→codigoFornecedor dos filhos K para putVariacoes
+  if (children.length > 0) {
+    const _ecm = {}, _scm = {};
+    children.forEach(c => {
+      const ean = String(c.ean || "").replace(/\D/g, "");
+      if (ean && c.codigo_fornecedor) _ecm[ean] = c.codigo_fornecedor;
+      const sku = c.enriched?.sku_interno || c.codigo_fornecedor || "";
+      if (sku && c.codigo_fornecedor) _scm[sku] = c.codigo_fornecedor;
+    });
+    if (Object.keys(_ecm).length) payload._eanCodMap = _ecm;
+    if (Object.keys(_scm).length) payload._skuCodMap = _scm;
+  }
+  body.variacoes.forEach(v => { const _eks=new Set((v.grade||[]).map(g=>g.chave)); body.grade.forEach(key=>{ if(!_eks.has(key)) (v.grade=v.grade||[]).push({chave:key,valor:'-'}); }); });
+  if (!payload.imagens.length) delete payload.imagens;
+  if (!Object.keys(payload.seo).length) delete payload.seo;
+  delete payload.tagExtraNome; // não enviar ao Tiny — usado só internamente
+
+  let res;
+  try {
+    res = await fetch(`${tinyBase}/produtos`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+      body: JSON.stringify(payload),
+    });
+  } catch (netErr) {
+    const m = netErr.message.toLowerCase();
+    if (m.includes("failed to fetch") || m.includes("cors") || m.includes("network")) {
+      throw new Error(
+        "CORS bloqueado — configure o Proxy CORS nas Configurações " +
+        "(ex: https://corsproxy.io/?). O Tiny bloqueia chamadas diretas do navegador."
+      );
+    }
+    throw new Error(`Rede: ${netErr.message}`);
+  }
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    // API v3 retorna { mensagem, detalhes: [{campo, mensagem}] }
+    const _detalhes = (err?.detalhes || []).map(d => `${d.campo}: ${d.mensagem}`).join("; ");
+              const detail = (err?.mensagem ? err.mensagem + (_detalhes ? ` [${_detalhes}]` : '') : null)
+                          || _detalhes || err?.message || `HTTP ${res.status}`;
+    if (res.status === 401) throw new Error("Token inválido ou expirado — atualize nas Configurações.");
+    if (res.status === 422) throw new Error(`Dados inválidos: ${detail}`);
+    if (res.status === 429) throw new Error("Rate limit — aguarde e tente novamente.");
+    throw new Error(detail);
+  }
+  return await res.json();
+
+async function assignTagsToProduct(productId, tagIds, token, corsProxy) {
+  if (!productId || !tagIds || !tagIds.length) return;
+  const _atgt = 'https://api.tiny.com.br/public-api/v3/produtos/' + productId + '/tags';
+  const _aurl = corsProxy ? corsProxy + 'url=' + encodeURIComponent(_atgt) : _atgt;
+  try {
+    await fetch(_aurl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify(tagIds.map(id => ({ idTag: id }))),
+    });
+  } catch(_) {}
+}
+
+}
+// ─── TAG HELPERS (v30) ────────────────────────────────────────────────────────
+function fetchTinyTagsXHR(token, corsProxy) {
+  return new Promise((resolve) => {
+        const targetUrl = 'https://api.tiny.com.br/public-api/v3/tags?limit=100';
+    const url = corsProxy ? corsProxy + 'url=' + encodeURIComponent(targetUrl) : targetUrl;
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try { const d = JSON.parse(xhr.responseText);
+          resolve(d?.itens || d?.retorno?.itens || []);
+        } catch (_) { resolve([]); }
+      } else resolve([]);
+    };
+    xhr.onerror = () => resolve([]);
+    xhr.send();
+  });
+}
+
+// ─────────────────────────────────────────────
+// STEP BAR
+// ─────────────────────────────────────────────
+const STEP_META = [
+  { id: "upload", label: "Upload", Icon: Upload },
+  { id: "validation", label: "Validação", Icon: CheckCircle },
+  { id: "enrichment", label: "Enriquecimento", Icon: Zap },
+  { id: "review", label: "Revisão", Icon: Eye },
+  { id: "sync", label: "Envio", Icon: Send },
+];
+
+function StepBar({ current, onNavigate }) {
+  const ci = STEPS.indexOf(current);
+  return (
+    <div className="flex items-center justify-center gap-1 mb-8 flex-wrap">
+      {STEP_META.map(({ id, label, Icon }, i) => {
+        const done = i < ci, active = i === ci;
+        return (
+          <Fragment key={id}>
+            {done && onNavigate ? (
+              <button onClick={() => onNavigate(id)}
+                title={`Voltar para ${label}`}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all bg-green-100 text-green-700 hover:bg-green-200 cursor-pointer">
+                <Icon size={13} />
+                <span className="hidden sm:inline">{label}</span>
+              </button>
+            ) : (
+              <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all
+                ${active ? "bg-indigo-600 text-white shadow-md" : done ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-400"}`}>
+                <Icon size={13} />
+                <span className="hidden sm:inline">{label}</span>
+              </div>
+            )}
+            {i < STEP_META.length - 1 && (
+              <div className={`w-6 h-0.5 rounded ${i < ci ? "bg-green-400" : "bg-gray-200"}`} />
+            )}
+          </Fragment>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// SETTINGS MODAL (APIs + Regras de IA)
+// ─────────────────────────────────────────────
+const TITLE_VARIABLES = [
+  { label: "{Marca}", desc: "Marca do produto" },
+  { label: "{Produto}", desc: "Nome do produto" },
+  { label: "{Modelo}", desc: "Código/modelo" },
+  { label: "{Potência}", desc: "Potência em W" },
+  { label: "{Tensão}", desc: "Tensão/voltagem" },
+  { label: "{Capacidade}", desc: "Capacidade (L, Ah…)" },
+  { label: "{Especificação}", desc: "Spec principal" },
+];
+
+const DESCRIPTION_STYLES = [
+  { id: "tecnico", label: "Tom técnico", desc: "Foco em especificações detalhadas" },
+  { id: "marketplace", label: "Otimizado para marketplace", desc: "Palavras-chave estratégicas" },
+  { id: "beneficios", label: "Foco em benefícios", desc: "Vantagens práticas para o usuário" },
+  { id: "garantia", label: "Mencionar garantia", desc: "Inclui info de garantia sempre" },
+  { id: "origem", label: "Mencionar origem", desc: "Destaca importado / nacional" },
+];
+
+const AI_MODELS = [
+  { id: "gpt-4o", label: "GPT-4o", desc: "Melhor qualidade, mais lento" },
+  { id: "gpt-4o-mini", label: "GPT-4o mini", desc: "Rápido e econômico" },
+];
+
+function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
+  const [localKeys, setLocalKeys] = useState({ ...keys });
+  const [localRules, setLocalRules] = useState({ ...rules });
+  const [tab, setTab] = useState("apis");
+  const [showPwd, setShowPwd] = useState({});
+  const [catSyncing, setCatSyncing] = React.useState(false);
+  const [catSyncMsg, setCatSyncMsg] = React.useState(function(){
+    try{var _v=localStorage.getItem("mpads_catCache");if(_v){var _d=JSON.parse(_v);return(_d.items||[]).length+" categorias · "+new Date(_d.ts).toLocaleDateString("pt-BR");}}
+    catch(e){}return"Não sincronizado";
+  });
+    function syncCats() {
+    if (!keys.tiny) { alert("Configure o token Tiny antes de sincronizar."); return; }
+    if (catSyncing) return;
+    setCatSyncing(true); setCatSyncMsg("Buscando produtos...");
+    var _eq=String.fromCharCode(61);
+    var _pfx=(keys.corsProxy || "https://corsproxy.io/?") + "ur" + "l" + _eq;
+    var _cm={}; var _ids=[]; var _pg=1;
+    function _fp() {
+      var x=new XMLHttpRequest();
+      var u=new URL("https://api.tiny.com.br/public-api/v3/produtos");
+      u.searchParams.set(atob("cGFnaW5h"),_pg);
+      u.searchParams.set(atob("bGltaXRl"),100);
+      u.searchParams.set(atob("c2l0dWFjYW8"),"A");
+      x.open("GET",_pfx+encodeURIComponent(u.toString()));
+      x.setRequestHeader("Authorization","Bearer "+keys.tiny);
+      x.onload=function(){try{var items=JSON.parse(x.responseText).itens||[];if(items.length===0||_pg>50){_det();return;}items.filter(function(_,i){return i%10===0;}).forEach(function(p){_ids.push(p.id);});setCatSyncMsg("Pg "+_pg+" · "+_ids.length+" amostras");_pg++;setTimeout(_fp,200);}catch(e){_det();}};
+      x.onerror=function(){_det();};x.send();
+    }
+    function _det(){var i=0;function _nx(){if(i>_ids.length-1){_fin();return;}setCatSyncMsg("Det:"+(i+1)+"/"+_ids.length);var xd=new XMLHttpRequest();xd.open("GET",_pfx+encodeURIComponent("https://api.tiny.com.br/public-api/v3/produtos/"+_ids[i]));xd.setRequestHeader("Authorization","Bearer "+keys.tiny);xd.onload=function(){try{var d=JSON.parse(xd.responseText);if(d.categoria&&d.categoria.id)_cm[d.categoria.id]={id:d.categoria.id,nome:d.categoria.nome||"",caminho:d.categoria.caminhoCompleto||""};}catch(e){}i++;setTimeout(_nx,300);};xd.onerror=function(){i++;setTimeout(_nx,300);};xd.send();}_nx();}
+    function _fin(){var list=Object.values(_cm).sort(function(a,b){return(a.caminho||"").localeCompare(b.caminho||"");});localStorage.setItem("mpads_catCache",JSON.stringify({ts:Date.now(),items:list}));setCatSyncMsg(list.length+" categorias · "+new Date().toLocaleDateString("pt-BR"));setCatSyncing(false);window.dispatchEvent(new CustomEvent("mpads-cat-synced",{detail:list}));}
+    _fp();
+  }
+  const titleRef = useRef(null);
+  const togglePwd = (k) => setShowPwd(p => ({ ...p, [k]: !p[k] }));
+
+  const setKey = (k, v) => setLocalKeys(p => ({ ...p, [k]: v }));
+  const setRule = (k, v) => setLocalRules(p => ({ ...p, [k]: v }));
+
+  const toggleStyle = (id) => {
+    const curr = localRules.descriptionStyles || [];
+    setRule("descriptionStyles", curr.includes(id) ? curr.filter(s => s !== id) : [...curr, id]);
+  };
+
+  const insertVariable = (v) => {
+    const el = titleRef.current;
+    if (!el) { setRule("titleTemplate", (localRules.titleTemplate || "") + v); return; }
+    const start = el.selectionStart, end = el.selectionEnd;
+    const cur = localRules.titleTemplate || "";
+    const next = cur.slice(0, start) + v + cur.slice(end);
+    setRule("titleTemplate", next);
+    setTimeout(() => { el.focus(); el.setSelectionRange(start + v.length, start + v.length); }, 0);
+  };
+
+  const previewTitle = () => {
+    const tpl = localRules.titleTemplate || "";
+    return tpl
+      .replace("{Marca}", "Vonder").replace("{Produto}", "Serra Mármore")
+      .replace("{Modelo}", "SM-1400").replace("{Potência}", "1400")
+      .replace("{Tensão}", "220V").replace("{Capacidade}", "—")
+      .replace("{Especificação}", "Disco 110mm") || "—";
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col">
+        {/* Header */}
+        <div className="p-5 border-b border-gray-100 flex items-center justify-between shrink-0">
+          <h2 className="text-lg font-bold flex items-center gap-2"><Settings size={18} /> Configurações</h2>
+          <div className="flex gap-1 bg-gray-100 p-1 rounded-xl">
+            {[{ id: "apis", label: "APIs" }, { id: "rules", label: "Regras de IA" }].map(({ id, label }) => (
+              <button key={id} onClick={() => setTab(id)}
+                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${tab === id ? "bg-white shadow text-indigo-700" : "text-gray-500 hover:text-gray-700"}`}>
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="p-6 overflow-y-auto flex-1">
+          {tab === "apis" && (
+            <div className="space-y-5">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Chave OpenAI</label>
+                <div className="relative">
+                  <input type={showPwd.openai ? "text" : "password"} value={localKeys.openai} onChange={e => setKey("openai", e.target.value)}
+                    placeholder="sk-proj-..." className="w-full border border-gray-300 rounded-xl px-4 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                  <button type="button" onClick={() => togglePwd("openai")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs font-medium">
+                    {showPwd.openai ? "ocultar" : "ver"}
+                  </button>
+                </div>
+                <p className="text-xs text-gray-400 mt-1">Usada para enriquecimento de texto e geração de imagens</p>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                  Tiny ERP <span className="px-1.5 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] rounded font-medium ml-1">OAuth2 v3</span>
+                  {localKeys.tiny && <span className="ml-2 px-1.5 py-0.5 bg-green-100 text-green-700 text-[10px] rounded font-medium">✓ Conectado</span>}
+                </label>
+                <div className="space-y-2">
+                  <input type="text" value={localKeys.tinyClientId || ""} onChange={e => setKey("tinyClientId", e.target.value)}
+                    placeholder="Client ID  (tiny-api-...)" className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                  <div className="relative">
+                    <input type={showPwd.tinySecret ? "text" : "password"} value={localKeys.tinyClientSecret || ""} onChange={e => setKey("tinyClientSecret", e.target.value)}
+                      placeholder="Client Secret" className="w-full border border-gray-300 rounded-xl px-4 py-2.5 pr-16 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                    <button type="button" onClick={() => togglePwd("tinySecret")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs font-medium">
+                      {showPwd.tinySecret ? "ocultar" : "ver"}
+                    </button>
+                  </div>
+                  <button type="button"
+                    onClick={() => { setKeys(localKeys); try { localStorage.setItem('mpads_keys', JSON.stringify(localKeys)); } catch {} initiateTinyOAuth(localKeys.tinyClientId, localKeys.corsProxy); }}
+                    disabled={!localKeys.tinyClientId || !localKeys.tinyClientSecret}
+                    className="w-full py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-40 transition-colors flex items-center justify-center gap-2">
+                    🔗 Autenticar com Tiny ERP
+                  </button>
+                  {localKeys.tiny && localKeys.tinyExpiry > 0 && (
+                    <p className="text-xs text-green-600">✓ Token expira em {new Date(localKeys.tinyExpiry).toLocaleString('pt-BR')}</p>
+                  )}
+                </div>
+                <p className="text-xs text-gray-400 mt-1.5">Cole o Client ID e Secret do app em Tiny → Aplicativos API. Você será redirecionado para login uma única vez. Válido por 4h (refresh automático).</p>
+                <details className="mt-2">
+                  <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-600">▸ Colar token Bearer manualmente</summary>
+                  <div className="mt-2 relative">
+                    <input type={showPwd.tiny ? "text" : "password"} value={localKeys.tiny} onChange={e => setKey("tiny", e.target.value)}
+                      placeholder="Bearer token OAuth2 manual" className="w-full border border-gray-300 rounded-xl px-4 py-2.5 pr-16 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                    <button type="button" onClick={() => togglePwd("tiny")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs font-medium">
+                      {showPwd.tiny ? "ocultar" : "ver"}
+                    </button>
+                  </div>
+                </details>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Proxy CORS <span className="font-normal text-gray-400">(necessário para API Tiny)</span></label>
+                <input type="text" value={localKeys.corsProxy || ""} onChange={e => setKey("corsProxy", e.target.value)}
+                  placeholder="https://corsproxy.io/?" className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                <p className="text-xs text-gray-400 mt-1">Prefixo do proxy CORS — usado para OpenAI e Tiny (ambas bloqueiam chamadas diretas do navegador). Cole apenas o prefixo, ex: <code className="bg-gray-100 px-1 rounded">https://corsproxy.io/?</code></p>
+              </div>
+              <div className="border border-gray-200 rounded-xl p-3 mb-3"><div className="flex items-center justify-between"><div><p className="text-sm font-semibold text-gray-700">Categorias Tiny</p><p className="text-xs text-gray-400 mt-0.5">{catSyncMsg}</p></div><button type="button" onClick={syncCats} disabled={catSyncing} className={"px-3 py-1.5 rounded-lg text-xs font-semibold "+(catSyncing?"bg-gray-100 text-gray-400":"bg-indigo-600 text-white hover:bg-indigo-700")}>{catSyncing?"⏳ Sincronizando...":"🔄 Atualizar"}</button></div><p className="text-xs text-gray-400 mt-1">Busca categorias no Tiny e salva no browser. Clique ao cadastrar novas.</p></div>
+              <div className="p-3 bg-blue-50 rounded-xl text-xs text-blue-700 space-y-2">
+                <p>🔒 As chaves são salvas no seu navegador (localStorage) e não são enviadas a nenhum servidor além das APIs correspondentes.</p>
+                <button type="button" onClick={() => { if(window.confirm("Apagar todas as configurações salvas?")) { localStorage.removeItem('mpads_keys'); localStorage.removeItem('mpads_rules'); setKey("openai",""); setKey("tiny",""); setKey("corsProxy",""); setKey("tinyClientId",""); setKey("tinyClientSecret",""); setKey("tinyRefresh",""); setKey("tinyExpiry",0); } }}
+                  className="text-blue-500 hover:text-red-500 underline text-xs transition-colors">
+                  Limpar dados salvos
+                </button>
+              </div>
+            </div>
+          )}
+
+          {tab === "rules" && (
+            <div className="space-y-6">
+              {/* Model selector */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Modelo de IA</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {AI_MODELS.map(m => (
+                    <button key={m.id} onClick={() => setRule("aiModel", m.id)}
+                      className={`p-3 rounded-xl border-2 text-left transition-all ${localRules.aiModel === m.id ? "border-indigo-500 bg-indigo-50" : "border-gray-200 hover:border-gray-300"}`}>
+                      <div className="font-semibold text-sm text-gray-800">{m.label}</div>
+                      <div className="text-xs text-gray-500 mt-0.5">{m.desc}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Title template */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Padrão de título</label>
+                <p className="text-xs text-gray-400 mb-2">Monte o template clicando nas variáveis ou digitando diretamente.</p>
+                {/* Variable chips */}
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {TITLE_VARIABLES.map(v => (
+                    <button key={v.label} onClick={() => insertVariable(v.label)} title={v.desc}
+                      className="px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-mono font-semibold hover:bg-indigo-100 border border-indigo-200 transition-colors">
+                      {v.label}
+                    </button>
+                  ))}
+                </div>
+                <input
+                  ref={titleRef}
+                  type="text"
+                  value={localRules.titleTemplate || ""}
+                  onChange={e => setRule("titleTemplate", e.target.value)}
+                  placeholder='Ex: {Marca} {Produto} {Potência}W {Tensão}'
+                  className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+                {localRules.titleTemplate && (
+                  <div className="mt-2 p-2.5 bg-gray-50 rounded-lg border border-gray-100">
+                    <span className="text-xs text-gray-400 font-medium">Preview: </span>
+                    <span className="text-xs text-gray-700 font-medium">{previewTitle()}</span>
+                    <span className="text-xs text-gray-400 ml-2">({previewTitle().length} chars)</span>
+                  </div>
+                )}
+                {!localRules.titleTemplate && (
+                  <p className="text-xs text-gray-400 mt-1.5 italic">Sem padrão definido — a IA criará o título livremente.</p>
+                )}
+              </div>
+
+              {/* Description style */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Estilo da descrição</label>
+                <div className="space-y-2">
+                  {DESCRIPTION_STYLES.map(s => {
+                    const active = (localRules.descriptionStyles || []).includes(s.id);
+                    return (
+                      <button key={s.id} onClick={() => toggleStyle(s.id)}
+                        className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-all ${active ? "border-indigo-400 bg-indigo-50" : "border-gray-200 hover:border-gray-300"}`}>
+                        <div className={`w-4 h-4 rounded flex items-center justify-center shrink-0 border-2 transition-all ${active ? "bg-indigo-600 border-indigo-600" : "border-gray-300"}`}>
+                          {active && <CheckCircle size={10} className="text-white" />}
+                        </div>
+                        <div>
+                          <div className="text-sm font-medium text-gray-800">{s.label}</div>
+                          <div className="text-xs text-gray-400">{s.desc}</div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Additional instructions */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Instruções adicionais</label>
+                <textarea
+                  value={localRules.additionalInstructions || ""}
+                  onChange={e => setRule("additionalInstructions", e.target.value)}
+                  rows={3}
+                  placeholder='Ex: "Sempre mencione que o produto possui certificação INMETRO. Evite superlativos como melhor e perfeito."'
+                  className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                />
+                <p className="text-xs text-gray-400 mt-1">Texto livre enviado diretamente para a IA em todos os produtos.</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="p-5 border-t border-gray-100 flex gap-3 shrink-0">
+          <button onClick={onClose} className="flex-1 py-2.5 border border-gray-300 rounded-xl text-sm font-medium hover:bg-gray-50">Cancelar</button>
+          <button onClick={() => {
+            setKeys(localKeys); setRules(localRules);
+            try { localStorage.setItem('mpads_keys', JSON.stringify(localKeys)); localStorage.setItem('mpads_rules', JSON.stringify(localRules)); } catch {}
+            onClose();
+          }}
+            className="flex-1 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700">
+            Salvar configurações
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// CSV PARSER
+// Custom RFC-4180 CSV parser that:
+//   - Always uses comma as delimiter (no auto-detection)
+//   - Handles quoted fields with embedded commas/newlines
+//   - Preserves tabs inside field names (e.g. "Unidade\tPreco_venda")
+//   - Returns plain objects (header row → keys, data rows → values)
+// ─────────────────────────────────────────────
+function parseCSVText(text) {
+  // Remove UTF-8 BOM if present
+  const s = text.replace(/^﻿/, "");
+
+  // Parse all records into arrays of strings
+  const records = [];
+  let i = 0;
+
+  while (i < s.length) {
+    const fields = [];
+    // Read each field in the current row
+    while (true) {
+      let val = "";
+      if (s[i] === '"') {
+        // Quoted field
+        i++; // skip opening quote
+        while (i < s.length) {
+          if (s[i] === '"' && s[i + 1] === '"') { val += '"'; i += 2; }
+          else if (s[i] === '"') { i++; break; }  // closing quote
+          else { val += s[i++]; }
+        }
+      } else {
+        // Unquoted field: read until comma or end-of-record
+        while (i < s.length && s[i] !== "," && s[i] !== "\r" && s[i] !== "\n") {
+          val += s[i++];
+        }
+      }
+      fields.push(val);
+      if (i < s.length && s[i] === ",") { i++; continue; } // next field
+      break; // end of record
+    }
+    // Skip \r\n or \n
+    if (i < s.length && s[i] === "\r") i++;
+    if (i < s.length && s[i] === "\n") i++;
+
+    // Keep record if at least one field is non-empty
+    if (fields.some(f => f.trim() !== "")) records.push(fields);
+  }
+
+  if (records.length < 2) return [];
+  const headers = records[0];
+  return records.slice(1).map(vals => {
+    const obj = {};
+    headers.forEach((h, j) => { obj[h] = vals[j] ?? ""; });
+    return obj;
+  });
+}
+
+// ─────────────────────────────────────────────
+// UPLOAD STEP
+// ─────────────────────────────────────────────
+function UploadStep({ onUpload }) {
+  const [dragging, setDragging] = useState(false);
+  const [error, setError] = useState("");
+  const inputRef = useRef(null);
+
+  const processFile = useCallback(async (file) => {
+    setError("");
+    const ext = file.name.split(".").pop().toLowerCase();
+    if (!["xlsx", "xls", "csv"].includes(ext)) {
+      setError("Formato não suportado. Use Excel (.xlsx, .xls) ou CSV."); return;
+    }
+    try {
+      let rawRows;
+
+      if (ext === "csv") {
+        // ── CSV: read as text (proper UTF-8 decode) then parse manually.
+        // Avoids SheetJS binary→string encoding issues that garble accented chars
+        // (e.g. "Preço de Venda" decoded as Latin-1 → "PreÃ§o de Venda").
+        const text = await file.text();
+        rawRows = parseCSVText(text);
+      } else {
+        // ── XLSX / XLS: SheetJS binary read
+        const buf = await file.arrayBuffer();
+        const wb = XLSX.read(buf, { type: "array" });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        rawRows = XLSX.utils.sheet_to_json(ws, { raw: false, defval: "" });
+      }
+
+      if (!rawRows.length) { setError("Arquivo sem dados reconhecíveis."); return; }
+
+      // Build column map: original header → canonical name (for diagnostics)
+      const columnMap = {};
+      if (rawRows[0]) {
+        Object.keys(rawRows[0]).forEach(k => { columnMap[k] = resolveColumnName(k); });
+      }
+
+      const normalized = rawRows.map(row => {
+        const r = {};
+        Object.entries(row).forEach(([k, v]) => {
+          const canonical = resolveColumnName(k);
+          let val = String(v ?? "").trim();
+          if (canonical === "ean" || canonical === "ncm") val = cleanNumericString(val);
+          // Don't overwrite an already-set non-empty value with an empty one.
+          // Prevents a secondary column with the same canonical name from wiping a valid value.
+          if (val !== "" || r[canonical] === undefined) {
+            r[canonical] = val;
+          }
+        });
+        return r;
+      });
+      // Filter out completely empty rows (trailing blank lines in CSV)
+      const nonEmpty = normalized.filter(r => Object.values(r).some(v => String(v).trim() !== ""));
+      onUpload(nonEmpty, columnMap);
+    } catch (err) {
+      setError("Erro ao ler o arquivo. Verifique se está no formato correto.");
+    }
+  }, [onUpload]);
+
+  return (
+    <div className="max-w-lg mx-auto">
+      <div className="text-center mb-8">
+        <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <Package size={32} className="text-indigo-600" />
+        </div>
+        <h1 className="text-2xl font-bold text-gray-900">Cadastro Massivo de Produtos</h1>
+        <p className="text-gray-500 mt-1.5 text-sm">Faça upload da planilha para iniciar o processo de enriquecimento</p>
+      </div>
+      <div
+        onClick={() => inputRef.current?.click()}
+        onDragOver={e => { e.preventDefault(); setDragging(true); }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={e => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files[0]; if (f) processFile(f); }}
+        className={`border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer transition-all
+          ${dragging ? "border-indigo-500 bg-indigo-50 scale-[1.01]" : "border-gray-300 hover:border-indigo-400 hover:bg-gray-50"}`}
+      >
+        <Upload size={36} className={`mx-auto mb-3 ${dragging ? "text-indigo-500" : "text-gray-400"}`} />
+        <p className="font-semibold text-gray-700">Arraste o arquivo aqui ou clique para selecionar</p>
+        <p className="text-sm text-gray-400 mt-1">Excel (.xlsx, .xls) ou CSV</p>
+        <input ref={inputRef} type="file" className="hidden" accept=".xlsx,.xls,.csv" onChange={e => { if (e.target.files[0]) processFile(e.target.files[0]); }} />
+      </div>
+      {error && (
+        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex items-center gap-2">
+          <XCircle size={16} className="shrink-0" /> {error}
+        </div>
+      )}
+      <div className="mt-5 p-4 bg-gray-50 rounded-xl">
+        <p className="text-xs font-semibold text-gray-600 mb-2">📋 Colunas esperadas na planilha</p>
+        <p className="text-xs text-gray-400 leading-relaxed">EAN · Produto_fornecedor · Codigo_fornecedor · Marca · Fornecedor · Origem · NCM · Classificação_Fiscal · Cubagem · Peso · Altura · Largura · Comprimento · Link_imagens_drive · Link_benchmark · Categoria_sugerida · Observacoes · <strong>Status</strong> · Unidade · Preco_venda · Garantia</p>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// VALIDATION STEP
+// ─────────────────────────────────────────────
+function ValidationStep({ raw, columnMap, onProceed, onBack }) {
+  const valid = [], blocked = [], ignored = [];
+  for (const p of raw) {
+    const status = (p.status || "").toLowerCase().trim();
+    if (status !== "pronto") { ignored.push({ ...p, _reason: `Status: "${p.status || "(vazio)"}"` }); continue; }
+    const errs = validateProduct(p);
+    if (errs.length) blocked.push({ ...p, _errors: errs });
+    else valid.push(p);
+  }
+
+  const [tab, setTab] = useState("valid");
+  const [expanded, setExpanded] = useState(null);
+  const [showColMap, setShowColMap] = useState(false);
+
+  // Identify required fields that are completely absent from the column mapping
+  const mappedCanonicals = new Set(Object.values(columnMap || {}));
+  const missingRequired = REQUIRED_FIELDS.filter(f => !mappedCanonicals.has(f));
+
+  const TABS = [
+    { id: "valid", label: "Válidos", count: valid.length, color: "green", Icon: CheckCircle },
+    { id: "blocked", label: "Bloqueados", count: blocked.length, color: "red", Icon: XCircle },
+    { id: "ignored", label: "Ignorados", count: ignored.length, color: "gray", Icon: AlertCircle },
+  ];
+  const activeList = tab === "valid" ? valid : tab === "blocked" ? blocked : ignored;
+
+  return (
+    <div>
+      <div className="text-center mb-6">
+        <h2 className="text-xl font-bold text-gray-900">Validação dos Produtos</h2>
+        <p className="text-gray-500 text-sm mt-1">{raw.length} linhas lidas da planilha</p>
+      </div>
+
+      {/* Column mapping diagnostics */}
+      {Object.keys(columnMap || {}).length > 0 && (
+        <div className="mb-4">
+          {missingRequired.length > 0 && (
+            <div className="p-3 mb-2 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-start gap-2">
+              <AlertCircle size={13} className="shrink-0 mt-0.5" />
+              <span>
+                <strong>Colunas obrigatórias não encontradas na planilha:</strong>{" "}
+                {missingRequired.map(f => FIELD_LABELS[f] || f).join(", ")}.
+                {" "}Verifique os nomes das colunas.
+              </span>
+            </div>
+          )}
+          <button onClick={() => setShowColMap(v => !v)}
+            className="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1 transition-colors">
+            {showColMap ? "▲" : "▼"} Diagnóstico de colunas detectadas ({Object.keys(columnMap).length} colunas)
+          </button>
+          {showColMap && (
+            <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-xl text-xs max-h-40 overflow-y-auto">
+              <div className="grid grid-cols-1 gap-0.5">
+                {Object.entries(columnMap).map(([orig, canon]) => {
+                  const isRequired = REQUIRED_FIELDS.includes(canon);
+                  return (
+                    <div key={orig} className="flex gap-2 items-center">
+                      <span className="text-gray-400 font-mono truncate max-w-[180px]" title={orig}>"{orig}"</span>
+                      <span className="text-gray-400">→</span>
+                      <span className={`font-mono font-semibold ${isRequired ? "text-indigo-600" : "text-gray-500"}`}>{canon}</span>
+                      {isRequired && <span className="text-indigo-400 text-[10px]">✓ obrigatório</span>}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="grid grid-cols-3 gap-3 mb-5">
+        {TABS.map(({ id, label, count, color, Icon }) => (
+          <button key={id} onClick={() => { setTab(id); setExpanded(null); }}
+            className={`p-4 rounded-2xl border-2 text-left transition-all
+              ${tab === id
+                ? color === "green" ? "border-green-500 bg-green-50"
+                  : color === "red" ? "border-red-500 bg-red-50"
+                  : "border-gray-400 bg-gray-50"
+                : "border-gray-200 hover:border-gray-300 bg-white"}`}>
+            <div className={`flex items-center gap-1.5 mb-1 text-xs font-semibold
+              ${color === "green" ? "text-green-600" : color === "red" ? "text-red-600" : "text-gray-500"}`}>
+              <Icon size={12} /> {label}
+            </div>
+            <div className={`text-3xl font-bold ${color === "green" ? "text-green-600" : color === "red" ? "text-red-600" : "text-gray-500"}`}>{count}</div>
+          </button>
+        ))}
+      </div>
+
+      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden mb-5">
+        <div className="overflow-x-auto max-h-60">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 sticky top-0 z-10">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">EAN</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Produto</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Marca</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                  {tab === "blocked" ? "Problemas" : tab === "ignored" ? "Motivo" : "Status"}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {activeList.length === 0 ? (
+                <tr><td colSpan={4} className="text-center py-10 text-gray-400 text-sm">Nenhum produto nessa categoria</td></tr>
+              ) : activeList.flatMap((p, i) => {
+                const rows = [
+                  <tr key={`r${i}`}
+                    className={`border-t border-gray-100 transition-colors ${tab === "blocked" ? "cursor-pointer hover:bg-red-50" : ""}`}
+                    onClick={() => tab === "blocked" && setExpanded(expanded === i ? null : i)}>
+                    <td className="px-4 py-3 font-mono text-xs text-gray-500">{p.ean || "—"}</td>
+                    <td className="px-4 py-3 font-medium text-gray-800 max-w-[200px] truncate">{p.produto_fornecedor || "—"}</td>
+                    <td className="px-4 py-3 text-gray-500 text-xs">{p.marca || "—"}</td>
+                    <td className="px-4 py-3">
+                      {tab === "blocked" && (
+                        <span className="inline-flex items-center gap-1 text-red-600 text-xs font-medium">
+                          <XCircle size={12} /> {p._errors.length} erro(s) {expanded === i ? "▲" : "▼"}
+                        </span>
+                      )}
+                      {tab === "ignored" && <span className="text-gray-400 text-xs">{p._reason}</span>}
+                      {tab === "valid" && <span className="inline-flex items-center gap-1 text-green-600 text-xs"><CheckCircle size={12} /> Pronto</span>}
+                    </td>
+                  </tr>
+                ];
+                if (tab === "blocked" && expanded === i) {
+                  rows.push(
+                    <tr key={`d${i}`} className="bg-red-50 border-t border-red-100">
+                      <td colSpan={4} className="px-6 py-4">
+                        {/* Errors */}
+                        <ul className="space-y-1 mb-3">
+                          {p._errors.map((e, j) => (
+                            <li key={j} className="text-xs text-red-700 flex items-start gap-1.5">
+                              <AlertCircle size={11} className="shrink-0 mt-0.5" />
+                              <span><span className="font-semibold">{FIELD_LABELS[e.field] || e.field}:</span> {e.msg}</span>
+                            </li>
+                          ))}
+                        </ul>
+                        {/* Debug: raw values received for all required fields */}
+                        <div className="border-t border-red-200 pt-2">
+                          <p className="text-xs font-semibold text-red-500 mb-1.5">🔍 Valores lidos da planilha:</p>
+                          <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
+                            {REQUIRED_FIELDS.map(f => (
+                              <div key={f} className="text-xs flex gap-1">
+                                <span className="text-red-500 font-medium w-24 shrink-0">{FIELD_LABELS[f] || f}:</span>
+                                <span className={`font-mono ${p[f] ? "text-gray-700" : "text-red-400 italic"}`}>
+                                  {p[f] ? `"${p[f]}"` : "(vazio)"}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                }
+                return rows;
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="flex gap-3 mt-2">
+        <button onClick={onBack}
+          className="px-5 py-3.5 border border-gray-300 rounded-2xl text-sm font-medium hover:bg-gray-50 flex items-center gap-1.5 transition-colors shrink-0">
+          <ChevronLeft size={16} /> Voltar
+        </button>
+        {valid.length > 0 ? (
+          <button onClick={() => onProceed(valid)}
+            className="flex-1 py-3.5 bg-indigo-600 text-white rounded-2xl font-semibold hover:bg-indigo-700 flex items-center justify-center gap-2 transition-colors shadow-md shadow-indigo-200">
+            Prosseguir com {valid.length} produto(s) válido(s) <ChevronRight size={18} />
+          </button>
+        ) : (
+          <div className="flex-1 flex items-center justify-center py-3.5 bg-gray-50 rounded-2xl text-gray-500 text-sm text-center px-4">
+            Nenhum produto válido. Corrija os erros e volte.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// ENRICHMENT STEP
+// ─────────────────────────────────────────────
+function EnrichmentStep({ products, apiKey, rules, onDone, onBack }) {
+  const [results, setResults] = useState([]);
+  const [current, setCurrent] = useState(-1);
+  const [phase, setPhase] = useState("");
+  const [started, setStarted] = useState(false);
+  const [running, setRunning] = useState(false);
+  const [expandedErr, setExpandedErr] = useState(null);
+
+  // Run enrichment for a list of (product, index) pairs, merging into existing results
+  const runBatch = async (batch, existingResults) => {
+    setRunning(true);
+    const acc = [...existingResults];
+    for (const { product, idx } of batch) {
+      setCurrent(idx);
+      setPhase("");
+      try {
+        const enriched = await enrichProductWithAI(product, apiKey, rules, (p) => setPhase(p));
+        acc[idx] = { ...product, enriched, _ok: true, _err: undefined };
+      } catch (e) {
+        acc[idx] = { ...product, enriched: null, _ok: false, _err: e.message };
+      }
+      setResults([...acc]);
+    }
+    setRunning(false);
+    setCurrent(-1);
+    return acc;
+  };
+
+  const run = async () => {
+    setStarted(true);
+    // Initialize result slots
+    const init = products.map(p => ({ ...p, _ok: false, _err: undefined, _pending: true }));
+    setResults(init);
+    const batch = products.map((p, i) => ({ product: p, idx: i }));
+    const final = await runBatch(batch, init);
+    setTimeout(() => onDone(final), 600);
+  };
+
+  const retryFailed = async () => {
+    const batch = results
+      .map((r, i) => ({ product: products[i], idx: i, ok: r._ok }))
+      .filter(x => !x.ok);
+    const final = await runBatch(batch, results);
+    if (final.every(r => r._ok || r._pending === false)) {
+      setTimeout(() => onDone(final), 600);
+    }
+  };
+
+  const pct = products.length
+    ? Math.round((results.filter(r => !r._pending).length / products.length) * 100)
+    : 0;
+  const done = started && !running && results.length === products.length && results.every(r => !r._pending);
+  const failedCount = results.filter(r => !r._pending && !r._ok).length;
+  const successCount = results.filter(r => r._ok).length;
+
+  return (
+    <div className="max-w-md mx-auto text-center">
+      <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 ${done && !failedCount ? "bg-green-100" : done && failedCount ? "bg-amber-100" : "bg-indigo-100"}`}>
+        {done && !failedCount
+          ? <CheckCircle size={32} className="text-green-500" />
+          : done && failedCount
+            ? <AlertCircle size={32} className="text-amber-500" />
+            : <Zap size={32} className="text-indigo-600" />}
+      </div>
+      <h2 className="text-xl font-bold text-gray-900 mb-1">
+        {!started
+          ? "Enriquecimento com IA"
+          : running
+            ? "Processando produtos..."
+            : done && !failedCount
+              ? "Enriquecimento concluído!"
+              : done
+                ? `${failedCount} produto(s) com erro`
+                : "Processando..."}
+      </h2>
+      <p className="text-gray-500 text-sm mb-6">
+        {!started ? `A IA vai gerar título, descrição e variações para ${products.length} produto(s).` : ""}
+      </p>
+
+      {!started && (
+        <>
+          {(rules?.titleTemplate || (rules?.descriptionStyles || []).length > 0 || rules?.additionalInstructions) && (
+            <div className="mb-4 p-4 bg-indigo-50 border border-indigo-100 rounded-2xl text-left text-sm space-y-1.5">
+              <p className="font-semibold text-indigo-700 text-xs mb-2">📋 Regras configuradas</p>
+              {rules.aiModel && rules.aiModel !== "gpt-4o" && (
+                <p className="text-xs text-indigo-600">🤖 Modelo: <span className="font-medium">{rules.aiModel}</span></p>
+              )}
+              {rules.titleTemplate && (
+                <p className="text-xs text-indigo-600">🏷️ Padrão: <span className="font-mono font-medium">{rules.titleTemplate}</span></p>
+              )}
+              {(rules.descriptionStyles || []).length > 0 && (
+                <p className="text-xs text-indigo-600">✍️ Estilos: <span className="font-medium">{rules.descriptionStyles.join(", ")}</span></p>
+              )}
+            </div>
+          )}
+          {!apiKey && (
+            <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-700 text-sm flex items-center gap-2">
+              <AlertCircle size={15} /> Configure a chave da OpenAI nas configurações antes de continuar.
+            </div>
+          )}
+          <div className="flex gap-3 justify-center">
+            {onBack && (
+              <button onClick={onBack}
+                className="px-5 py-3 border border-gray-300 rounded-2xl text-sm font-medium hover:bg-gray-50 flex items-center gap-2 transition-colors">
+                <ChevronLeft size={16} /> Voltar
+              </button>
+            )}
+            <button onClick={run} disabled={!apiKey}
+              className="px-8 py-3 bg-indigo-600 text-white rounded-2xl font-semibold hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-indigo-200 flex items-center gap-2">
+              <Zap size={16} /> Iniciar Enriquecimento
+            </button>
+          </div>
+        </>
+      )}
+
+      {started && (
+        <div className="text-left">
+          {/* Progress bar */}
+          <div className="flex justify-between text-sm text-gray-500 mb-2">
+            <span>{successCount} ok · {failedCount} erro · {results.filter(r => r._pending).length} pendente</span>
+            <span className="font-semibold text-indigo-600">{pct}%</span>
+          </div>
+          <div className="w-full bg-gray-100 rounded-full h-3 mb-5 overflow-hidden">
+            <div className="bg-gradient-to-r from-indigo-500 to-purple-500 h-3 rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
+          </div>
+
+          {/* Currently processing */}
+          {running && current >= 0 && current < products.length && (
+            <div className="mb-4 text-center">
+              <p className="text-sm text-gray-600 flex items-center justify-center gap-2">
+                <Loader size={14} className="animate-spin text-indigo-500" />
+                <span className="font-medium truncate max-w-xs">{products[current]?.produto_fornecedor}</span>
+              </p>
+              {phase && (
+                <p className="text-xs text-indigo-500 font-medium mt-1 flex items-center justify-center gap-1">
+                  {phase === "Pesquisando na web..." ? "🔍" : "✨"} {phase}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Results list */}
+          <div className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
+            {results.map((r, i) => (
+              <div key={i}>
+                <div
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm cursor-default
+                    ${r._pending ? "bg-gray-50 text-gray-400" : r._ok ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}
+                  onClick={() => !r._ok && r._err && setExpandedErr(expandedErr === i ? null : i)}
+                >
+                  {r._pending
+                    ? <Loader size={14} className="shrink-0 opacity-40" />
+                    : r._ok
+                      ? <CheckCircle size={14} className="shrink-0" />
+                      : <XCircle size={14} className="shrink-0 cursor-pointer" />}
+                  <span className="flex-1 truncate text-xs">{r.produto_fornecedor}</span>
+                  {!r._ok && !r._pending && r._err && (
+                    <span className="text-xs opacity-60 shrink-0">{expandedErr === i ? "▲" : "▼"}</span>
+                  )}
+                </div>
+                {/* Full error message, expandable */}
+                {expandedErr === i && r._err && (
+                  <div className="mt-0.5 mx-1 px-3 py-2 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 break-all">
+                    {r._err}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Actions when done */}
+          {done && failedCount > 0 && (
+            <div className="mt-4 flex gap-2 justify-center">
+              <button onClick={retryFailed}
+                className="px-5 py-2 bg-amber-500 text-white rounded-xl text-sm font-semibold hover:bg-amber-600 flex items-center gap-1.5 shadow-sm">
+                <RefreshCw size={14} /> Tentar novamente ({failedCount} falha{failedCount > 1 ? "s" : ""})
+              </button>
+              {successCount > 0 && (
+                <button onClick={() => onDone(results)}
+                  className="px-5 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 flex items-center gap-1.5 shadow-sm">
+                  Continuar com {successCount} produto{successCount > 1 ? "s" : ""} <ChevronRight size={14} />
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// REVIEW STEP
+// ─────────────────────────────────────────────
+function ReviewStep({ products, apiKey, tinyToken, corsProxy, onDone, onBack }) {
+  const [items, setItems] = useState(() =>
+    products.map(p => ({ ...p, _approved: false, _imgPrompt: "", _generatedImage: null, _imgUrl: p.link_imagens_drive || "", _marcaId: null, _marcaSearch: p.marca || "", _fornecedorId: null, _fornecedorSearch: p.fornecedor || "", _categoriaId: null, _catSearch: "" }))
+  );
+  const [idx, setIdx] = useState(0);
+  const [genLoading, setGenLoading] = useState(false);
+  const [genError, setGenError] = useState("");
+  const [activeTab, setActiveTab] = useState("content");
+  const [brandList, setBrandList] = React.useState([]);
+  const [brandsLoaded, setBrandsLoaded] = React.useState(false);
+  const [fornecList, setFornecList] = React.useState([]);
+  const [fornecLoading, setFornecLoading] = React.useState(false);
+  const fornecTimerRef = React.useRef(null);
+  const [catCache, setCatCache] = React.useState(function(){try{var _v=localStorage.getItem("mpads_catCache");return _v?(JSON.parse(_v).items||[]):[];}catch(e){return[];}}); // v32
+  const [catCacheLoaded, setCatCacheLoaded] = React.useState(!!localStorage.getItem("mpads_catCache")); // v32
+  const [availableTags, setAvailableTags] = useState([]);
+  const [tagsLoading, setTagsLoading] = useState(false);
+  const [selectedTagNames, setSelectedTagNames] = useState([]); const [tagInput, setTagInput] = useState('');
+  React.useEffect(() => {
+    if (!tinyToken) return;
+    setTagsLoading(true);
+    fetchTinyTagsXHR(tinyToken, corsProxy || '').then(tags => {
+      setAvailableTags(tags);
+      setTagsLoading(false);
+    });
+  }, [tinyToken]);
+React.useEffect(() => {
+    if (!tinyToken) { setBrandsLoaded(true); return; }
+    // XHR bypasses the fetch interceptor that would corrupt GET /marcas
+    var proxy = (corsProxy || 'https://corsproxy.io/?') + 'url=' + encodeURIComponent('https://api.tiny.com.br/public-api/v3/marcas?limit=100');  // v25
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', proxy);
+    xhr.setRequestHeader('Authorization', 'Bearer ' + tinyToken);
+    xhr.onload = function() {
+      try {
+        var d = JSON.parse(xhr.responseText);
+        var list = d.itens || d.data || [];
+        setBrandList(list);
+        setItems(function(prev) {
+          return prev.map(function(item) {
+            if (item._marcaId) return item;
+            var search = (item._marcaSearch || item.marca || '').toLowerCase().trim();
+            var match = list.find(function(b) { return (b.descricao||b.nome||'').toLowerCase().trim() === search; });  // v24-hf5
+            return Object.assign({}, item, { _marcaId: match ? match.id : null });
+          });
+        });
+      } catch(e) {}
+      setBrandsLoaded(true);
+    };
+    xhr.onerror = function() { setBrandsLoaded(true); };
+    xhr.send();
+  }, [tinyToken, corsProxy]);
+
+  // Auto-match fornecedor da planilha contra Tiny /contatos
+  React.useEffect(() => {
+    if (!tinyToken || !brandsLoaded) return;
+    var uniqueNames = [];
+    items.forEach(function(it) {
+      var nm = (it._fornecedorSearch || '').trim();
+      if (nm && !it._fornecedorId && uniqueNames.indexOf(nm) === -1) uniqueNames.push(nm);
+    });
+    if (uniqueNames.length === 0) return;
+    var delay = 0;
+    uniqueNames.forEach(function(nome) {
+      setTimeout(function() {
+        var proxy = (corsProxy || 'https://corsproxy.io/?') + 'url=' + encodeURIComponent('https://api.tiny.com.br/public-api/v3/contatos?nome=' + encodeURIComponent(nome) + '&limit=10');
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', proxy);
+        xhr.setRequestHeader('Authorization', 'Bearer ' + tinyToken);
+        xhr.onload = function() {
+          try {
+            var d = JSON.parse(xhr.responseText);
+            var list = (d.itens || d.data || []).map(function(fc) { return { id: fc.id, nome: fc.nome || fc.fantasia || fc.razaoSocial || '' }; });
+            var match = list.find(function(f) { return f.nome.toLowerCase().trim() === nome.toLowerCase().trim(); });
+            if (!match && list.length === 1) match = list[0];
+            if (match) {
+              setItems(function(prev) {
+                return prev.map(function(it) {
+                  if ((it._fornecedorSearch || '').trim().toLowerCase() === nome.toLowerCase().trim() && !it._fornecedorId) {
+                    return Object.assign({}, it, { _fornecedorId: match.id, _fornecedorSearch: match.nome });
+                  }
+                  return it;
+                });
+              });
+            }
+          } catch(e) {}
+        };
+        xhr.send();
+      }, delay);
+      delay += 600;
+    });
+  }, [brandsLoaded, tinyToken, corsProxy]);
+
+  // v32: escuta evento de sync das Configurações
+  React.useEffect(function(){
+    function _doSync() {
+      if (!tinyToken) return;
+      var _eq=String.fromCharCode(61);
+      var _pfx=(corsProxy || "https://corsproxy.io/?") + "ur" + "l" + _eq;
+      var _cm={}; var _ids=[]; var _pg=1;
+      function _fp() {
+        var x=new XMLHttpRequest();
+        var u=new URL("https://api.tiny.com.br/public-api/v3/produtos");
+        u.searchParams.set(atob("cGFnaW5h"),_pg);
+        u.searchParams.set(atob("bGltaXRl"),100);
+        u.searchParams.set(atob("c2l0dWFjYW8"),"A");
+        x.open("GET",_pfx+encodeURIComponent(u.toString()));
+        x.setRequestHeader("Authorization","Bearer "+tinyToken);
+        x.onload=function(){try{var items=JSON.parse(x.responseText).itens||[];if(items.length===0||_pg>50){_det();return;}items.filter(function(_,i){return i%10===0;}).forEach(function(p){_ids.push(p.id);});_pg++;setTimeout(_fp,200);}catch(e){_det();}};
+        x.onerror=function(){_det();};x.send();
+      }
+      function _det(){
+        var i=0;
+        function _nx(){if(i>_ids.length-1){_fin();return;}var xd=new XMLHttpRequest();xd.open("GET",_pfx+encodeURIComponent("https://api.tiny.com.br/public-api/v3/produtos/"+_ids[i]));xd.setRequestHeader("Authorization","Bearer "+tinyToken);xd.onload=function(){try{var d=JSON.parse(xd.responseText);if(d.categoria&&d.categoria.id)_cm[d.categoria.id]={id:d.categoria.id,nome:d.categoria.nome||"",caminho:d.categoria.caminhoCompleto||""};}catch(e){}i++;setTimeout(_nx,300);};xd.onerror=function(){i++;setTimeout(_nx,300);};xd.send();}
+        _nx();
+      }
+      function _fin(){
+        var list=Object.values(_cm).sort(function(a,b){return(a.caminho||"").localeCompare(b.caminho||"");});
+        localStorage.setItem("mpads_catCache",JSON.stringify({ts:Date.now(),items:list}));
+        setCatCache(list);setCatCacheLoaded(true);
+        window.dispatchEvent(new CustomEvent("mpads-cat-synced",{detail:list}));
+      }
+      _fp();
+    }
+    window.addEventListener("mpads-do-sync",_doSync);
+    return function(){window.removeEventListener("mpads-do-sync",_doSync);};
+  },[tinyToken,corsProxy]);
+
+  React.useEffect(function(){
+    function _h(e){setCatCache(e.detail||[]);setCatCacheLoaded(true);}
+    window.addEventListener("mpads-cat-synced",_h);
+    return function(){window.removeEventListener("mpads-cat-synced",_h);};
+  },[]);
+
+  
+
+    const searchFornec = React.useCallback((term) => {
+    if (!tinyToken || !term) return;
+    setFornecLoading(true);
+    setFornecList([]);
+    var proxy2 = (corsProxy || 'https://corsproxy.io/?') + 'url=' + encodeURIComponent('https://api.tiny.com.br/public-api/v3/contatos?nome=' + encodeURIComponent(term) + '&limit=20');
+    var xhr2 = new XMLHttpRequest();
+    xhr2.open('GET', proxy2);
+    xhr2.setRequestHeader('Authorization', 'Bearer ' + tinyToken);
+    xhr2.onload = function() {
+      setFornecLoading(false);
+      try {
+        var d = JSON.parse(xhr2.responseText);
+        var list = (d.itens || d.data || []).map(function(fc) { return { id: fc.id, nome: fc.nome || fc.fantasia || fc.razaoSocial || '' }; });
+        setFornecList(list);
+      } catch(e) { setFornecList([]); }
+    };
+    xhr2.onerror = function() { setFornecLoading(false); setFornecList([]); };
+    xhr2.send();
+  }, [tinyToken, corsProxy]);
+
+  const cur = items[idx];
+  const approved = items.filter(i => i._approved);
+
+  const upd = (k, v) => setItems(prev => { const a = [...prev]; a[idx] = { ...a[idx], [k]: v }; return a; });
+  const updEnr = (k, v) => setItems(prev => { const a = [...prev]; a[idx] = { ...a[idx], enriched: { ...a[idx].enriched, [k]: v } }; return a; });
+
+  const handleGenImage = async () => {
+    if (!cur._imgPrompt.trim()) { setGenError("Descreva a cena antes de gerar."); return; }
+    setGenError(""); setGenLoading(true);
+    try {
+      const url = await generateProductImage(cur.produto_fornecedor, cur.enriched?.descricao || "", cur._imgPrompt, apiKey);
+      upd("_generatedImage", url);
+    } catch (e) { setGenError(e.message); }
+    setGenLoading(false);
+  };
+
+  const handleApprove = () => {
+    upd("_approved", true);
+    if (idx < items.length - 1) setIdx(idx + 1);
+  };
+
+  if (!cur) return null;
+
+  return (
+    <div>
+      {/* Header */}
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-center gap-2">
+          {onBack && (
+            <button onClick={onBack}
+              className="p-2 border border-gray-300 rounded-xl text-sm font-medium hover:bg-gray-50 flex items-center gap-1 transition-colors"
+              title="Voltar ao Enriquecimento">
+              <ChevronLeft size={16} />
+            </button>
+          )}
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">Revisão</h2>
+            <p className="text-sm text-gray-500">Produto {idx + 1} de {items.length}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-500">{approved.length} aprovados</span>
+          {approved.length > 0 && (
+            <button onClick={() => onDone(approved, selectedTagNames, availableTags)}
+              className="px-4 py-2 bg-green-600 text-white rounded-xl text-sm font-semibold hover:bg-green-700 flex items-center gap-1.5 shadow-sm">
+              <Send size={14} /> Exportar {approved.length} produto(s)
+            </button>
+          )}
+        </div>
+      </div>
+
+            {/* Tags Tiny (v30) */}
+      {tinyToken && (
+        <div className="bg-white border border-gray-200 rounded-2xl px-4 py-3 mb-4 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-semibold text-gray-600 flex items-center gap-1.5 uppercase tracking-wide">
+              <Tag size={13} className="shrink-0" /> Tags Tiny
+              {tagsLoading && <span className="font-normal text-gray-400 normal-case tracking-normal ml-1"> carregando...</span>}
+            </span>
+            {selectedTagNames.length > 0 && (
+              <span className="text-[11px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-semibold">
+                {selectedTagNames.length} tag{selectedTagNames.length > 1 ? 's' : ''}
+              </span>
+            )}
+          </div>
+          {selectedTagNames.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {selectedTagNames.map((name, i) => (
+                <span key={i} className="inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full bg-indigo-600 text-white font-medium">
+                  {name}
+                  <button onClick={() => setSelectedTagNames(prev => prev.filter((_, j) => j !== i))} className="ml-0.5 hover:text-indigo-200 leading-none text-sm">&times;</button>
+                </span>
+              ))}
+            </div>
+          )}
+          <div className="flex gap-2 mb-2">
+            <input
+              type="text"
+              value={tagInput}
+              onChange={e => setTagInput(e.target.value)}
+              onKeyDown={e => {
+                if ((e.key === 'Enter' || e.key === ',') && tagInput.trim()) {
+                  e.preventDefault();
+                  const nm = tagInput.trim().replace(/,+$/, '');
+                  if (nm && !selectedTagNames.includes(nm)) setSelectedTagNames(prev => [...prev, nm]);
+                  setTagInput('');
+                }
+              }}
+              placeholder="Digite uma tag e pressione Enter..."
+              className="flex-1 text-xs border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            />
+            {tagInput.trim() && (
+              <button
+                onClick={() => {
+                  const nm = tagInput.trim();
+                  if (nm && !selectedTagNames.includes(nm)) setSelectedTagNames(prev => [...prev, nm]);
+                  setTagInput('');
+                }}
+                className="text-xs px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-semibold">
+                +
+              </button>
+            )}
+          </div>
+          {availableTags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 items-center">
+              <span className="text-[10px] text-gray-400 mr-1">Tiny:</span>
+              {availableTags.filter(t => !selectedTagNames.includes(t.nome)).map(tag => (
+                <button key={tag.id}
+                  onClick={() => setSelectedTagNames(prev => selectedTagNames.includes(tag.nome) ? prev : [...prev, tag.nome])}
+                  className="text-xs px-2.5 py-0.5 rounded-full border border-gray-300 bg-gray-50 text-gray-600 hover:border-indigo-400 hover:text-indigo-600 transition-all"
+                  title={tag.grupo || ''}>
+                  {tag.nome}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+{/* Dot navigator */}
+      <div className="flex gap-1.5 mb-5 flex-wrap">
+        {items.map((p, i) => (
+          <button key={i} onClick={() => setIdx(i)}
+            className={`w-8 h-8 rounded-full text-xs font-bold transition-all border-2 ${
+              i === idx ? "bg-indigo-600 text-white border-indigo-400 scale-110"
+              : p._approved ? "bg-green-500 text-white border-green-400"
+              : "bg-gray-100 text-gray-500 border-transparent hover:border-gray-300"}`}>
+            {i + 1}
+          </button>
+        ))}
+      </div>
+
+      {/* Product name + badge */}
+      <div className="flex items-center gap-3 mb-5 p-4 bg-gray-50 rounded-2xl">
+        <div className="flex-1">
+          <p className="font-bold text-gray-900">{cur.produto_fornecedor}</p>
+          <p className="text-xs text-gray-500 mt-0.5">{cur.marca} · EAN {cur.ean} · {cur.categoria_sugerida || "Sem categoria"}</p>
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
+              <label className="text-xs font-semibold text-gray-600 whitespace-nowrap">Marca Tiny:</label>
+              {brandsLoaded ? (
+                <select
+                  className="text-xs border border-gray-300 rounded px-2 py-1 bg-white"
+                  value={cur._marcaId || ""}
+                  onChange={e => upd('_marcaId', e.target.value ? Number(e.target.value) : null)}
+                >
+                  <option value="">— Sem marca —</option>
+                  {brandList.map(b => <option key={b.id} value={b.id}>{b.descricao}</option>)}
+                </select>
+              ) : tinyToken ? (
+                <span className="text-xs text-gray-400 italic">Carregando...</span>
+              ) : null}
+              {brandsLoaded && (cur._marcaId
+                ? <span className="text-xs text-green-600 font-medium ml-1">&#10003; {brandList.find(b => Number(b.id) === Number(cur._marcaId))?.descricao}</span>
+                : <span className="text-xs text-amber-500 font-medium ml-1">&#9888; Não mapeada</span>
+              )}
+            </div>
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
+              <label className="text-xs font-semibold text-gray-600 whitespace-nowrap">Fornecedor Tiny:</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  className="text-xs border border-gray-300 rounded px-2 py-1 w-48"
+                  placeholder="Buscar fornecedor..."
+                  value={cur._fornecedorSearch || ""}
+                  onChange={e => {
+                    upd('_fornecedorSearch', e.target.value);
+                    upd('_fornecedorId', null);
+                    clearTimeout(fornecTimerRef.current);
+                    if (e.target.value.trim().length >= 2) {
+                      fornecTimerRef.current = setTimeout(() => searchFornec(e.target.value.trim()), 500);
+                    } else {
+                      setFornecList([]);
+                    }
+                  }}
+                />
+                {fornecLoading && <span className="text-xs text-gray-400 italic ml-1">Buscando...</span>}
+                {fornecList.length > 0 && !cur._fornecedorId && (
+                  <div className="absolute z-10 bg-white border border-gray-300 rounded shadow-lg mt-1 max-h-40 overflow-y-auto w-64">
+                    {fornecList.map(f => (
+                      <div key={f.id} className="px-3 py-1.5 text-xs hover:bg-blue-50 cursor-pointer"
+                        onClick={() => { upd('_fornecedorId', f.id); upd('_fornecedorSearch', f.nome); setFornecList([]); }}>
+                        {f.nome}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {cur._fornecedorId
+                ? <span className="text-xs text-green-600 font-medium ml-1">&#10003; {cur._fornecedorSearch}</span>
+                : cur._fornecedorSearch && <span className="text-xs text-amber-500 font-medium ml-1">&#9888; Não selecionado</span>
+              }
+            </div>
+            {/* v31: Categoria Tiny */}
+            {tinyToken && (
+              <div className="flex items-center gap-2 flex-wrap mt-2">
+                <label className="text-xs font-semibold text-gray-600 whitespace-nowrap">Categoria Tiny:</label>
+                <div className="relative">
+                  <input type="text"
+                    className="text-xs border border-gray-300 rounded px-2 py-1 w-52"
+                    placeholder={catCacheLoaded ? "Buscar categoria..." : "Carregando..."}
+                    disabled={!catCacheLoaded}
+                    value={cur._catSearch || ""}
+                    onChange={e => { upd('_catSearch', e.target.value); if (!e.target.value.trim()) upd('_categoriaId', null); }}
+                  />
+                  {catCacheLoaded && (cur._catSearch||'').length >= 2 && !cur._categoriaId && (() => {
+                    var filtered = catCache.filter(function(c){ return (c.caminho||c.nome||'').toLowerCase().includes((cur._catSearch||'').toLowerCase()); });
+                    return filtered.length > 0 ? (
+                      <div className="absolute z-20 bg-white border border-gray-300 rounded shadow-lg mt-1 max-h-52 overflow-y-auto w-80">
+                        {filtered.slice(0,10).map(function(c){ return (
+                          <div key={c.id} className="px-3 py-2 text-xs hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-0"
+                            onClick={function(){ upd('_categoriaId', c.id); upd('_catSearch', c.nome); }}>
+                            <div className="font-semibold text-gray-800">{c.nome}</div>
+                            <div className="text-gray-400 text-[10px] truncate mt-0.5">{c.caminho}</div>
+                          </div>
+                        ); })}
+                        {filtered.length > 10 && <div className="px-3 py-1.5 text-[10px] text-gray-400 bg-gray-50">+{filtered.length - 10} — refine a busca</div>}
+                      </div>
+                    ) : (
+                      <div className="absolute z-20 bg-white border border-gray-300 rounded shadow-lg mt-1 w-64 px-3 py-2 text-xs text-gray-400">Nenhuma categoria encontrada</div>
+                    );
+                  })()}
+                </div>
+                {cur._categoriaId
+                  ? <span className="text-xs text-green-600 font-medium">&#10003; {cur._catSearch}</span>
+                  : cur._catSearch && <span className="text-xs text-amber-500 font-medium">&#9888; Não selecionada</span>
+                }
+                {cur._categoriaId && (
+                  <button className="text-xs text-gray-400 hover:text-red-500 font-bold ml-1" title="Limpar"
+                    onClick={function(){ upd('_categoriaId', null); upd('_catSearch', ''); }}>✕</button>
+                )}
+              </div>
+            )}
+        </div>
+        {cur._ok === false && (
+          <div className="flex flex-col items-end gap-1">
+            <span className="px-2 py-1 bg-red-100 text-red-700 text-xs rounded-lg font-medium">Falha no enriquecimento</span>
+            {cur._err && <span className="text-xs text-red-600 max-w-xs text-right">{cur._err}</span>}
+          </div>
+        )}
+        {cur._approved && (
+          <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-lg font-medium flex items-center gap-1">
+            <CheckCircle size={11} /> Aprovado
+          </span>
+        )}
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-1 mb-5 bg-gray-100 p-1 rounded-xl">
+        {[
+          { id: "content", label: "Conteúdo IA", Icon: FileText },
+          { id: "image", label: "Imagem Lifestyle", Icon: ImageIcon },
+          { id: "data", label: "Dados Originais", Icon: Package },
+        ].map(({ id, label, Icon }) => (
+          <button key={id} onClick={() => setActiveTab(id)}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium transition-all
+              ${activeTab === id ? "bg-white shadow text-indigo-700" : "text-gray-500 hover:text-gray-700"}`}>
+            <Icon size={14} /> <span className="hidden sm:inline">{label}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Tab: Content */}
+      {activeTab === "content" && (
+        <div className="space-y-4">
+          {/* Marketplace titles table */}
+          {cur.enriched?.titulos && Object.keys(cur.enriched.titulos).length > 0 && (
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-2">Títulos por Marketplace</label>
+              <div className="border border-gray-200 rounded-xl overflow-hidden">
+                {MARKETPLACES.filter(mp => cur.enriched.titulos[mp.id] !== undefined).map((mp, i) => {
+                  const title = cur.enriched.titulos[mp.id] || "";
+                  const pct = Math.min(100, Math.round((title.length / mp.limit) * 100));
+                  const over = title.length > mp.limit;
+                  return (
+                    <div key={mp.id} className={`px-3 py-2.5 ${i > 0 ? "border-t border-gray-100" : ""}`}>
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className="text-sm">{mp.icon}</span>
+                        <span className="text-xs font-semibold text-gray-600 w-28 shrink-0">{mp.label}</span>
+                        <input
+                          type="text"
+                          value={title}
+                          onChange={e => updEnr("titulos", { ...cur.enriched.titulos, [mp.id]: e.target.value })}
+                          className={`flex-1 text-xs px-2 py-1 rounded-lg border focus:outline-none focus:ring-1 ${over ? "border-red-300 focus:ring-red-400 bg-red-50" : "border-gray-200 focus:ring-indigo-400"}`}
+                        />
+                        <span className={`text-xs font-mono w-14 text-right shrink-0 ${over ? "text-red-600 font-bold" : "text-gray-400"}`}>
+                          {title.length}/{mp.limit}
+                        </span>
+                      </div>
+                      <div className="ml-[120px] h-1 bg-gray-100 rounded-full overflow-hidden">
+                        <div
+                          className={`h-1 rounded-full transition-all ${over ? "bg-red-400" : pct > 85 ? "bg-amber-400" : "bg-green-400"}`}
+                          style={{ width: `${Math.min(100, pct)}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Generic title */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Título Geral</label>
+            <input type="text" value={cur.enriched?.titulo_otimizado || ""}
+              onChange={e => updEnr("titulo_otimizado", e.target.value)}
+              className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <p className="text-xs text-gray-400 mt-1">{(cur.enriched?.titulo_otimizado || "").length} / 60 caracteres</p>
+          </div>
+
+          {/* SKU Interno + CEST + Variações */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">SKU Interno</label>
+            <input type="text" value={cur.enriched?.sku_interno || ""}
+              onChange={e => updEnr("sku_interno", e.target.value)}
+              placeholder="LAV-1200W-LK1305-KALA-127V"
+              className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">CEST</label>
+              <input type="text" value={cur.enriched?.cest || ""}
+                onChange={e => updEnr("cest", e.target.value)}
+                placeholder="XX.XXX.XX"
+                className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Variações <span className="font-normal text-gray-400">(tipo K)</span></label>
+              <input type="text" value={cur.enriched?.variacoes || ""}
+                onChange={e => updEnr("variacoes", e.target.value)}
+                placeholder="Voltagem: 127V"
+                className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Descrição (HTML) <span className="font-normal text-gray-400">→ exportada como "Descrição complementar" no Tiny</span></label>
+            <textarea value={cur.enriched?.descricao || ""} onChange={e => updEnr("descricao", e.target.value)}
+              rows={7} className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
+            <p className="text-xs text-gray-400 mt-1">{(cur.enriched?.descricao || "").length} chars — estrutura modular com especificações técnicas, benefícios e CTA</p>
+          </div>
+
+          {/* SEO fields */}
+          <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl space-y-3">
+            <p className="text-xs font-bold text-blue-700 mb-1">🔍 Campos SEO</p>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Título SEO <span className="font-normal text-gray-400">(máx 70 chars)</span></label>
+              <input type="text" value={cur.enriched?.titulo_seo || ""}
+                onChange={e => updEnr("titulo_seo", e.target.value)}
+                className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+              <p className="text-xs text-gray-400 mt-1">{(cur.enriched?.titulo_seo || "").length} / 70 caracteres</p>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Descrição SEO <span className="font-normal text-gray-400">(máx 160 chars)</span></label>
+              <textarea value={cur.enriched?.descricao_seo || ""}
+                onChange={e => updEnr("descricao_seo", e.target.value)}
+                rows={2}
+                className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none" />
+              <p className="text-xs text-gray-400 mt-1">{(cur.enriched?.descricao_seo || "").length} / 160 caracteres</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tab: Image */}
+      {activeTab === "image" && (
+        <div className="space-y-4">
+          <div className="p-4 bg-purple-50 rounded-2xl text-xs text-purple-700 border border-purple-100">
+            💡 A IA gerará uma fotografia lifestyle profissional baseada no nome do produto e no contexto que você descrever abaixo.
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">URL da imagem do produto <span className="font-normal text-gray-400">(referência visual)</span></label>
+            <input type="url" value={cur._imgUrl} onChange={e => upd("_imgUrl", e.target.value)}
+              placeholder="https://drive.google.com/... ou link direto da imagem"
+              className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Descreva a cena / contexto de uso</label>
+            <textarea value={cur._imgPrompt} onChange={e => upd("_imgPrompt", e.target.value)} rows={4}
+              placeholder={`Ex: "${cur.produto_fornecedor} sendo utilizado por um profissional para furar uma parede de alvenaria, ambiente de obra residencial, luz natural intensa, fundo desfocado..."`}
+              className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none" />
+          </div>
+
+          {genError && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs flex items-center gap-2">
+              <XCircle size={13} /> {genError}
+            </div>
+          )}
+
+          <button onClick={handleGenImage} disabled={genLoading || !apiKey}
+            className="w-full py-3 bg-purple-600 text-white rounded-2xl text-sm font-semibold hover:bg-purple-700 disabled:opacity-40 flex items-center justify-center gap-2 shadow-md shadow-purple-200">
+            {genLoading ? <><Loader size={14} className="animate-spin" /> Gerando imagem...</> : <><ImageIcon size={14} /> Gerar imagem lifestyle</>}
+          </button>
+
+          {cur._generatedImage && (
+            <div className="relative rounded-2xl overflow-hidden border border-gray-200">
+              <img src={cur._generatedImage} alt="Imagem gerada" className="w-full object-cover max-h-72" />
+              <div className="absolute bottom-2 right-2 flex gap-2">
+                <a href={cur._generatedImage} target="_blank" rel="noreferrer"
+                  className="px-2.5 py-1 bg-white/90 rounded-lg text-xs font-medium hover:bg-white shadow-sm">
+                  Abrir ↗
+                </a>
+                <button onClick={handleGenImage}
+                  className="px-2.5 py-1 bg-white/90 rounded-lg text-xs font-medium hover:bg-white shadow-sm flex items-center gap-1">
+                  <RefreshCw size={11} /> Regerar
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Tab: Original data */}
+      {activeTab === "data" && (
+        <div className="bg-gray-50 rounded-2xl overflow-hidden border border-gray-100">
+          {[
+            ["EAN", cur.ean], ["Código fornecedor", cur.codigo_fornecedor], ["Marca", cur.marca],
+            ["Fornecedor", cur.fornecedor], ["Origem", cur.origem], ["NCM", cur.ncm],
+            ["Classificação Fiscal", cur.classificacao_fiscal], ["Preço de venda", cur.preco_venda ? `R$ ${cur.preco_venda}` : "—"],
+            ["Unidade", cur.unidade], ["Garantia", cur.garantia ? `${cur.garantia} meses` : "—"],
+            ["Peso", cur.peso ? `${cur.peso} kg` : "—"],
+            ["Dimensões (A×L×C)", cur.altura && cur.largura && cur.comprimento ? `${cur.altura} × ${cur.largura} × ${cur.comprimento} cm` : "—"],
+            ["Categoria sugerida", cur.categoria_sugerida], ["Observações", cur.observacoes],
+          ].map(([label, value], i) => (
+            <div key={i} className={`flex text-sm px-4 py-2.5 ${i % 2 === 0 ? "" : "bg-white"}`}>
+              <span className="font-medium text-gray-500 w-1/2 shrink-0">{label}</span>
+              <span className="text-gray-800 break-all">{value || "—"}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Navigation + Approve */}
+      <div className="flex items-center justify-between mt-6 gap-3">
+        <button onClick={() => setIdx(Math.max(0, idx - 1))} disabled={idx === 0}
+          className="px-4 py-2.5 border border-gray-300 rounded-xl text-sm font-medium hover:bg-gray-50 disabled:opacity-30 flex items-center gap-1">
+          <ChevronLeft size={16} /> Anterior
+        </button>
+
+        <button onClick={handleApprove}
+          className={`flex-1 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-all ${
+            cur._approved ? "bg-green-100 text-green-700 border border-green-300 hover:bg-green-200" : "bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-200"
+          }`}>
+          <CheckCircle size={15} />
+          {cur._approved ? "Aprovado ✓" : "Aprovar produto"}
+        </button>
+
+        <button onClick={() => setIdx(Math.min(items.length - 1, idx + 1))} disabled={idx === items.length - 1}
+          className="px-4 py-2.5 border border-gray-300 rounded-xl text-sm font-medium hover:bg-gray-50 disabled:opacity-30 flex items-center gap-1">
+          Próximo <ChevronRight size={16} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// SYNC STEP (API v3 primary + CSV backup)
+// ─────────────────────────────────────────────
+function SyncStep({ products, tinyToken, corsProxy, onRestart, selectedTagNames = [], availableTags = [] }) {
+  const [syncing, setSyncing]           = useState(false);
+  const [stopFlag, setStopFlag]         = useState({ stop: false });
+  const [syncResults, setSyncResults]   = useState([]);
+  const [syncDone, setSyncDone]         = useState(false);
+  const [currentIdx, setCurrentIdx]     = useState(0);
+  const [currentName, setCurrentName]   = useState("");
+  const [expandedErr, setExpandedErr]   = useState({});
+  const [exported, setExported]         = useState(false);
+
+  const resolved = React.useMemo(() => resolveParentChild(products), [products]);
+
+  const runSync = async (items) => {
+    const flag = { stop: false };
+    setStopFlag(flag);
+    setSyncing(true);
+    setSyncDone(false);
+    setCurrentIdx(0);
+    const acc = [];
+
+    // Agrupa produtos V com seus filhos K: K vinculados a um V são enviados
+    // dentro do variacoes[] do pai — não como chamadas individuais.
+    const vSkuSet = new Set(
+      items
+        .filter(p => (p.tipo_de_produto || "S").toUpperCase() === "V")
+        .map(p => p.enriched?.sku_interno || p.codigo_fornecedor || "")
+        .filter(Boolean)
+    );
+
+    const tasks = [];
+    for (const p of items) {
+      const tipo = (p.tipo_de_produto || "S").toUpperCase();
+      // K com pai V: será incluído nas variacoes[] do pai — pular chamada individual
+      if (tipo === "K" && p._codigoPai !== null && vSkuSet.has(p._codigoPai)) continue; // v24
+      if (tipo === "V") {
+        const pSku = p.enriched?.sku_interno || p.codigo_fornecedor || "";
+        const kChildren = items.filter(k =>
+          (k.tipo_de_produto || "S").toUpperCase() === "K" && k._codigoPai === pSku
+        );
+        tasks.push({ main: p, children: kChildren });
+      } else {
+        tasks.push({ main: p, children: [] });
+      }
+    }
+
+    for (let i = 0; i < tasks.length; i++) {
+      if (flag.stop) break;
+      const { main, children } = tasks[i];
+      setCurrentIdx(i + 1);
+      setCurrentName(main.enriched?.titulo_otimizado || main.produto_fornecedor || "");
+      try {
+        const _tr = await sendToTiny(main, tinyToken, corsProxy || "", children);
+        if (_tr && _tr.id && selectedTagNames && selectedTagNames.length) { const _tb = selectedTagNames.filter(function(n){return n&&n.trim();}).map(function(n){var _nm=n.trim();var _at=(availableTags||[]).find(function(t){return t.nome&&t.nome.toLowerCase()===_nm.toLowerCase();});return _at?{idTag:_at.id}:null;}).filter(Boolean);if (_tb.length) { const _atu='https://api.tiny.com.br/public-api/v3/produtos/'+_tr.id+'/tags'; const _aturl=(corsProxy||'')?corsProxy+encodeURIComponent(_atu):_atu; await new Promise(function(_res){var _xhr2=new XMLHttpRequest();_xhr2.open('POST',_aturl,true);_xhr2.setRequestHeader('Authorization','Bearer '+tinyToken);_xhr2.setRequestHeader('Content-Type','application/json');_xhr2.setRequestHeader('Accept','application/json');_xhr2.onload=function(){_res(_xhr2.status);};_xhr2.onerror=function(){_res(0);};_xhr2.send(JSON.stringify(_tb));});}  }
+        acc.push({ ...main, _syncOk: true });
+        if (_tr && _tr.id && children && children.length && selectedTagNames && selectedTagNames.length) {
+          const _cbt = selectedTagNames.filter(function(n){return n&&n.trim();})
+            .map(function(n){var _nm=n.trim();var _at=(availableTags||[]).find(function(t){return t.nome&&t.nome.toLowerCase()===_nm.toLowerCase();});return _at?{idTag:_at.id}:null;}).filter(Boolean);
+          if (_cbt.length) {
+            let _varList = (_tr.variacoes||[]).filter(function(_v){return _v&&_v.id;});
+            if (!_varList.length) {
+              try {
+                const _gpUrl='https://api.tiny.com.br/public-api/v3/produtos/'+_tr.id;
+                const _gpFinal=(corsProxy||'')?corsProxy+encodeURIComponent(_gpUrl):_gpUrl;
+                const _gpRes=await fetch(_gpFinal,{headers:{'Authorization':'Bearer '+tinyToken,'Accept':'application/json'}});
+                if (_gpRes.ok) { const _gpData=await _gpRes.json(); _varList=(_gpData.variacoes||[]).filter(function(_v){return _v&&_v.id;}); }
+              } catch(_gpErr){}
+            }
+            for (const _v of _varList) {
+              const _cbtu='https://api.tiny.com.br/public-api/v3/produtos/'+_v.id+'/tags';
+              const _cbturl=(corsProxy||'')?corsProxy+encodeURIComponent(_cbtu):_cbtu;
+              await new Promise(function(_res3){
+                var _xhr3=new XMLHttpRequest();
+                _xhr3.open('POST',_cbturl,true);
+                _xhr3.setRequestHeader('Authorization','Bearer '+tinyToken);
+                _xhr3.setRequestHeader('Content-Type','application/json');
+                _xhr3.setRequestHeader('Accept','application/json');
+                _xhr3.onload=function(){_res3(_xhr3.status);};
+                _xhr3.onerror=function(){_res3(0);};
+                _xhr3.send(JSON.stringify(_cbt));
+              });
+            }
+          }
+        }
+        // Peso bruto/líquido nas variações: GET pai para IDs atuais das variações, depois PUT em cada filho
+if(_tr&&_tr.id&&children&&children.length){
+  const _skuPesoMap={};
+  for(let _ci=0;_ci<children.length;_ci++){
+    const _ch=children[_ci];
+    if(!_ch) continue;
+    const _chSku=(_ch.enriched&&_ch.enriched.sku_interno)?_ch.enriched.sku_interno:_ch.codigo_fornecedor;
+    const _chPw=parseNumber(_ch.peso)||parseNumber(product.peso)||0;
+    if(_chSku&&_chPw>0) _skuPesoMap[_chSku]=_chPw;
+  }
+  if(Object.keys(_skuPesoMap).length>0){
+    const _getParXhr=new XMLHttpRequest();
+    _getParXhr.open('GET','https://corsproxy.io/?url='+encodeURIComponent('https://api.tiny.com.br/public-api/v3/produtos/'+_tr.id));
+    _getParXhr.setRequestHeader('Authorization','Bearer '+tinyToken);
+    _getParXhr.onload=function(){
+      if(_getParXhr.status!==200) return;
+      try{
+        const _pdata=JSON.parse(_getParXhr.responseText);
+        const _pvList=_pdata.variacoes||[];
+        for(let _vi=0;_vi<_pvList.length;_vi++){
+          const _vari=_pvList[_vi];
+          if(!_vari||!_vari.id||!_vari.sku) continue;
+          const _vPeso=_skuPesoMap[_vari.sku]||parseNumber(product.peso)||0;
+          if(!(_vPeso>0)) continue;
+          const _putXhr=new XMLHttpRequest();
+          _putXhr.open('PUT','https://corsproxy.io/?url='+encodeURIComponent('https://api.tiny.com.br/public-api/v3/produtos/'+_tr.id+'/variacoes/'+_vari.id));
+          _putXhr.setRequestHeader('Authorization','Bearer '+tinyToken);
+          _putXhr.setRequestHeader('Content-Type','application/json');
+          _putXhr.send(JSON.stringify({sku:_vari.sku,dimensoes:{pesoBruto:_vPeso,pesoLiquido:_vPeso}}));
+        }
+      }catch(e){}
+    };
+    _getParXhr.send();
+  }
+}
+        for (const k of children) {
+          acc.push({ ...k, _syncOk: true });
+        }
+      } catch (e) {
+        acc.push({ ...main, _syncOk: false, _syncErr: e.message });
+        children.forEach(k => acc.push({ ...k, _syncOk: false, _syncErr: e.message }));
+      }
+      setSyncResults([...acc]);
+      if (i < tasks.length - 1) await new Promise(r => setTimeout(r, 260));
+    }
+    setSyncing(false);
+    setSyncDone(true);
+  };
+
+  const handleSyncAll  = () => runSync(resolved);
+  const handleRetryFail = () => {
+    const failed = syncResults.filter(r => !r._syncOk);
+    setSyncResults(syncResults.filter(r => r._syncOk));
+    runSync(failed);
+  };
+  const handleStop = () => { stopFlag.stop = true; };
+
+  const handleExportCSV = () => {
+    const csv = buildTinyCSV(resolved);
+    const date = new Date().toISOString().slice(0, 10);
+    downloadCSV(csv, `tiny-produtos-${date}.csv`);
+    setExported(true);
+  };
+
+  const ok   = syncResults.filter(r => r._syncOk).length;
+  const fail = syncResults.filter(r => !r._syncOk).length;
+  const hasCors = syncResults.some(r => !r._syncOk && r._syncErr && r._syncErr.toLowerCase().includes("cors"));
+  const pct = resolved.length > 0 ? Math.round((syncResults.length / resolved.length) * 100) : 0;
+
+  return (
+    <div className="max-w-lg mx-auto">
+      {/* Header */}
+      <div className="text-center mb-6">
+        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 ${syncDone && fail === 0 ? "bg-green-100" : syncDone ? "bg-amber-100" : "bg-indigo-100"}`}>
+          {syncDone && fail === 0
+            ? <CheckCircle size={32} className="text-green-500" />
+            : syncDone
+              ? <AlertCircle size={32} className="text-amber-500" />
+              : <Send size={32} className="text-indigo-600" />}
+        </div>
+        <h2 className="text-xl font-bold text-gray-900">Cadastro via API v3</h2>
+        <div className="flex items-center justify-center gap-2 mt-1">
+          <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs rounded-full font-medium">Direto no Tiny</span>
+          <p className="text-sm text-gray-500">{products.length} produto(s) aprovado(s)</p>
+        </div>
+      </div>
+
+      {/* Token warning */}
+      {!tinyToken && (
+        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-700 text-xs flex items-center gap-2 mb-4">
+          <AlertCircle size={13} /> Configure o token OAuth2 do Tiny nas <strong>Configurações</strong> para enviar via API.
+        </div>
+      )}
+
+      {/* CORS warning */}
+      {hasCors && (
+        <div className="p-3 bg-orange-50 border border-orange-200 rounded-xl text-orange-800 text-xs mb-4 space-y-1">
+          <div className="flex items-center gap-2 font-semibold"><AlertCircle size={13} /> CORS bloqueado pelo Tiny</div>
+          <p>O navegador não consegue chamar a API do Tiny diretamente. Configure um <strong>Proxy CORS</strong> nas Configurações (ex: <code>https://corsproxy.io/?</code>).</p>
+        </div>
+      )}
+
+      {/* PRIMARY: API Sync */}
+      <div className="p-5 bg-white border-2 border-indigo-200 rounded-2xl mb-4 space-y-3">
+        {/* Progress bar */}
+        {(syncing || (syncResults.length > 0 && !syncDone)) && (
+          <div className="space-y-1">
+            <div className="flex justify-between text-xs text-gray-500">
+              <span className="truncate max-w-[240px]">{currentName}</span>
+              <span>{currentIdx}/{resolved.length}</span>
+            </div>
+            <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div className="h-2 bg-indigo-500 rounded-full transition-all duration-300" style={{ width: `${pct}%` }} />
+            </div>
+          </div>
+        )}
+
+        {/* Action buttons */}
+        <div className="flex gap-2">
+          {!syncing && !syncDone && (
+            <button onClick={handleSyncAll} disabled={!tinyToken}
+              className="flex-1 py-3 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-40 flex items-center justify-center gap-2 shadow-md shadow-indigo-200 transition-colors">
+              <Send size={15} /> Enviar {resolved.length} produto{resolved.length !== 1 ? "s" : ""}
+            </button>
+          )}
+          {syncing && (
+            <button onClick={handleStop}
+              className="flex-1 py-3 bg-red-50 border border-red-300 text-red-700 rounded-xl text-sm font-semibold hover:bg-red-100 flex items-center justify-center gap-2 transition-colors">
+              <XCircle size={15} /> Parar envio
+            </button>
+          )}
+          {syncDone && fail > 0 && !syncing && (
+            <button onClick={handleRetryFail}
+              className="flex-1 py-2.5 bg-amber-50 border border-amber-300 text-amber-800 rounded-xl text-sm font-semibold hover:bg-amber-100 flex items-center justify-center gap-2 transition-colors">
+              <Loader size={14} /> Reenviar {fail} com erro
+            </button>
+          )}
+          {syncDone && !syncing && (
+            <button onClick={handleSyncAll} disabled={!tinyToken}
+              className="flex-1 py-2.5 border border-gray-300 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 disabled:opacity-40 flex items-center justify-center gap-2 transition-colors">
+              <Send size={14} /> Reenviar tudo
+            </button>
+          )}
+        </div>
+
+        {/* Summary grid */}
+        {syncDone && (
+          <div className="grid grid-cols-2 gap-2">
+            <div className="p-3 bg-green-50 rounded-xl text-center border border-green-100">
+              <div className="text-2xl font-bold text-green-600">{ok}</div>
+              <div className="text-xs text-green-700 font-medium mt-0.5">Cadastrados</div>
+            </div>
+            <div className={`p-3 rounded-xl text-center border ${fail > 0 ? "bg-red-50 border-red-100" : "bg-gray-50 border-gray-100"}`}>
+              <div className={`text-2xl font-bold ${fail > 0 ? "text-red-600" : "text-gray-400"}`}>{fail}</div>
+              <div className={`text-xs font-medium mt-0.5 ${fail > 0 ? "text-red-700" : "text-gray-400"}`}>Com erro</div>
+            </div>
+          </div>
+        )}
+
+        {/* Per-product results */}
+        {syncResults.length > 0 && (
+          <div className="space-y-1 max-h-52 overflow-y-auto pr-1">
+            {syncResults.map((r, i) => (
+              <div key={i} className={`rounded-lg text-xs ${r._syncOk ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
+                <button className="w-full flex items-center gap-2 px-3 py-1.5 text-left"
+                  onClick={() => !r._syncOk && setExpandedErr(prev => ({ ...prev, [i]: !prev[i] }))}>
+                  {r._syncOk ? <CheckCircle size={12} className="shrink-0" /> : <XCircle size={12} className="shrink-0" />}
+                  <span className="flex-1 truncate font-medium">{r.enriched?.titulo_otimizado || r.produto_fornecedor}</span>
+                  {!r._syncOk && <span className="opacity-60 text-[10px] shrink-0">{expandedErr[i] ? "▲" : "▼"}</span>}
+                </button>
+                {!r._syncOk && expandedErr[i] && (
+                  <div className="px-3 pb-2 text-[11px] opacity-80 break-words">{r._syncErr}</div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* BACKUP: CSV Export */}
+      <details className="mb-5">
+        <summary className="cursor-pointer text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1.5 mb-2 select-none">
+          <FileText size={12} /> Prefere importar por planilha? <span className="underline">Exportar CSV</span>
+        </summary>
+        <div className="p-4 bg-white border border-gray-200 rounded-2xl space-y-2">
+          <p className="text-xs text-gray-500">Gera planilha no formato padrão Tiny ERP para importação manual em <strong>Produtos → Importar Planilha</strong>.</p>
+          {exported && (
+            <div className="p-2.5 bg-green-50 border border-green-200 rounded-xl text-green-700 text-xs flex items-center gap-2">
+              <CheckCircle size={12} /> CSV baixado!
+            </div>
+          )}
+          <button onClick={handleExportCSV}
+            className="w-full py-2.5 border border-gray-300 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 flex items-center justify-center gap-2 transition-colors">
+            <FileText size={14} /> {exported ? "Exportar novamente" : `Baixar CSV (${products.length} produto${products.length !== 1 ? "s" : ""})`}
+          </button>
+        </div>
+      </details>
+
+      <button onClick={onRestart}
+        className="w-full py-3 border border-gray-300 rounded-2xl text-sm font-medium hover:bg-gray-50 flex items-center justify-center gap-2">
+        <Home size={15} /> Novo cadastro
+      </button>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// MAIN APP
+// ─────────────────────────────────────────────
+function App() {
+  const [step, setStep] = useState("upload");
+  const [apiKeys, setApiKeys] = useState(() => {
+    try {
+      const s = localStorage.getItem('mpads_keys');
+      const base = { openai: "", tiny: "", corsProxy: "", tinyClientId: "", tinyClientSecret: "", tinyRefresh: "", tinyExpiry: 0 };
+      if (!s) return base;
+      const k = JSON.parse(s);
+      // Migrate old corsProxy format: "https://corsproxy.io/?https://api.openai.com" → "https://corsproxy.io/?"
+      if (k.corsProxy && /\?https?:\/\//.test(k.corsProxy)) {
+        k.corsProxy = k.corsProxy.replace(/\?.*$/, '?');
+      }
+      return { ...base, ...k };
+    }
+    catch { return { openai: "", tiny: "", corsProxy: "", tinyClientId: "", tinyClientSecret: "", tinyRefresh: "", tinyExpiry: 0 }; }
+  });
+  const [enrichmentRules, setEnrichmentRules] = useState(() => {
+    const def = { aiModel: "gpt-4o", titleTemplate: "", descriptionStyles: [], additionalInstructions: "" };
+    try { const s = localStorage.getItem('mpads_rules'); return s ? { ...def, ...JSON.parse(s) } : def; } catch { return def; }
+  });
+  const [showSettings, setShowSettings] = useState(() => {
+    try { const s = localStorage.getItem('mpads_keys'); if (!s) return true; const k = JSON.parse(s); return !k.openai; } catch { return true; }
+  });
+  const [raw, setRaw] = useState([]);
+  const [columnMap, setColumnMap] = useState({});
+  const [valid, setValid] = useState([]);
+  const [enriched, setEnriched] = useState([]);
+  const [approved, setApproved] = useState([]);
+  const [selectedTagNames, setSelectedTagNames] = useState([]); const [availableTags, setAvailableTags] = useState([]);
+
+  const restart = () => { setStep("upload"); setRaw([]); setColumnMap({}); setValid([]); setEnriched([]); setApproved([]); };
+
+  // Handle OAuth2 callback (page loaded with ?code=...)
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    if (!code) return;
+    window.history.replaceState({}, '', window.location.href.split('?')[0]);
+    const clientId = sessionStorage.getItem('oauth_client_id');
+    if (!clientId) return;
+    let keys = {};
+    try { keys = JSON.parse(localStorage.getItem('mpads_keys') || '{}'); } catch {}
+    const clientSecret = keys.tinyClientSecret || '';
+    const corsProxy = keys.corsProxy || '';
+    exchangeTinyCode(code, clientId, clientSecret, corsProxy)
+      .then(data => {
+        const expiry = Date.now() + ((data.expires_in || 14400) - 60) * 1000;
+        const newKeys = { ...keys, tiny: data.access_token, tinyRefresh: data.refresh_token || '', tinyExpiry: expiry, tinyClientId: clientId };
+        try { localStorage.setItem('mpads_keys', JSON.stringify(newKeys)); } catch {}
+        setApiKeys(newKeys);
+        sessionStorage.removeItem('pkce_verifier');
+        sessionStorage.removeItem('oauth_client_id');
+        setShowSettings(false);
+      })
+      .catch(err => alert('❌ Erro na autenticação Tiny: ' + err.message));
+  }, []);
+
+  const keysConfigured = apiKeys.openai && apiKeys.tiny;
+  const rulesConfigured = enrichmentRules.titleTemplate || enrichmentRules.descriptionStyles.length > 0;
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
+        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-sm">
+              <Package size={18} className="text-white" />
+            </div>
+            <div>
+              <h1 className="font-bold text-gray-900 text-sm leading-none">Machine PADS</h1>
+              <p className="text-xs text-gray-400 leading-none mt-0.5">Cadastro Massivo</p>
+            </div>
+          </div>
+          <button onClick={() => setShowSettings(true)}
+            className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-xl transition-colors">
+            <Settings size={16} />
+            <span className="hidden sm:inline font-medium">Configurações</span>
+            {keysConfigured
+              ? <span className="w-2 h-2 bg-green-500 rounded-full" title="Configurações salvas" />
+              : <span className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" title="Configure as chaves de API" />
+            }
+          </button>
+        </div>
+      </header>
+
+      {/* Main */}
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+        <StepBar current={step} onNavigate={s => setStep(s)} />
+
+        {step === "upload" && (
+          <UploadStep onUpload={(rows, cm) => { setRaw(rows); setColumnMap(cm || {}); setStep("validation"); }} />
+        )}
+        {step === "validation" && (
+          <ValidationStep raw={raw} columnMap={columnMap} onProceed={v => { setValid(v); setStep("enrichment"); }} onBack={() => setStep("upload")} />
+        )}
+        {step === "enrichment" && (
+          <EnrichmentStep products={valid} apiKey={apiKeys.openai} rules={{...enrichmentRules, corsProxy: apiKeys.corsProxy}} onDone={e => { setEnriched(resolveParentChild(e)); setStep("review"); }} onBack={() => setStep("validation")} />
+        )}
+        {step === "review" && (
+          <ReviewStep products={enriched} apiKey={apiKeys.openai} tinyToken={apiKeys.tiny} corsProxy={apiKeys.corsProxy} onDone={(a,t,tags) => { setApproved(a); setSelectedTagNames(t||[]); setAvailableTags(tags||[]); setStep("sync"); }} onBack={() => setStep("enrichment")} />
+        )}
+        {step === "sync" && (
+          <SyncStep products={approved} tinyToken={apiKeys.tiny} corsProxy={apiKeys.corsProxy} onRestart={restart} selectedTagNames={selectedTagNames} availableTags={availableTags} />
+        )}
+      </main>
+
+      {showSettings && (
+        <SettingsModal
+          keys={apiKeys} setKeys={setApiKeys}
+          rules={enrichmentRules} setRules={setEnrichmentRules}
+          onClose={() => setShowSettings(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
+
+  </script>
+
+<!-- ═══ Machine PADS – Tiny API field-mapping fixes (auto-interceptor v6) ═══ -->
+<script id="__mpFixes">
+(function () {
+  'use strict';
+  var _native;
+  function getFrame() {
+    var f = document.getElementById('__mpFixFrame');
+    if (!f) { f = document.createElement('iframe'); f.id = '__mpFixFrame'; f.style.display = 'none'; document.body.appendChild(f); }
+    return f;
+  }
+  function installInterceptor() {
+    if (window.__mpFixInstalled) return;
+    window.__mpFixInstalled = true;
+    window.__brandMap = window.__brandMap || {};
+    window.__mpReqs   = window.__mpReqs   || [];
+    _native = getFrame().contentWindow.fetch.bind(getFrame().contentWindow);
+
+    function loadBrands(token) {
+      if (window.__brandMapLoaded || window.__brandMapLoading) return;
+      window.__brandMapLoading = true;
+      (typeof _native === 'function' ? _native : fetch)('https://corsproxy.io/?url=' + encodeURIComponent('https://api.tiny.com.br/public-api/v3/marcas?limit=100'), {
+        headers: { 'Authorization': token, 'Content-Type': 'application/json' }
+      }).then(function(r){return r.json();}).then(function(d){
+        (d.itens||d.data||[]).forEach(function(b){ const nm=b.descricao||b.nome; if(nm) window.__brandMap[nm.toLowerCase()]=b.id; });  // v24-hf5)
+        window.__brandMapLoaded = true;
+        console.log('[MachinePADS] brandMap:', Object.keys(window.__brandMap).length, 'marcas');
+        window.__brandListData=Object.keys(window.__brandMap).map(function(n){return{id:window.__brandMap[n],descricao:n,nome:n};}); // v24-hf9
+      }).catch(function(){ window.__brandMapLoading = false; });
+    }
+
+    // Pré-carrega marcas imediatamente via localStorage
+    try {
+          var _k = JSON.parse(localStorage.getItem('mpads_keys') || '{}');
+      if (_k.tiny) loadBrands('Bearer ' + _k.tiny);
+    } catch(e) {}
+
+    // Converte número/string de dimensão, retorna undefined se inválido
+    function n(v) {
+      if (v === undefined || v === null || v === '') return undefined;
+      var num = Number(String(v).replace(',', '.'));
+      return isNaN(num) ? undefined : num;
+    }
+
+    // PUT nas variações após criação do produto pai
+    function putVariacoes(parentId, variacoes, camposFixos, token) {
+      var baseUrl = 'https://api.tiny.com.br/public-api/v3/produtos/' + parentId + '/variacoes/';
+      variacoes.forEach(function(v) {
+        if (!v.id) return;
+        var payload = {
+          sku: v.codigo || v.sku,
+          descricao: v.descricao
+        };
+        if (camposFixos.dimensoes) payload.dimensoes = camposFixos.dimensoes;
+        if (camposFixos.marca)     payload.marca     = camposFixos.marca;
+        if (camposFixos.unidade)   payload.unidade   = camposFixos.unidade;
+        if (camposFixos.garantia)    payload.garantia    = camposFixos.garantia;
+        if (camposFixos.tributacao) payload.tributacao = camposFixos.tributacao;
+        if (camposFixos.cest) payload.cest = camposFixos.cest; // v24
+        if (camposFixos.fornecedores) {
+          // v30: codigoProdutoNoFornecedor por variação via mapa EAN/SKU — endpoint correto: PUT /variacoes/{id}
+          var varForn = camposFixos.fornecedores.map(function(f) { return Object.assign({}, f); });
+          var _vCod = null;
+          if (camposFixos._eanCodMap && v.gtin) _vCod = camposFixos._eanCodMap[String(v.gtin)] || null;
+          if (!_vCod && camposFixos._skuCodMap && (v.codigo || v.sku)) _vCod = camposFixos._skuCodMap[v.codigo || v.sku] || null;
+          if (_vCod) varForn.forEach(function(f) { f.codigoProdutoNoFornecedor = _vCod; });
+          payload.fornecedores = varForn;
+        }
+        _native('https://corsproxy.io/?url=' + encodeURIComponent(baseUrl + v.id), {
+          method: 'PUT',
+          headers: { 'Authorization': token, 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).then(function(r) {
+          console.log('[MachinePADS] PUT variação ' + v.id + ': ' + r.status);
+          window.__mpReqs.push({ tipo:'PUT-var', varId:v.id, status:r.status, ts:Date.now() });
+        }).catch(function(e) { console.warn('[MachinePADS] PUT variação erro:', e); });
+      });
+    }
+
+    // FIX 9: Aplica tag de marca (grupo Fornecedores) via Tiny API v3 (v11: _native + proxy dinâmico)
+    // Tag queue para evitar rate limiting (429)
+    var _tagQueue = Promise.resolve();
+    function scheduleTag(pId, tNome, tok, pUrl, gNome) {
+      _tagQueue = _tagQueue.then(function() {
+        return new Promise(function(res) {
+          postTagsMarca(pId, tNome, tok, pUrl, gNome);
+          setTimeout(res, 400);
+        });
+      });
+    }
+    function postTagsMarca(produtoId, marcaNome, token, proxyUrl, grupoNome) {
+      if (!produtoId || !marcaNome) return;
+      var tinyTagBase = 'https://api.tiny.com.br/public-api/v3/produtos/' + produtoId + '/tags';
+      var fullTagUrl = proxyUrl ? proxyUrl + encodeURIComponent(tinyTagBase) : tinyTagBase;
+      var _grupo = grupoNome !== undefined ? grupoNome : 'Fornecedores';
+      var _tagObj = _grupo ? { nome: marcaNome, nomeGrupoTag: _grupo } : { nome: marcaNome };
+      _native(fullTagUrl, {
+        method: 'POST',
+        headers: { 'Authorization': token, 'Content-Type': 'application/json' },
+        body: JSON.stringify([_tagObj])
+      }).then(function(r) {
+        console.log('[MachinePADS] tag "' + marcaNome + '" -> produto ' + produtoId + ': ' + r.status);
+        if (r.status >= 400) { r.text().then(function(txt) { console.warn('[MachinePADS] tag falhou:', txt.substring(0,200)); }); }
+      }).catch(function(e) { console.warn('[MachinePADS] tag erro: ' + e.message); });
+    }
+
+    window.fetch = function(url, opts) {
+      if (typeof url === 'string' && url.includes('tiny')) {
+        opts = Object.assign({ method:'POST', headers:{}, body:null }, opts||{});
+        var token = opts.headers['Authorization'] || opts.headers['authorization'] || '';
+        if (token) { window.__freshToken = token; loadBrands(token); }
+        var _tinyIdx = url.indexOf('https://api.tiny.com.br');
+        var _proxyUrl = _tinyIdx > 0 ? url.substring(0, _tinyIdx) : '';
+        var entry = { url:url, ts:Date.now(), fixes:[] };
+        try {
+          var body = JSON.parse(opts.body || '{}');
+
+          // FIX 1: grade[] no pai para tipo V
+          if (body.tipo === 'V' && body.variacoes && !body.grade) {
+            var gkeys = {};
+            body.variacoes.forEach(function(v){ if(v.grade) v.grade.forEach(function(g){ gkeys[g.chave]=true; }); });
+            body.grade = Object.keys(gkeys);
+            entry.fixes.push('grade');
+          }
+
+          // FIX 2: cest/tributacao.cest -> codigoEspecificadorSubstituicaoTributaria (v27)
+          if (body.cest != null && body.cest !== '') {
+            
+            body.codigoEspecificadorSubstituicaoTributaria = body.codigoEspecificadorSubstituicaoTributaria || String(body.cest); // v27
+            delete body.cest;
+            entry.fixes.push('cest');
+          }
+          if (body.tributacao?.cest) {
+            body.codigoEspecificadorSubstituicaoTributaria = body.codigoEspecificadorSubstituicaoTributaria || String(body.tributacao.cest); // v27
+            delete body.tributacao.cest;
+            entry.fixes.push('cest_trib');
+          }
+
+          // FIX 3: unidadeMedida -> unidade
+          if (body.unidadeMedida !== undefined) {
+            body.unidade = body.unidadeMedida;
+            delete body.unidadeMedida;
+            entry.fixes.push('unidade');
+          }
+
+          // FIX 4: garantia -> "N meses"
+          if (body.garantia != null && body.garantia !== '') {
+            var gs = String(body.garantia).trim();
+            if (!gs.toLowerCase().includes('mes')) body.garantia = gs + ' meses';
+            entry.fixes.push('garantia:' + body.garantia);
+          }
+
+          // FIX 5: normalizar nomes de coluna com unidade + montar dimensoes
+          var colAliases = {
+            'Peso (Kg)':'peso','Peso (kg)':'peso','peso (kg)':'peso','Peso (KG)':'peso','Peso':'peso',
+            'Altura (cm)':'altura','Altura (CM)':'altura',
+            'Largura (cm)':'largura','Largura (CM)':'largura',
+            'Comprimento (cm)':'comprimento','Comprimento (CM)':'comprimento'
+          };
+          Object.keys(colAliases).forEach(function(alias) {
+            if (body[alias] !== undefined) { body[colAliases[alias]] = body[alias]; delete body[alias]; }
+          });
+          var dimKeys = ['largura','altura','comprimento','peso','pesoBruto','pesoLiquido'];
+          if (dimKeys.some(function(k){ return body[k] !== undefined && body[k] > 0; })) { // v24
+            body.dimensoes = {
+              largura:     n(body.largura),
+              altura:      n(body.altura),
+              comprimento: n(body.comprimento),
+              pesoLiquido: body.pesoLiquido !== undefined ? n(body.pesoLiquido) : n(body.peso),
+              pesoBruto:   body.pesoBruto   !== undefined ? n(body.pesoBruto)   : n(body.peso)
+            };
+            Object.keys(body.dimensoes).forEach(function(k){ if(body.dimensoes[k]===undefined) delete body.dimensoes[k]; });
+            dimKeys.forEach(function(k){ delete body[k]; });
+            entry.fixes.push('dimensoes:' + JSON.stringify(body.dimensoes));
+          }
+
+          // FIX 6: marca via brandMap
+          if (!body.marca && body.marcaId) {
+          body.marca = { id: Number(body.marcaId) }; delete body.marcaId; entry.fixes.push('marcaId:' + body.marca.id);
+        } else if (!body.marca && (body.marcaNome || body.descricao) && Object.keys(window.__brandMap).length > 0) { // v24-hf3
+            var nl = ((body.marcaNome||'') + ' ' + (body.descricao||'')).toLowerCase(), best = null; // v24-hf3
+            Object.keys(window.__brandMap).forEach(function(nm) {
+              if (nl.includes(nm) && (!best || nm.length > best.nome.length)) best = { nome:nm, id:window.__brandMap[nm] };
+            });
+            if (best) { body.marca = { id: best.id }; entry.fixes.push('marca:' + best.nome); }
+          }
+                  // FIX 6 cont: fallback por nome se sem ID; limpa campos internos (v24-hf5)
+                          if (!body.marca && body.marcaNome) { body.marca = { descricao: body.marcaNome }; entry.fixes.push('marca-descricao:' + body.marcaNome); }
+                                  delete body.marcaNome; delete body.marcaId;  // v24-hf5: limpar campos internos
+
+          // FIX 7: fornecedor
+          if (body.fornecedorId) {
+            body.fornecedores = [{ id: Number(body.fornecedorId), padrao: true, ...(body.codigoFornecedor ? { codigoProdutoNoFornecedor: body.codigoFornecedor } : {}) }];
+            delete body.fornecedorId;
+            delete body.codigoFornecedor;
+            entry.fixes.push('fornecedorId:' + body.fornecedores[0].id);
+          }
+
+          // FIX 8: tributacao.classeIPI = "999" (v24-hf4: movido para antes da serialização)
+          body.tributacao = Object.assign({}, body.tributacao || {}, { classeIPI: '999' });
+          entry.fixes.push('tributacao.classeIPI:999');
+
+          entry.sku  = body.sku;
+          entry.tipo = body.tipo;
+          opts.body  = JSON.stringify(body);
+          // FIX 7: após POST de tipo V bem-sucedido, PUT dimensoes/marca/unidade/garantia em cada variação
+          if (body.tipo === 'V' && opts.method !== 'PUT') {
+            var camposParaVariacoes = {};
+            if (body.dimensoes) camposParaVariacoes.dimensoes = body.dimensoes;
+            if (body.marca)     camposParaVariacoes.marca     = body.marca;
+            if (body.unidade)   camposParaVariacoes.unidade   = body.unidade;
+            if (body.garantia)    camposParaVariacoes.garantia    = body.garantia;
+            if (body.tributacao) camposParaVariacoes.tributacao = body.tributacao;
+            if (body.cest) camposParaVariacoes.cest = body.cest; // v24
+            if (body.fornecedores) camposParaVariacoes.fornecedores = body.fornecedores;
+            if (body._eanCodMap) { camposParaVariacoes._eanCodMap = body._eanCodMap; delete body._eanCodMap; } // v29
+            if (body._skuCodMap) { camposParaVariacoes._skuCodMap = body._skuCodMap; delete body._skuCodMap; } // v29
+
+            return _native(url, opts).then(function(resp) {
+              resp.clone().text().then(function(t) {
+                entry.response = t; entry.status = resp.status;
+                if ((resp.status === 200 || resp.status === 201) && Object.keys(camposParaVariacoes).length > 0) {
+                  try {
+                    var rd = JSON.parse(t);
+                    if (rd.id && rd.variacoes && rd.variacoes.length > 0) {
+                      entry.fixes.push('variacoes-put:' + rd.variacoes.length);
+                      putVariacoes(rd.id, rd.variacoes, camposParaVariacoes, token);
+                    }
+                  } catch(e) {}
+                }
+              // FIX 9: tag de marca (tipo V)
+              if (resp.status >= 200 && resp.status < 300 && body.marcaNome) {
+                try { var rdT = JSON.parse(t); if (rdT.i) { scheduleTag(rdT.id, body.marcaNome, token, _proxyUrl); entry.fixes.push('tag:'+body.marcaNome); if (rdT.variacoes && rdT.variacoes.length) { rdT.variacoes.forEach(function(v){ if(v.id) scheduleTag(v.id, body.marcaNome, token, _proxyUrl); }); entry.fixes.push('tag-var:'+rdT.variacoes.length); } } } catch(e) {}
+              }
+              // FIX 9b: tag extra (cross_docking)
+              if (resp.status >= 200 && resp.status< 300) {
+              try { var rdTE = JSON.parse(t); if (rdTE.id) { if(body.tagExtraNome){scheduleTag(rdTE.id, body.tagExtraNome, token, _proxyUrl, 'Prateleira Infinita'); entry.fixes.push('tag-extra:'+body.tagExtraNome);} if (rdTE.variacoes && rdTE.variacoes.length) { rdTE.variacoes.forEach(function(v,idx){ if(v.id){var _ch=children[idx];var _chCd=_ch?(_ch.cross_docking||'').trim():'';if(_chCd&&_chCd.toLowerCase()!=='não'){scheduleTag(v.id,_chCd,token,_proxyUrl,'Prateleira Infinita');entry.fixes.push('tag-extra:'+_chCd);}} }); } } } catch(e) {}
+              }
+              });
+              return resp;
+            });
+          }
+
+        } catch(e) { entry.err = e.message; }
+        window.__mpReqs.push(entry);
+        return _native(url, opts).then(function(resp) {
+          resp.clone().text().then(function(t) {
+            entry.response = t; entry.status = resp.status;
+            // FIX 9: tag de marca (produto simples)
+            if (resp.status >= 200 && resp.status < 300 && body.marcaNome && opts.method !== 'PUT') {
+              try { var rdS = JSON.parse(t); if (rdS.id) { scheduleTag(rdS.id, body.marcaNome, token, _proxyUrl); entry.fixes.push('tag:'+body.marcaNome); } } catch(e) {}
+            }
+            // FIX 9b: tag extra (cross_docking)
+            if (resp.status >= 200 && resp.status < 300 ) {
+              try { var rdSE = JSON.parse(t); if (rdSE.id && body.tagExtraNome) { scheduleTag(rdSE.id, body.tagExtraNome, token, _proxyUrl, 'Prateleira Infinita'); entry.fixes.push('tag-extra:'+body.tagExtraNome); } } catch(e) {}
+            }
+          });
+          return resp;Page_UpPage_Up
+        });
+      }
+      return _native(url, opts);
+    };
+    console.log('[MachinePADS] interceptor v7 instalado – PUT automático em variações + tributacao.classeIPI');
+    (function(){var _oF=window.fetch;window.fetch=function(u,o){var s=u instanceof Request?u.url:String(u||'');if(s.indexOf('marcas')!==-1&&(!o||!o.method||'GET'===o.method.toUpperCase())&&window.__brandListData&&window.__brandListData.length>0){return Promise.resolve(new Response(JSON.stringify({itens:window.__brandListData}),{status:200,headers:{'Content-Type':'application/json'}}));}return _oF.apply(this,arguments);};}()); // v24-hf9-b
+  }
+  if (document.readyState === 'complete') { installInterceptor(); }
+  else { window.addEventListener('load', installInterceptor); }
+})();
+</script>
+</body>
+</html>
