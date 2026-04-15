@@ -457,17 +457,7 @@ Retorne as três seções claramente separadas.`;
    Exemplos: "Parafusadeira/Furadeira 20V 1/2pol PFV120 Vonder" | "Serra Mármore 1400W 110mm SM1400 Vonder" | "Esmerilhadeira Angular 9pol 2200W GWS2200 Bosch"
    Regras: máx 60 chars • sem pipes "|" nem aspas no conteúdo • inclua potência/voltagem/capacidade quando relevante • inclua código de referência do modelo quando disponível • termine com a marca • use abreviações: "pol" para polegadas, "W" para watts, "V" para volts`;
 
-  const STYLE_LABELS = {
-    tecnico: "tom técnico com foco em especificações detalhadas",
-    marketplace: "linguagem otimizada para marketplace com palavras-chave estratégicas",
-    beneficios: "destaque os benefícios práticos para o usuário final",
-    garantia: "sempre mencione a garantia do produto",
-    origem: "sempre mencione a origem (importado/nacional)",
-  };
-  const styleText = descriptionStyles.length
-    ? `Estilo: ${descriptionStyles.map(s => STYLE_LABELS[s] || s).join("; ")}.`
-    : "Descrição clara, completa e profissional.";
-  const extraInstructions = additionalInstructions.trim()
+    const extraInstructions = additionalInstructions.trim()
     ? `\nInstruções adicionais: ${additionalInstructions.trim()}` : "";
 
   // v37: variáveis pré-calculadas para evitar aninhamento de templates
@@ -943,14 +933,6 @@ const TITLE_VARIABLES = [
   { label: "{Especificação}", desc: "Spec principal" },
 ];
 
-const DESCRIPTION_STYLES = [
-  { id: "tecnico", label: "Tom técnico", desc: "Foco em especificações detalhadas" },
-  { id: "marketplace", label: "Otimizado para marketplace", desc: "Palavras-chave estratégicas" },
-  { id: "beneficios", label: "Foco em benefícios", desc: "Vantagens práticas para o usuário" },
-  { id: "garantia", label: "Mencionar garantia", desc: "Inclui info de garantia sempre" },
-  { id: "origem", label: "Mencionar origem", desc: "Destaca importado / nacional" },
-];
-
 const AI_MODELS = [
   { id: "gpt-4o", label: "GPT-4o", desc: "Melhor qualidade, mais lento" },
   { id: "gpt-4o-mini", label: "GPT-4o mini", desc: "Rápido e econômico" },
@@ -1053,11 +1035,6 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
 
   const setKey = (k, v) => setLocalKeys(p => ({ ...p, [k]: v }));
   const setRule = (k, v) => setLocalRules(p => ({ ...p, [k]: v }));
-
-  const toggleStyle = (id) => {
-    const curr = localRules.descriptionStyles || [];
-    setRule("descriptionStyles", curr.includes(id) ? curr.filter(s => s !== id) : [...curr, id]);
-  };
 
   const insertVariable = (v) => {
     const el = titleRef.current;
@@ -1235,28 +1212,6 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
                 {!localRules.titleTemplate && (
                   <p className="text-xs text-gray-400 mt-1.5 italic">Sem padrão definido — a IA criará o título livremente.</p>
                 )}
-              </div>
-
-              {/* Description style */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Estilo da descrição</label>
-                <div className="space-y-2">
-                  {DESCRIPTION_STYLES.map(s => {
-                    const active = (localRules.descriptionStyles || []).includes(s.id);
-                    return (
-                      <button key={s.id} onClick={() => toggleStyle(s.id)}
-                        className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-all ${active ? "border-indigo-400 bg-indigo-50" : "border-gray-200 hover:border-gray-300"}`}>
-                        <div className={`w-4 h-4 rounded flex items-center justify-center shrink-0 border-2 transition-all ${active ? "bg-indigo-600 border-indigo-600" : "border-gray-300"}`}>
-                          {active && <CheckCircle size={10} className="text-white" />}
-                        </div>
-                        <div>
-                          <div className="text-sm font-medium text-gray-800">{s.label}</div>
-                          <div className="text-xs text-gray-400">{s.desc}</div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
               </div>
 
               {/* Additional instructions */}
