@@ -2801,8 +2801,9 @@ function App() {
     }
     function _check() {
       const _k = JSON.parse(localStorage.getItem("mpads_keys") || "{}");
-      if (!_k.tinyExpiry || !_k.tinyRefresh) return;
-      if (Date.now() > _k.tinyExpiry - 15 * 60 * 1000) _doRefresh();
+      // v40: dispara refresh se tiny vazio (apos importar) OU expirando
+      if (!_k.tinyRefresh) return;
+      if (!_k.tiny || !_k.tinyExpiry || Date.now() > _k.tinyExpiry - 15 * 60 * 1000) _doRefresh();
     }
     _check(); // verificar no carregamento
     const _iv = setInterval(_check, 10 * 60 * 1000); // a cada 10 min
