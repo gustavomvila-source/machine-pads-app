@@ -496,30 +496,35 @@ ${_prompt1 || `1. "sku_interno": SKU em MAIÚSCULAS com hífens, APENAS letras/n
 
 3. "titulo_otimizado": ${titleInstruction}
 
-${enrichDescricao !== false ? "" : "ATENÇÃO: retorne string vazia \"\"\ para descricao.\n"}4. "descricao": Descrição HTML COMPLETA do produto — será importada como "Descrição complementar" no Tiny ERP e enviada ao e-commerce/marketplace como descrição longa.
-   ${styleText}${extraInstructions}
+${enrichDescricao !== false ? "" : "ATENÇÃO: retorne string vazia \"\"\ para descricao.\n"}4. "descricao": Crie a descricao seguindo o PADRAO DOMUS para e-commerce.
 
-   ESTRUTURA OBRIGATÓRIA (6 blocos, nesta ordem, em HTML limpo com <h3>, <p>, <ul>, <li>, <strong>):
+   Formato HTML com <h3>, <p>, <strong>. PROIBIDO <ul> ou <li>.
 
-   BLOCO 1 — <h3>Sobre o Produto</h3>
-   Parágrafo de abertura comercial (4-6 linhas): o que é o produto, para que serve, para quem é indicado. Tom profissional e persuasivo. Contextualize o valor para o comprador — não apenas "é uma furadeira", mas "é a ferramenta ideal para quem precisa de X com performance Y".
+   ESTRUTURA OBRIGATORIA (nesta ordem):
 
-   BLOCO 2 — <h3>Principais Aplicações</h3>
-   Lista <ul> com 5-7 aplicações práticas e casos de uso reais, específicos ao produto.
+   <h3>Descricao</h3>
+   Texto comercial (3-5 paragrafos): produto, beneficios reais, uso, publico ideal. Tom profissional e persuasivo.
 
-   BLOCO 3 — <h3>Diferenciais e Benefícios</h3>
-   Lista <ul> com 4-6 diferenciais competitivos: durabilidade, ergonomia, tecnologia, segurança, rendimento, facilidade de uso, economia de energia, certificações. Seja específico — não use "alta qualidade" genérico.
+   <h3>Destaques do Produto</h3>
+   Exatamente 3 diferenciais, numerados:
+   <p><strong>1. [Diferencial]</strong></p><p>Explicacao.</p>
+   <p><strong>2. [Diferencial]</strong></p><p>Explicacao.</p>
+   <p><strong>3. [Diferencial]</strong></p><p>Explicacao.</p>
 
-   BLOCO 4 — <h3>Especificações Técnicas</h3>
-   Lista <ul> completa com TODOS os atributos técnicos relevantes: potência (W), tensão (V), velocidade (RPM), torque, capacidade, disco/bit incluído, dimensões, peso, nível de ruído, classe de proteção IP, certificações (INMETRO, CE, UL). Use <strong>Nome do atributo:</strong> Valor.
+   <h3>Informacoes Tecnicas</h3>
+   <p><strong>Atributo:</strong> Valor</p> (um por linha, sem ul/li)
 
-   BLOCO 5 — <h3>Conteúdo da Embalagem</h3>
-   Lista <ul> com os itens inclusos na embalagem (infira com base no tipo de produto se não especificado).
+   <h3>Conteudo da Embalagem</h3>
+   <p>1. Item</p> (um por linha)
 
-   BLOCO 6 — Parágrafo de fechamento com CTA (2-3 linhas):
-   Reforce o benefício principal, crie urgência ou confiança (garantia, suporte, qualidade), e termine com um call-to-action de compra. Ex: "Invista em performance e durabilidade. Adquira agora a [Produto] [Marca] e tenha à disposição a ferramenta que profissionais confiam."
+   <h3>Garantia</h3>
+   <p>3 meses de garantia.</p>
 
-   REQUISITOS: mínimo 400 palavras • use apenas tags HTML básicas (<h3>, <p>, <ul>, <li>, <strong>) • sem inline CSS • sem classes • inclua palavras-chave naturalmente para SEO sem forçar • conteúdo deve informar E convencer
+   <p>[Frase de incentivo a compra, profissional, sem emojis]</p>
+
+   SE KIT: integre numa unica descricao, explique beneficios do conjunto, separe informacoes tecnicas por produto.
+
+   REGRAS: profissional e comercial • sem emojis • sem ul/li • nao inventar • sem linguagem informal
 
 ${_seoBlock}
 
@@ -2312,9 +2317,18 @@ React.useEffect(() => {
 
           <div>
             <label className="block text-xs font-semibold text-gray-600 mb-1.5">Descrição (HTML) <span className="font-normal text-gray-400">→ exportada como "Descrição complementar" no Tiny</span></label>
-            <textarea value={cur.enriched?.descricao || ""} onChange={e => updEnr("descricao", e.target.value)}
-              rows={7} className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
-            <p className="text-xs text-gray-400 mt-1">{(cur.enriched?.descricao || "").length} chars — estrutura modular com especificações técnicas, benefícios e CTA</p>
+            {cur.enriched?.descricao ? (
+              <div className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-white max-h-72 overflow-y-auto"
+                dangerouslySetInnerHTML={{__html: cur.enriched.descricao}} />
+            ) : (
+              <div className="text-xs text-gray-400 italic p-3 border border-dashed border-gray-200 rounded-xl">Sem descricao gerada.</div>
+            )}
+            <details className="mt-1">
+              <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-600 select-none">✏️ Editar HTML bruto</summary>
+              <textarea value={cur.enriched?.descricao || ""} onChange={e => updEnr("descricao", e.target.value)}
+                rows={5} className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none mt-1" />
+            </details>
+            <p className="text-xs text-gray-400 mt-1">{(cur.enriched?.descricao || "").length} chars — padrao DOMUS</p>
           </div>
 
           {/* SEO fields */}
