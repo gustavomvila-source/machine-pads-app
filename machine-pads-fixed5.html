@@ -470,7 +470,10 @@ Retorne as três seções claramente separadas.`;
   const extraInstructions = additionalInstructions.trim()
     ? `\nInstruções adicionais: ${additionalInstructions.trim()}` : "";
 
-  const _skipSku=!!product.sku_interno; const _skipVar=!!product.variacao;
+  // v37: variáveis pré-calculadas para evitar aninhamento de templates
+  const _prompt1=product.sku_interno ? '1. "sku_interno": Use exatamente "' + product.sku_interno + '" (da planilha — retorne sem alterar).' : null;
+  const _prompt7=product.variacao ? '7. "variacoes": Use exatamente "' + product.variacao + '" (da planilha — retorne sem alterar).' : null;
+  const _seoBlock=enrichSeo !== false ? '\n\n5. "titulo_seo": Título SEO (máx 70 chars). Palavra-chave principal + marca. Ex: "Serra Mármore 1400W 220V Vonder SM-1400 Disco 110mm"\n\n6. "descricao_seo": Meta description SEO (máx 160 chars) descrevendo o produto para buscadores.' : '';
   const prompt = `Você é especialista em cadastro de produtos para e-commerce brasileiro.
 Com base nos dados abaixo, gere em PORTUGUÊS DO BRASIL todos os campos para o Tiny ERP.
 
@@ -479,7 +482,7 @@ ${webContext || "(pesquisa não disponível — use seu conhecimento)"}
 
 INSTRUÇÕES DE GERAÇÃO:
 
-1. "sku_interno": ${_skipSku ? `Use exatamente "${product.sku_interno}" (da planilha).` : `SKU em MAIÚSCULAS com hífens, APENAS letras/números/hífens (sem @!.%'˜=+ ou outros especiais), máx 32 caracteres.
+${_prompt1 || `1. "sku_interno": SKU em MAIÚSCULAS com hífens, APENAS letras/números/hífens (sem @!.%'˜=+ ou outros especiais), máx 32 caracteres.
    Padrão: [CATEG]-[SPEC]-[MODELO]-[MARCA][-VARIAÇÃO]
    Exemplos: "LAV-1200W-LK1305-KALA-127V", "SER-1400W-SM1400-VOND-220V", "FUR-710W-HP0704-BOSH"
    Use abreviações: LAV=Lavadora, SER=Serra, FUR=Furadeira, PAR=Parafusadeira, ESM=Esmerilhadeira, LIX=Lixadeira, AMP=Amplificador, GER=Gerador, POL=Poliadeira, etc.
@@ -493,7 +496,7 @@ INSTRUÇÕES DE GERAÇÃO:
 
 3. "titulo_otimizado": ${titleInstruction}
 
-${enrichDescricao !== false ? `${enrichDescricao !== false ? `${enrichDescricao !== false ? `4. "descricao": Descrição HTML COMPLETA do produto — será importada como "Descrição complementar" no Tiny ERP e enviada ao e-commerce/marketplace como descrição longa.
+${enrichDescricao !== false ? "" : "ATENÇÃO: retorne string vazia \"\"\ para descricao.\n"}4. "descricao": Descrição HTML COMPLETA do produto — será importada como "Descrição complementar" no Tiny ERP e enviada ao e-commerce/marketplace como descrição longa.
    ${styleText}${extraInstructions}
 
    ESTRUTURA OBRIGATÓRIA (6 blocos, nesta ordem, em HTML limpo com <h3>, <p>, <ul>, <li>, <strong>):
@@ -516,15 +519,13 @@ ${enrichDescricao !== false ? `${enrichDescricao !== false ? `${enrichDescricao 
    BLOCO 6 — Parágrafo de fechamento com CTA (2-3 linhas):
    Reforce o benefício principal, crie urgência ou confiança (garantia, suporte, qualidade), e termine com um call-to-action de compra. Ex: "Invista em performance e durabilidade. Adquira agora a [Produto] [Marca] e tenha à disposição a ferramenta que profissionais confiam."
 
-   REQUISITOS: mínimo 400 palavras • use apenas tags HTML básicas (<h3>, <p>, <ul>, <li>, <strong>) • sem inline CSS • sem classes • inclua palavras-chave naturalmente para SEO sem forçar • conteúdo deve informar E convencer` : ''}` : ''}` : ''}
+   REQUISITOS: mínimo 400 palavras • use apenas tags HTML básicas (<h3>, <p>, <ul>, <li>, <strong>) • sem inline CSS • sem classes • inclua palavras-chave naturalmente para SEO sem forçar • conteúdo deve informar E convencer
 
-${enrichSeo !== false ? `5. "titulo_seo": Título SEO (máx 70 chars). Palavra-chave principal + marca. Ex: "Serra Mármore 1400W 220V Vonder SM-1400 Disco 110mm"
+${_seoBlock}
 
-6. "descricao_seo": Meta description SEO (máx 160 chars) descrevendo o produto para buscadores.` : ''}` : ''}
+${_prompt7 || `7. "variacoes": Se tipo_de_produto for "K" (variante filho), retorne "Atributo: valor" (ex: "Voltagem: 127V"). Para "S" ou "V", retorne "".`}
 
-7. "variacoes": ${_skipVar ? `Use exatamente "${product.variacao}" (da planilha).` : `Se tipo_de_produto for "K" (variante filho), retorne "Atributo: valor" (ex: "Voltagem: 127V"). Para "S" ou "V", retorne "".`}
-
-Retorne APENAS JSON válido com exatamente estas chaves: ${[!_skipSku&&"sku_interno","cest","titulo_otimizado",enrichDescricao!==false&&"descricao",enrichSeo!==false&&"titulo_seo",enrichSeo!==false&&"descricao_seo",!_skipVar&&"variacoes"].filter(Boolean).join(", ")}.
+Retorne APENAS JSON válido com exatamente estas chaves: ${[!product.sku_interno&&"sku_interno","cest","titulo_otimizado","descricao",enrichSeo!==false&&"titulo_seo",enrichSeo!==false&&"descricao_seo",!product.variacao&&"variacoes"].filter(Boolean).join(", ")}.
 
 DADOS DO PRODUTO:
 Nome: ${product.produto_fornecedor}
@@ -1176,19 +1177,13 @@ function SettingsModal({ keys, setKeys, rules, setRules, onClose }) {
                 </div>
               </div>
 
-              {/* v37: Campos a gerar com IA */}
+              {/* v37: campos IA */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Campos a gerar com IA</label>
                 <p className="text-xs text-gray-400 mb-3">Desmarque para pular e acelerar o enriquecimento.</p>
                 <div className="space-y-2">
-                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                    <input type="checkbox" checked={localRules.enrichDescricao != false} onChange={e => setRule("enrichDescricao", e.target.checked)} className="rounded" />
-                    <span><strong>Descrição HTML</strong> <span className="text-gray-400 text-xs">(mais lento — ~60% do tempo)</span></span>
-                  </label>
-                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                    <input type="checkbox" checked={localRules.enrichSeo != false} onChange={e => setRule("enrichSeo", e.target.checked)} className="rounded" />
-                    <span><strong>Título e Descrição SEO</strong> <span className="text-gray-400 text-xs">(~20% do tempo)</span></span>
-                  </label>
+                  <label className="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" checked={localRules.enrichDescricao != false} onChange={e => setRule("enrichDescricao", e.target.checked)} className="rounded" /><span><strong>Descrição HTML</strong><span className="text-gray-400 text-xs ml-1">(~60% do tempo)</span></span></label>
+                  <label className="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" checked={localRules.enrichSeo != false} onChange={e => setRule("enrichSeo", e.target.checked)} className="rounded" /><span><strong>SEO</strong><span className="text-gray-400 text-xs ml-1">(~20% do tempo)</span></span></label>
                 </div>
               </div>
 
