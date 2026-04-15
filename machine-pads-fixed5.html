@@ -2773,6 +2773,30 @@ function App() {
       .catch(err => alert('❌ Erro na autenticação Tiny: ' + err.message));
   }, []);
 
+  // v38: auto-refresh do token Tiny — verifica a cada 10 min, renova se expira em < 15 min
+  React.useEffect(() => {
+    async function _doRefresh() {
+      try {
+        const _k = JSON.parse(localStorage.getItem("mpads_keys") || "{}");
+        if (!_k.tinyRefresh || !_k.tinyClientId) return;
+        const _data = await refreshTinyTokenFn(_k.tinyRefresh, _k.tinyClientId, _k.tinyClientSecret || "", _k.corsProxy || "");
+        const _exp = Date.now() + (_data.expires_in || 3600) * 1000;
+        const _nk = { ..._k, tiny: _data.access_token, tinyRefresh: _data.refresh_token || _k.tinyRefresh, tinyExpiry: _exp };
+        localStorage.setItem("mpads_keys", JSON.stringify(_nk));
+        setApiKeys(_nk);
+        console.log("[MPADS] Token Tiny renovado automaticamente — expira às", new Date(_exp).toLocaleTimeString("pt-BR"));
+      } catch(e) { console.warn("[MPADS] Auto-refresh falhou:", e.message); }
+    }
+    function _check() {
+      const _k = JSON.parse(localStorage.getItem("mpads_keys") || "{}");
+      if (!_k.tinyExpiry || !_k.tinyRefresh) return;
+      if (Date.now() > _k.tinyExpiry - 15 * 60 * 1000) _doRefresh();
+    }
+    _check(); // verificar no carregamento
+    const _iv = setInterval(_check, 10 * 60 * 1000); // a cada 10 min
+    return () => clearInterval(_iv);
+  }, []);
+
   const keysConfigured = apiKeys.openai && apiKeys.tiny;
   const rulesConfigured = enrichmentRules.titleTemplate || enrichmentRules.descriptionStyles.length > 0;
 
