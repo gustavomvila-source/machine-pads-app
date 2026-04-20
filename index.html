@@ -89,33 +89,6 @@ const STEPS = ["upload", "validation", "enrichment", "review", "sync"];
 // ─────────────────────────────────────────────
 // MARKETPLACE CONFIG
 // ─────────────────────────────────────────────
-const MARKETPLACES = [
-  {
-    id: "mercadolivre", label: "Mercado Livre", icon: "🛒", limit: 60,
-    rules: "Máx 60 chars. Formato: Marca + Produto + Spec principal + Voltagem. Sem adjetivos (melhor, incrível). Sem pontuação final. Sem repetição de palavras. Tudo em português claro.",
-  },
-  {
-    id: "shopee", label: "Shopee", icon: "🛍️", limit: 120,
-    rules: "Máx 120 chars. Comece com a palavra-chave principal (produto). Inclua modelo, specs e marca. Pode usar hífen como separador. Linguagem direta e objetiva.",
-  },
-  {
-    id: "amazon", label: "Amazon", icon: "📦", limit: 200,
-    rules: "Máx 200 chars. Formato: Marca + Produto + Modelo + Specs detalhadas. Use vírgula ou travessão como separadores. Não use CAPS excessivo. Sem preços ou promoções. Português formal.",
-  },
-  {
-    id: "magalu", label: "Magalu", icon: "🏪", limit: 120,
-    rules: "Máx 120 chars. Linguagem acessível e descritiva. Inclua marca e principais características. Público amplo, não apenas técnico.",
-  },
-  {
-    id: "tiktok", label: "TikTok Shop", icon: "🎵", limit: 100,
-    rules: "Máx 100 chars. Destaque o benefício principal primeiro. Tom mais informal e envolvente. Mencione o diferencial do produto. Evite jargão técnico excessivo.",
-  },
-  {
-    id: "madeiramadeira", label: "Madeira Madeira", icon: "🪵", limit: 120,
-    rules: "Máx 120 chars. Tom técnico e detalhado. Inclua material, acabamento ou especificação construtiva quando relevante. Marca + produto + specs completas.",
-  },
-];
-
 // ─────────────────────────────────────────────
 // COLUMN RESOLUTION
 // Maps various real-world column name variations → canonical internal names
@@ -492,7 +465,7 @@ ${enrichDescricao !== false ? "" : "ATENÇÃO: retorne string vazia \"\"\ para d
 
    ESTRUTURA OBRIGATORIA (nesta ordem):
 
-   <h3>Descricao</h3>
+   <h3>Descrição</h3>
    Texto comercial (3-5 paragrafos): produto, beneficios reais, uso, publico ideal. Tom profissional e persuasivo.
 
    <h3>Destaques do Produto</h3>
@@ -501,10 +474,10 @@ ${enrichDescricao !== false ? "" : "ATENÇÃO: retorne string vazia \"\"\ para d
    <p><strong>2. [Diferencial]</strong></p><p>Explicacao.</p>
    <p><strong>3. [Diferencial]</strong></p><p>Explicacao.</p>
 
-   <h3>Informacoes Tecnicas</h3>
+   <h3>Informações Técnicas</h3>
    <p><strong>Atributo:</strong> Valor</p> (um por linha, sem ul/li)
 
-   <h3>Conteudo da Embalagem</h3>
+   <h3>Conteúdo da Embalagem</h3>
    <p>1. Item</p> (um por linha)
 
    <h3>Garantia</h3>
@@ -673,7 +646,7 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
     // ── Identificação ──────────────────────────────────────
     nome:           product.enriched?.titulo_otimizado || product.produto_fornecedor,
     sku:            product.sku_interno || product.enriched?.sku_interno || product.codigo_fornecedor || "", // v33: planilha > IA
-    ean:            String(product.ean || ""),
+    gtin:           String(product.ean || "").replace(/\D/g, "") || undefined,
     situacao:       "A",
     tipo:           tipoApi,
 
@@ -2198,42 +2171,6 @@ React.useEffect(() => {
       {/* Tab: Content */}
       {activeTab === "content" && (
         <div className="space-y-4">
-          {/* Marketplace titles table */}
-          {cur.enriched?.titulos && Object.keys(cur.enriched.titulos).length > 0 && (
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-2">Títulos por Marketplace</label>
-              <div className="border border-gray-200 rounded-xl overflow-hidden">
-                {MARKETPLACES.filter(mp => cur.enriched.titulos[mp.id] !== undefined).map((mp, i) => {
-                  const title = cur.enriched.titulos[mp.id] || "";
-                  const pct = Math.min(100, Math.round((title.length / mp.limit) * 100));
-                  const over = title.length > mp.limit;
-                  return (
-                    <div key={mp.id} className={`px-3 py-2.5 ${i > 0 ? "border-t border-gray-100" : ""}`}>
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <span className="text-sm">{mp.icon}</span>
-                        <span className="text-xs font-semibold text-gray-600 w-28 shrink-0">{mp.label}</span>
-                        <input
-                          type="text"
-                          value={title}
-                          onChange={e => updEnr("titulos", { ...cur.enriched.titulos, [mp.id]: e.target.value })}
-                          className={`flex-1 text-xs px-2 py-1 rounded-lg border focus:outline-none focus:ring-1 ${over ? "border-red-300 focus:ring-red-400 bg-red-50" : "border-gray-200 focus:ring-indigo-400"}`}
-                        />
-                        <span className={`text-xs font-mono w-14 text-right shrink-0 ${over ? "text-red-600 font-bold" : "text-gray-400"}`}>
-                          {title.length}/{mp.limit}
-                        </span>
-                      </div>
-                      <div className="ml-[120px] h-1 bg-gray-100 rounded-full overflow-hidden">
-                        <div
-                          className={`h-1 rounded-full transition-all ${over ? "bg-red-400" : pct > 85 ? "bg-amber-400" : "bg-green-400"}`}
-                          style={{ width: `${Math.min(100, pct)}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
 
           {/* Generic title */}
           <div>
@@ -2245,15 +2182,14 @@ React.useEffect(() => {
           </div>
 
           {/* SKU Interno + CEST + Variações */}
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">SKU Interno</label>
-            <input type="text" value={cur.sku_interno || cur.enriched?.sku_interno || ""}
-              onChange={e => { upd("sku_interno", e.target.value); updEnr("sku_interno", e.target.value); }}
-              placeholder="LAV-1200W-LK1305-KALA-127V"
-              className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">SKU Interno</label>
+              <input type="text" value={cur.sku_interno || cur.enriched?.sku_interno || ""}
+                onChange={e => { upd("sku_interno", e.target.value); updEnr("sku_interno", e.target.value); }}
+                placeholder="LAV-1200W-LK1305-KALA-127V"
+                className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            </div>
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1.5">CEST</label>
               <input type="text" value={cur.enriched?.cest || ""}
@@ -2266,14 +2202,14 @@ React.useEffect(() => {
               <input type="text" value={cur.variacao || cur.enriched?.variacoes || ""}
                 onChange={e => { upd("variacao", e.target.value); updEnr("variacoes", e.target.value); }}
                 placeholder="Voltagem: 127V"
-                className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             </div>
           </div>
 
           <div>
             <label className="block text-xs font-semibold text-gray-600 mb-1.5">Descrição (HTML) <span className="font-normal text-gray-400">→ exportada como "Descrição complementar" no Tiny</span></label>
             {cur.enriched?.descricao ? (
-              <div className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-white max-h-72 overflow-y-auto"
+              <div className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-white max-h-40 overflow-y-auto"
                 dangerouslySetInnerHTML={{__html: cur.enriched.descricao}} />
             ) : (
               <div className="text-xs text-gray-400 italic p-3 border border-dashed border-gray-200 rounded-xl">Sem descricao gerada.</div>
@@ -2283,27 +2219,6 @@ React.useEffect(() => {
               <textarea value={cur.enriched?.descricao || ""} onChange={e => updEnr("descricao", e.target.value)}
                 rows={5} className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none mt-1" />
             </details>
-            <p className="text-xs text-gray-400 mt-1">{(cur.enriched?.descricao || "").length} chars — padrao DOMUS</p>
-          </div>
-
-          {/* SEO fields */}
-          <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl space-y-3">
-            <p className="text-xs font-bold text-blue-700 mb-1">🔍 Campos SEO</p>
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Título SEO <span className="font-normal text-gray-400">(máx 70 chars)</span></label>
-              <input type="text" value={cur.enriched?.titulo_seo || ""}
-                onChange={e => updEnr("titulo_seo", e.target.value)}
-                className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
-              <p className="text-xs text-gray-400 mt-1">{(cur.enriched?.titulo_seo || "").length} / 70 caracteres</p>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Descrição SEO <span className="font-normal text-gray-400">(máx 160 chars)</span></label>
-              <textarea value={cur.enriched?.descricao_seo || ""}
-                onChange={e => updEnr("descricao_seo", e.target.value)}
-                rows={2}
-                className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none" />
-              <p className="text-xs text-gray-400 mt-1">{(cur.enriched?.descricao_seo || "").length} / 160 caracteres</p>
-            </div>
           </div>
         </div>
       )}
