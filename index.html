@@ -772,15 +772,18 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
   if (body.variacoes) payload.variacoes = body.variacoes;
   // v29: mapeia EAN e SKU→codigoFornecedor dos filhos K para putVariacoes
   if (children.length > 0) {
-    const _ecm = {}, _scm = {};
+    const _ecm = {}, _scm = {}, _pcm = {};
     children.forEach(c => {
       const ean = String(c.ean || "").replace(/\D/g, "");
       if (ean && c.codigo_fornecedor) _ecm[ean] = c.codigo_fornecedor;
       const sku = c.sku_interno || c.enriched?.sku_interno || c.codigo_fornecedor || "";
       if (sku && c.codigo_fornecedor) _scm[sku] = c.codigo_fornecedor;
+      const _pc = parseNumber(c.preco_custo); const _pv = parseNumber(c.preco_venda) ?? 0;
+      if (sku && _pc > 0) _pcm[sku] = { preco: _pv, precoCusto: _pc }; // v48
     });
     if (Object.keys(_ecm).length) payload._eanCodMap = _ecm;
     if (Object.keys(_scm).length) payload._skuCodMap = _scm;
+    if (Object.keys(_pcm).length) payload._precosMap = _pcm; // v48
   }
   (body.variacoes || []).forEach(v => { const _eks=new Set((v.grade||[]).map(g=>g.chave)); body.grade.forEach(key=>{ if(!_eks.has(key)) (v.grade=v.grade||[]).push({chave:key,valor:'-'}); }); });
   if (!payload.imagens.length) delete payload.imagens;
@@ -2813,6 +2816,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
           sku: v.codigo || v.sku,
           descricao: v.descricao
         };
+        if (camposFixos._precosMap) { var _vp = camposFixos._precosMap[v.sku]; if (_vp) payload.precos = _vp; } // v48
         if (camposFixos.dimensoes) payload.dimensoes = camposFixos.dimensoes;
         if (camposFixos.marca)     payload.marca     = camposFixos.marca;
         if (camposFixos.unidade)   payload.unidade   = camposFixos.unidade;
@@ -2977,6 +2981,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
             if (body.fornecedores) camposParaVariacoes.fornecedores = body.fornecedores;
             if (body._eanCodMap) { camposParaVariacoes._eanCodMap = body._eanCodMap; delete body._eanCodMap; } // v29
             if (body._skuCodMap) { camposParaVariacoes._skuCodMap = body._skuCodMap; delete body._skuCodMap; } // v29
+            if (body._precosMap) { camposParaVariacoes._precosMap = body._precosMap; delete body._precosMap; } // v48
 
             return _native(url, opts).then(function(resp) {
               resp.clone().text().then(function(t) {
