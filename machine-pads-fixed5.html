@@ -724,7 +724,7 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
                                                                                       }
       const varItem = {
         sku:    k.sku_interno || k.enriched?.sku_interno || k.codigo_fornecedor || "", // v33
-        precos: { preco: parseNumber(k.preco_venda) ?? 0 },
+        precos: (() => { const _pc = parseNumber(k.preco_custo); const _pv = parseNumber(k.preco_venda) ?? 0; return _pc > 0 ? { preco: _pv, precoCusto: _pc } : { preco: _pv }; })(),
         grade,
         dimensoes: {
           pesoBruto:   parseNumber(k.pesoBruto) || parseNumber(k.peso) || parseNumber(product.peso) || 0,
