@@ -101,6 +101,9 @@ const COLUMN_ALIASES = {
   preco_venda: "preco_venda",
   valor_venda: "preco_venda",
   preco: "preco_venda",
+  preco_de_custo: "preco_custo",
+  preco_custo: "preco_custo",
+  custo: "preco_custo",
   // Dimensões com sufixo de unidade
   peso_kg: "peso",
   peso: "peso",
@@ -651,8 +654,7 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
     tipo:           tipoApi,
 
     // ── Preços ─────────────────────────────────────────────
-    preco:          parseNumber(product.preco_venda) ?? 0,
-    precoCusto:     parseNumber(product.preco_custo) ?? undefined,
+    precos:         (() => { const _pc = parseNumber(product.preco_custo); const _pv = parseNumber(product.preco_venda) ?? 0; return _pc > 0 ? { preco: _pv, precoCusto: _pc } : { preco: _pv }; })(),
 
     // ── Classificação fiscal ───────────────────────────────
     unidadeMedida:  product.unidade || "UN",
