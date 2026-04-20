@@ -646,7 +646,7 @@ async function sendToTiny(product, token, corsProxy = "", children = []) {
     // ── Identificação ──────────────────────────────────────
     nome:           product.enriched?.titulo_otimizado || product.produto_fornecedor,
     sku:            product.sku_interno || product.enriched?.sku_interno || product.codigo_fornecedor || "", // v33: planilha > IA
-    ean:            String(product.ean || ""),
+    gtin:           String(product.ean || "").replace(/\D/g, "") || undefined,
     situacao:       "A",
     tipo:           tipoApi,
 
