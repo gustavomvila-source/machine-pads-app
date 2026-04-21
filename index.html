@@ -2687,7 +2687,7 @@ function App() {
         localStorage.setItem("mpads_keys", JSON.stringify(_nk));
         setApiKeys(_nk);
         console.log("[MPADS] Token Tiny renovado automaticamente — expira às", new Date(_exp).toLocaleTimeString("pt-BR"));
-      } catch(e) { console.warn("[MPADS] Auto-refresh falhou:", e.message); }
+      } catch(e) { console.warn("[MPADS] Auto-refresh falhou:", e.message); if (e.message && (e.message.includes("401") || e.message.includes("invalid") || e.message.includes("expired"))) { alert("\u26a0\ufe0f Token Tiny expirado ou inv\u00e1lido. Abra Configura\u00e7\u00f5es e clique em \"Autenticar com Tiny ERP\" para reconectar."); } }
     }
     function _check() {
       const _k = JSON.parse(localStorage.getItem("mpads_keys") || "{}");
