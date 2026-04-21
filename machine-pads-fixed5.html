@@ -7,7 +7,7 @@
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Process polyfill (must be first, before any module loading) -->
-  <script>window.process = window.process || { env: { NODE_ENV:prouction' } };</script>
+  <script>window.process = window.process || { env: { NODE_ENV: 'production' } };</script>
   <!-- React 18 -->
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
@@ -2818,7 +2818,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
           sku: v.codigo || v.sku,
           descricao: v.descricao
         };
-        if (camposFixos._precosMap) { var _vp = camposFixos._precosMap[v.codigo || v.sku]; if (_vp) payload.precos = _vp; } // v51
+        if (camposFixos._precosMap) { var _lookupKey = v.codigo || v.sku; console.log('[MPADS-DBG] putV lookup key:', _lookupKey, 'map keys:', Object.keys(camposFixos._precosMap)); var _vp = camposFixos._precosMap[_lookupKey]; if (_vp) payload.precos = _vp; } // v51
         if (camposFixos.dimensoes) payload.dimensoes = camposFixos.dimensoes;
         if (camposFixos.marca)     payload.marca     = camposFixos.marca;
         if (camposFixos.unidade)   payload.unidade   = camposFixos.unidade;
@@ -2993,6 +2993,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
                     var rd = JSON.parse(t);
                     if (rd.id && rd.variacoes && rd.variacoes.length > 0) {
                       entry.fixes.push('variacoes-put:' + rd.variacoes.length);
+                      console.log('[MPADS-DBG] rd.variacoes:', JSON.stringify(rd.variacoes.map(function(v){return{id:v.id,sku:v.sku,codigo:v.codigo};})));
+                      console.log('[MPADS-DBG] _precosMap:', JSON.stringify(camposParaVariacoes._precosMap));
                       putVariacoes(rd.id, rd.variacoes, camposParaVariacoes, token);
                     }
                   } catch(e) {}
