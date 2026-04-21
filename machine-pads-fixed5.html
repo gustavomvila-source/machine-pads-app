@@ -2842,6 +2842,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
           console.log('[MachinePADS] PUT variação ' + v.id + ': ' + r.status);
           window.__mpReqs.push({ tipo:'PUT-var', varId:v.id, status:r.status, ts:Date.now() });
         }).catch(function(e) { console.warn('[MachinePADS] PUT variação erro:', e); });
+        if (camposFixos._precosMap) { var _pk52 = v.codigo || v.sku; var _pp52 = camposFixos._precosMap[_pk52]; if (_pp52) { _native('https://corsproxy.io/?url=' + encodeURIComponent('https://api.tiny.com.br/public-api/v3/produtos/' + v.id), { method: 'PUT', headers: { 'Authorization': token, 'Content-Type': 'application/json' }, body: JSON.stringify({ precos: _pp52 }) }).then(function(r2) { console.log('[MachinePADS] PUT preco-var ' + v.id + ': ' + r2.status); }).catch(function(e2) { console.warn('[MachinePADS] PUT preco-var erro:', e2); }); } } // v52
       });
     }
 
